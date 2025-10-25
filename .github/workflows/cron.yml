@@ -22,8 +22,8 @@ jobs:
           # Get the latest deployment URL
           LATEST_URL="https://llm-brand-tracker-saas.vercel.app"
           
-          # Call the cron endpoint
-          response=$(curl -s -w "\n%{http_code}" -X GET "$LATEST_URL/api/public-cron" \
+          # Call the server cron endpoint
+          response=$(curl -s -w "\n%{http_code}" -X GET "$LATEST_URL/api/server-cron" \
             -H "Accept: application/json" \
             -H "User-Agent: GitHub-Actions-Cron/1.0")
           

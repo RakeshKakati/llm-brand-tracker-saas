@@ -43,7 +43,7 @@ export async function GET() {
         console.log(`🔍 Checking tracker: ${tracker.brand} - ${tracker.query}`);
         
         // Call the checkMention API internally
-        const response = await fetch(`${process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000'}/api/checkMention`, {
+        const response = await fetch(`https://llm-brand-tracker-saas.vercel.app/api/checkMention`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 

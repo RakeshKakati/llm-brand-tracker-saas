@@ -20,7 +20,7 @@ jobs:
           echo "🔄 Starting brand tracker cron job..."
           
           # Get the latest deployment URL
-          LATEST_URL="https://llm-brand-tracker-saas-22crxonew-fractionel.vercel.app"
+          LATEST_URL="https://llm-brand-tracker-saas.vercel.app"
           
           # Call the cron endpoint
           response=$(curl -s -w "\n%{http_code}" -X GET "$LATEST_URL/api/public-cron" \

@@ -50,7 +50,7 @@ export default function TrackingPage() {
       if (error) throw error;
       
       // Refresh trackers list
-      await fetchTrackers();
+      await fetchTrackers(false);
       
       setBrand("");
       setQuery("");
@@ -96,7 +96,7 @@ export default function TrackingPage() {
       .eq("id", id);
     
     if (!error) {
-      fetchTrackers();
+      fetchTrackers(false);
     }
   };
 
@@ -108,7 +108,7 @@ export default function TrackingPage() {
         .eq("id", id);
       
       if (!error) {
-        fetchTrackers();
+        fetchTrackers(false);
       }
     }
   };
@@ -150,7 +150,7 @@ export default function TrackingPage() {
 
   // Load trackers on component mount
   useEffect(() => {
-    fetchTrackers();
+    fetchTrackers(false);
     
     // Auto-refresh every 30 seconds to catch new trackers and status changes
     const interval = setInterval(() => {
@@ -341,7 +341,7 @@ export default function TrackingPage() {
                       if (error) throw error;
                       
                       // Refresh trackers list
-                      await fetchTrackers();
+                      await fetchTrackers(false);
                       
                       // Clear form and results
                       setBrand("");

@@ -14,7 +14,8 @@ import {
   Calendar,
   Clock,
   RefreshCw,
-  Activity
+  Activity,
+  Plus
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -28,44 +29,11 @@ export default function HistoryPage() {
 
   useEffect(() => {
     fetchMentions();
-    
-    // Auto-refresh every 30 seconds to catch new cron job data
-    const refreshInterval = setInterval(() => {
-      console.log("🔄 Auto-refreshing history data...");
-      fetchMentions(true); // Pass true for auto-refresh
-      setLastRefresh(new Date());
-    }, 30000); // 30 seconds
-
-    // Auto-run cron job every 5 minutes
-    const cronInterval = setInterval(async () => {
-      try {
-        console.log("🚀 Auto-running cron job...");
-        const response = await fetch("https://llm-brand-tracker-saas.vercel.app/api/public-cron");
-        const result = await response.json();
-        console.log("Auto cron job result:", result);
-        
-        // Refresh the data after running cron job
-        await fetchMentions(true);
-        setLastRefresh(new Date());
-        setLastCronRun(new Date());
-        
-        console.log(`✅ Auto cron job completed! Processed ${result.results?.length || 0} trackers.`);
-      } catch (error) {
-        console.error("Error in auto cron job:", error);
-      }
-    }, 300000); // 5 minutes
-
-    return () => {
-      clearInterval(refreshInterval);
-      clearInterval(cronInterval);
-    };
   }, []);
 
-  const fetchMentions = async (isAutoRefresh = false) => {
+  const fetchMentions = async () => {
     try {
-      if (!isAutoRefresh) {
-        setLoading(true);
-      }
+      setLoading(true);
       const { data, error } = await supabase
         .from("brand_mentions")
         .select("*")
@@ -77,9 +45,7 @@ export default function HistoryPage() {
     } catch (error) {
       console.error("Error fetching mentions:", error);
     } finally {
-      if (!isAutoRefresh) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -124,7 +90,7 @@ export default function HistoryPage() {
             <button
               onClick={async () => {
                 console.log("🔄 Manual refresh triggered");
-                fetchMentions(false); // Pass false for manual refresh
+                await fetchMentions();
                 setLastRefresh(new Date());
               }}
               disabled={loading}
@@ -142,7 +108,7 @@ export default function HistoryPage() {
                   console.log("Cron job result:", result);
                   
                   // Refresh the data after running cron job
-                  await fetchMentions(false);
+                  await fetchMentions();
                   setLastRefresh(new Date());
                   setLastCronRun(new Date());
                   
@@ -284,6 +250,18 @@ export default function HistoryPage() {
           </div>
         )}
       </Card>
+
+      {/* Floating New Tracker Button */}
+      <button
+        onClick={() => {
+          // Navigate to tracking page - you can implement routing here
+          window.location.href = '/#tracking';
+        }}
+        className="fixed bottom-6 left-6 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-colors z-50"
+        title="Create New Tracker"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
     </div>
   );
 }

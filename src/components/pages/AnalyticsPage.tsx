@@ -48,22 +48,11 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     fetchAnalyticsData();
-    
-    // Auto-refresh every 30 seconds to catch new cron job data
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing analytics data...");
-      fetchAnalyticsData(true); // Pass true for auto-refresh
-      setLastRefresh(new Date());
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
   }, []);
 
-  const fetchAnalyticsData = async (isAutoRefresh = false) => {
+  const fetchAnalyticsData = async () => {
     try {
-      if (!isAutoRefresh) {
-        setLoading(true);
-      }
+      setLoading(true);
       
       // Fetch all brand mentions
       const { data: mentions, error: mentionsError } = await supabase
@@ -173,9 +162,7 @@ export default function AnalyticsPage() {
     } catch (error) {
       console.error("Error fetching analytics data:", error);
     } finally {
-      if (!isAutoRefresh) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   };
 
@@ -244,9 +231,9 @@ export default function AnalyticsPage() {
               <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
                 console.log("🔄 Manual refresh triggered");
-                fetchAnalyticsData(false); // Pass false for manual refresh
+                await fetchAnalyticsData();
                 setLastRefresh(new Date());
               }}
               disabled={loading}

@@ -50,7 +50,7 @@ export default function TrackingPage() {
       if (error) throw error;
       
       // Refresh trackers list
-      await fetchTrackers(false);
+      await fetchTrackersData(false);
       
       setBrand("");
       setQuery("");
@@ -64,7 +64,7 @@ export default function TrackingPage() {
     }
   };
 
-  const fetchTrackers = async (isAutoRefresh: boolean = false) => {
+  const fetchTrackersDataData = async (isAutoRefresh: boolean = false) => {
     try {
       if (!isAutoRefresh) {
         setLoading(true);
@@ -96,7 +96,7 @@ export default function TrackingPage() {
       .eq("id", id);
     
     if (!error) {
-      fetchTrackers(false);
+      fetchTrackersData(false);
     }
   };
 
@@ -108,7 +108,7 @@ export default function TrackingPage() {
         .eq("id", id);
       
       if (!error) {
-        fetchTrackers(false);
+        fetchTrackersData(false);
       }
     }
   };
@@ -150,12 +150,12 @@ export default function TrackingPage() {
 
   // Load trackers on component mount
   useEffect(() => {
-    fetchTrackers(false);
+    fetchTrackersData(false);
     
     // Auto-refresh every 30 seconds to catch new trackers and status changes
     const interval = setInterval(() => {
       console.log("🔄 Auto-refreshing trackers data...");
-      fetchTrackers(true); // Pass true for auto-refresh
+      fetchTrackersData(true); // Pass true for auto-refresh
       setLastRefresh(new Date());
     }, 30000); // 30 seconds
 
@@ -179,7 +179,7 @@ export default function TrackingPage() {
             <button
               onClick={() => {
                 console.log("🔄 Manual refresh triggered");
-                fetchTrackers(false); // Pass false for manual refresh
+                fetchTrackersData(false); // Pass false for manual refresh
                 setLastRefresh(new Date());
               }}
               disabled={loading}
@@ -341,7 +341,7 @@ export default function TrackingPage() {
                       if (error) throw error;
                       
                       // Refresh trackers list
-                      await fetchTrackers(false);
+                      await fetchTrackersData(false);
                       
                       // Clear form and results
                       setBrand("");

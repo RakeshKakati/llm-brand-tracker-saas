@@ -281,9 +281,46 @@ export default function TrackingPage() {
                     setQuery(testSearchResult.query);
                     setTestSearchResult(null);
                   }}
+                  variant="outline"
                   size="sm"
                 >
-                  Use for Tracker
+                  Fill Form Only
+                </Button>
+                <Button
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      const { error } = await supabase.from("tracked_brands").insert([
+                        {
+                          brand: testSearchResult.brand,
+                          query: testSearchResult.query,
+                          interval_minutes: interval,
+                          active: true
+                        },
+                      ]);
+                      if (error) throw error;
+                      
+                      // Refresh trackers list
+                      await fetchTrackers();
+                      
+                      // Clear form and results
+                      setBrand("");
+                      setQuery("");
+                      setInterval(5);
+                      setTestSearchResult(null);
+                      
+                      alert(`✅ Successfully created tracker for "${testSearchResult.brand}" searching "${testSearchResult.query}" every ${interval} minutes.`);
+                    } catch (err: any) {
+                      console.error("❌ Supabase insert error:", err);
+                      alert(`❌ Failed to create tracker: ${err.message || 'Unknown error'}`);
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                  size="sm"
+                >
+                  {loading ? "Creating..." : "Create Tracker"}
                 </Button>
               </div>
             </div>

@@ -114,14 +114,3 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
           </div>
         ))}
       </div>
-
-      {/* Footer */}
-      <div className="p-4 border-t border-gray-200">
-        <Button className="w-full justify-start h-8 px-2 text-sm font-normal text-gray-600 hover:text-gray-900">
-          <Plus className="w-4 h-4 mr-2" />
-          New Tracker
-        </Button>
-      </div>
-    </div>
-  );
-}

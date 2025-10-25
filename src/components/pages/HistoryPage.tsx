@@ -14,7 +14,6 @@ import {
   Calendar,
   Clock,
   RefreshCw,
-  Activity,
   Plus
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
@@ -25,15 +24,24 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMentioned, setFilterMentioned] = useState<boolean | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
-  const [lastCronRun, setLastCronRun] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchMentions();
+    
+    // Auto-refresh every 30 seconds to catch external cron job updates
+    const refreshInterval = setInterval(() => {
+      console.log("🔄 Auto-refreshing history data...");
+      fetchMentions(true); // Silent refresh
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(refreshInterval);
   }, []);
 
-  const fetchMentions = async () => {
+  const fetchMentions = async (isSilentRefresh = false) => {
     try {
-      setLoading(true);
+      if (!isSilentRefresh) {
+        setLoading(true);
+      }
       const { data, error } = await supabase
         .from("brand_mentions")
         .select("*")
@@ -41,11 +49,16 @@ export default function HistoryPage() {
       
       if (!error && data) {
         setRecords(data);
+        if (!isSilentRefresh) {
+          setLastRefresh(new Date());
+        }
       }
     } catch (error) {
       console.error("Error fetching mentions:", error);
     } finally {
-      setLoading(false);
+      if (!isSilentRefresh) {
+        setLoading(false);
+      }
     }
   };
 
@@ -80,12 +93,6 @@ export default function HistoryPage() {
             <div className="text-right">
               <p className="text-sm text-gray-500">Last updated</p>
               <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
-              {lastCronRun && (
-                <>
-                  <p className="text-sm text-blue-500">Last cron run</p>
-                  <p className="text-xs text-blue-400">{lastCronRun.toLocaleTimeString()}</p>
-                </>
-              )}
             </div>
             <button
               onClick={async () => {
@@ -98,31 +105,6 @@ export default function HistoryPage() {
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
-            </button>
-            <button
-              onClick={async () => {
-                try {
-                  console.log("🚀 Running cron job manually...");
-                  const response = await fetch("https://llm-brand-tracker-saas.vercel.app/api/public-cron");
-                  const result = await response.json();
-                  console.log("Cron job result:", result);
-                  
-                  // Refresh the data after running cron job
-                  await fetchMentions();
-                  setLastRefresh(new Date());
-                  setLastCronRun(new Date());
-                  
-                  alert(`✅ Cron job completed! Processed ${result.results?.length || 0} trackers.`);
-                } catch (error) {
-                  console.error("Error running cron job:", error);
-                  alert("❌ Failed to run cron job. Check console for details.");
-                }
-              }}
-              disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <Activity className="w-4 h-4" />
-              Run Cron Job
             </button>
           </div>
         </div>

@@ -12,7 +12,8 @@ import {
   CheckCircle, 
   XCircle,
   Calendar,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -21,14 +22,26 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMentioned, setFilterMentioned] = useState<boolean | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     fetchMentions();
+    
+    // Auto-refresh every 30 seconds to catch new cron job data
+    const interval = setInterval(() => {
+      console.log("🔄 Auto-refreshing history data...");
+      fetchMentions(true); // Pass true for auto-refresh
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
-  const fetchMentions = async () => {
+  const fetchMentions = async (isAutoRefresh = false) => {
     try {
-      setLoading(true);
+      if (!isAutoRefresh) {
+        setLoading(true);
+      }
       const { data, error } = await supabase
         .from("brand_mentions")
         .select("*")
@@ -40,7 +53,9 @@ export default function HistoryPage() {
     } catch (error) {
       console.error("Error fetching mentions:", error);
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) {
+        setLoading(false);
+      }
     }
   };
 
@@ -66,8 +81,30 @@ export default function HistoryPage() {
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Mention History</h1>
-        <p className="text-gray-600">View all brand mention checks and results</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mention History</h1>
+            <p className="text-gray-600">View all brand mention checks and results</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Last updated</p>
+              <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
+            </div>
+            <button
+              onClick={() => {
+                console.log("🔄 Manual refresh triggered");
+                fetchMentions(false); // Pass false for manual refresh
+                setLastRefresh(new Date());
+              }}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}

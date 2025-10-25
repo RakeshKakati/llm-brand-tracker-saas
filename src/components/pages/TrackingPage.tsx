@@ -64,7 +64,7 @@ export default function TrackingPage() {
     }
   };
 
-  const fetchTrackersDataData = async (isAutoRefresh: boolean = false) => {
+  const fetchTrackersData = async (isAutoRefresh: boolean = false) => {
     try {
       if (!isAutoRefresh) {
         setLoading(true);

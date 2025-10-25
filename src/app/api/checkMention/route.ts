@@ -1,12 +1,5 @@
-export const runtime = 'nodejs';
-
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
 import { supabase } from "@/app/lib/supabaseClient";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
 
 // --- helper: safely escape brand in regex ---
 function escapeRegExp(s: string) {

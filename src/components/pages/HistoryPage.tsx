@@ -24,18 +24,41 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMentioned, setFilterMentioned] = useState<boolean | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [lastCronRun, setLastCronRun] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchMentions();
     
     // Auto-refresh every 30 seconds to catch new cron job data
-    const interval = setInterval(() => {
+    const refreshInterval = setInterval(() => {
       console.log("🔄 Auto-refreshing history data...");
       fetchMentions(true); // Pass true for auto-refresh
       setLastRefresh(new Date());
     }, 30000); // 30 seconds
 
-    return () => clearInterval(interval);
+    // Auto-run cron job every 5 minutes
+    const cronInterval = setInterval(async () => {
+      try {
+        console.log("🚀 Auto-running cron job...");
+        const response = await fetch("https://llm-brand-tracker-saas.vercel.app/api/public-cron");
+        const result = await response.json();
+        console.log("Auto cron job result:", result);
+        
+        // Refresh the data after running cron job
+        await fetchMentions(true);
+        setLastRefresh(new Date());
+        setLastCronRun(new Date());
+        
+        console.log(`✅ Auto cron job completed! Processed ${result.results?.length || 0} trackers.`);
+      } catch (error) {
+        console.error("Error in auto cron job:", error);
+      }
+    }, 300000); // 5 minutes
+
+    return () => {
+      clearInterval(refreshInterval);
+      clearInterval(cronInterval);
+    };
   }, []);
 
   const fetchMentions = async (isAutoRefresh = false) => {
@@ -91,6 +114,12 @@ export default function HistoryPage() {
             <div className="text-right">
               <p className="text-sm text-gray-500">Last updated</p>
               <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
+              {lastCronRun && (
+                <>
+                  <p className="text-sm text-blue-500">Last cron run</p>
+                  <p className="text-xs text-blue-400">{lastCronRun.toLocaleTimeString()}</p>
+                </>
+              )}
             </div>
             <button
               onClick={async () => {
@@ -115,6 +144,7 @@ export default function HistoryPage() {
                   // Refresh the data after running cron job
                   await fetchMentions(false);
                   setLastRefresh(new Date());
+                  setLastCronRun(new Date());
                   
                   alert(`✅ Cron job completed! Processed ${result.results?.length || 0} trackers.`);
                 } catch (error) {

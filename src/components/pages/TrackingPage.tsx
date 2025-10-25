@@ -17,7 +17,8 @@ import {
   Activity,
   CheckCircle,
   XCircle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -29,6 +30,7 @@ export default function TrackingPage() {
   const [trackers, setTrackers] = useState<any[]>([]);
   const [testSearchLoading, setTestSearchLoading] = useState(false);
   const [testSearchResult, setTestSearchResult] = useState<any>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   const handleTrack = async () => {
     if (!brand || !query) {
@@ -62,8 +64,11 @@ export default function TrackingPage() {
     }
   };
 
-  const fetchTrackers = async () => {
+  const fetchTrackers = async (isAutoRefresh = false) => {
     try {
+      if (!isAutoRefresh) {
+        setLoading(true);
+      }
       const { data, error } = await supabase
         .from("tracked_brands")
         .select("*")
@@ -77,6 +82,10 @@ export default function TrackingPage() {
       setTrackers(data || []);
     } catch (err) {
       console.error("Error fetching trackers:", err);
+    } finally {
+      if (!isAutoRefresh) {
+        setLoading(false);
+      }
     }
   };
 
@@ -142,14 +151,45 @@ export default function TrackingPage() {
   // Load trackers on component mount
   useEffect(() => {
     fetchTrackers();
+    
+    // Auto-refresh every 30 seconds to catch new trackers and status changes
+    const interval = setInterval(() => {
+      console.log("🔄 Auto-refreshing trackers data...");
+      fetchTrackers(true); // Pass true for auto-refresh
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Brand Tracking</h1>
-        <p className="text-gray-600">Create and manage brand mention trackers</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Brand Tracking</h1>
+            <p className="text-gray-600">Create and manage brand mention trackers</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm text-gray-500">Last updated</p>
+              <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
+            </div>
+            <button
+              onClick={() => {
+                console.log("🔄 Manual refresh triggered");
+                fetchTrackers(false); // Pass false for manual refresh
+                setLastRefresh(new Date());
+              }}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Create New Tracker */}

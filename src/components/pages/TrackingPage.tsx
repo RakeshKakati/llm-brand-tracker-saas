@@ -209,16 +209,6 @@ export default function TrackingPage() {
               className="mt-1"
             />
           </div>
-          <div>
-            <Label className="text-sm font-medium text-gray-700">Check Interval (minutes)</Label>
-            <Input
-              type="number"
-              min={1}
-              value={interval}
-              onChange={(e) => setInterval(Number(e.target.value))}
-              className="mt-1"
-            />
-          </div>
         </div>
 
         <div className="flex gap-3">

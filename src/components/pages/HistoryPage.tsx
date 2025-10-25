@@ -92,7 +92,7 @@ export default function HistoryPage() {
               <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
                 console.log("🔄 Manual refresh triggered");
                 fetchMentions(false); // Pass false for manual refresh
                 setLastRefresh(new Date());
@@ -102,6 +102,30 @@ export default function HistoryPage() {
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               Refresh
+            </button>
+            <button
+              onClick={async () => {
+                try {
+                  console.log("🚀 Running cron job manually...");
+                  const response = await fetch("https://llm-brand-tracker-saas.vercel.app/api/public-cron");
+                  const result = await response.json();
+                  console.log("Cron job result:", result);
+                  
+                  // Refresh the data after running cron job
+                  await fetchMentions(false);
+                  setLastRefresh(new Date());
+                  
+                  alert(`✅ Cron job completed! Processed ${result.results?.length || 0} trackers.`);
+                } catch (error) {
+                  console.error("Error running cron job:", error);
+                  alert("❌ Failed to run cron job. Check console for details.");
+                }
+              }}
+              disabled={loading}
+              className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors disabled:opacity-50"
+            >
+              <Activity className="w-4 h-4" />
+              Run Cron Job
             </button>
           </div>
         </div>

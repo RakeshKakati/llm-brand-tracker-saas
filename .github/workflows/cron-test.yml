@@ -1,0 +1,70 @@
+name: Brand Tracker Cron Job (Test)
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  check-brands:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Run Brand Checks
+        run: |
+          echo "🔄 Starting brand tracker cron job..."
+          
+          # Get the latest deployment URL
+          LATEST_URL="https://llm-brand-tracker-saas.vercel.app"
+          
+          echo "📡 Calling endpoint: $LATEST_URL/api/public-cron"
+          
+          # Call the cron endpoint
+          response=$(curl -s -w "\n%{http_code}" -X GET "$LATEST_URL/api/public-cron" \
+            -H "Accept: application/json" \
+            -H "User-Agent: GitHub-Actions-Cron/1.0" \
+            --max-time 60)
+          
+          # Extract response body and status code
+          http_code=$(echo "$response" | tail -n1)
+          response_body=$(echo "$response" | head -n -1)
+          
+          echo "📊 Response Status: $http_code"
+          echo "📋 Response Body: $response_body"
+          
+          # Check if the request was successful
+          if [ "$http_code" -eq 200 ]; then
+            echo "✅ Brand tracker cron job completed successfully"
+            
+            # Check if we have results
+            if echo "$response_body" | grep -q "results"; then
+              echo "📈 Found results in response"
+              # Count trackers processed
+              tracker_count=$(echo "$response_body" | grep -o '"brand"' | wc -l)
+              echo "📊 Processed $tracker_count trackers"
+            else
+              echo "⚠️ No results found in response"
+            fi
+          else
+            echo "❌ Brand tracker cron job failed with status: $http_code"
+            echo "Response: $response_body"
+            exit 1
+          fi
+          
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 Brand tracker cron job failed!"
+          echo "Please check the logs above for details."
+          
+      - name: Summary
+        if: always()
+        run: |
+          echo "🏁 Brand tracker cron job completed at $(date)"
+          echo "📅 Next run: Every 5 minutes"
+          echo "🔗 Check your app: https://llm-brand-tracker-saas.vercel.app"

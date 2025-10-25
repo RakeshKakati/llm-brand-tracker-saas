@@ -14,7 +14,10 @@ import {
   Pause, 
   Trash2,
   Clock,
-  Activity
+  Activity,
+  CheckCircle,
+  XCircle,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -24,6 +27,8 @@ export default function TrackingPage() {
   const [interval, setInterval] = useState(5);
   const [loading, setLoading] = useState(false);
   const [trackers, setTrackers] = useState<any[]>([]);
+  const [testSearchLoading, setTestSearchLoading] = useState(false);
+  const [testSearchResult, setTestSearchResult] = useState<any>(null);
 
   const handleTrack = async () => {
     if (!brand || !query) {
@@ -101,17 +106,36 @@ export default function TrackingPage() {
 
   const runCheck = async (brand: string, query: string) => {
     try {
+      setTestSearchLoading(true);
+      setTestSearchResult(null);
+      
       const res = await fetch("/api/checkMention", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ brand, query }),
       });
+      
       if (res.ok) {
-        alert("✅ Check completed! Check the history page for results.");
+        const result = await res.json();
+        setTestSearchResult({
+          brand,
+          query,
+          mentioned: result.mentioned,
+          evidence: result.evidence,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        throw new Error(`HTTP ${res.status}`);
       }
     } catch (error) {
       console.error("Error running check:", error);
-      alert("❌ Failed to run check");
+      setTestSearchResult({
+        brand,
+        query,
+        error: error.message || "Failed to run check"
+      });
+    } finally {
+      setTestSearchLoading(false);
     }
   };
 
@@ -169,11 +193,15 @@ export default function TrackingPage() {
         <div className="flex gap-3">
           <Button
             onClick={() => runCheck(brand, query)}
-            disabled={loading || !brand || !query}
+            disabled={loading || testSearchLoading || !brand || !query}
             variant="outline"
           >
-            <Search className="w-4 h-4 mr-2" />
-            Test Search
+            {testSearchLoading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4 mr-2" />
+            )}
+            {testSearchLoading ? "Searching..." : "Test Search"}
           </Button>
           <Button
             onClick={handleTrack}
@@ -184,6 +212,84 @@ export default function TrackingPage() {
           </Button>
         </div>
       </Card>
+
+      {/* Test Search Results */}
+      {testSearchResult && (
+        <Card className="p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="w-5 h-5 text-gray-600" />
+            <h2 className="text-lg font-semibold text-gray-900">Test Search Results</h2>
+          </div>
+          
+          {testSearchResult.error ? (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <XCircle className="w-5 h-5 text-red-500" />
+                <h3 className="font-medium text-red-900">Search Failed</h3>
+              </div>
+              <p className="text-sm text-red-700">{testSearchResult.error}</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <h3 className="font-medium text-gray-900">{testSearchResult.brand}</h3>
+                    <Badge variant={testSearchResult.mentioned ? "default" : "secondary"}>
+                      {testSearchResult.mentioned ? (
+                        <>
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Mentioned
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-3 h-3 mr-1" />
+                          Not Found
+                        </>
+                      )}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {new Date(testSearchResult.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
+                
+                <p className="text-sm text-gray-600 mb-3">
+                  <strong>Query:</strong> {testSearchResult.query}
+                </p>
+                
+                {testSearchResult.evidence && testSearchResult.evidence !== "No mention found" && (
+                  <div className="bg-white p-3 rounded-md border">
+                    <p className="text-sm text-gray-700">
+                      <strong>Evidence:</strong> {testSearchResult.evidence}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => setTestSearchResult(null)}
+                  variant="outline"
+                  size="sm"
+                >
+                  Close Results
+                </Button>
+                <Button
+                  onClick={() => {
+                    setBrand(testSearchResult.brand);
+                    setQuery(testSearchResult.query);
+                    setTestSearchResult(null);
+                  }}
+                  size="sm"
+                >
+                  Use for Tracker
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Active Trackers */}
       <Card className="p-6">

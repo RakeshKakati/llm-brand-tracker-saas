@@ -13,7 +13,8 @@ import {
   XCircle,
   Calendar,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Activity
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 

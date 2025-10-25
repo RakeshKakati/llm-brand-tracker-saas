@@ -1,0 +1,84 @@
+name: Brand Tracker Cron Job
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  check-brands:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: npm install
+        
+      - name: Run Brand Checks via API
+        env:
+          VERCEL_URL: ${{ secrets.VERCEL_URL || 'https://llm-brand-tracker-saas-7ivrr1n0b-fractionel.vercel.app' }}
+        run: |
+          echo "🔄 Starting brand tracker cron job..."
+          
+          # Try multiple endpoints in case of auth issues
+          ENDPOINTS=(
+            "$VERCEL_URL/api/public-cron"
+            "$VERCEL_URL/api/cron"
+          )
+          
+          for endpoint in "${ENDPOINTS[@]}"; do
+            echo "🔍 Trying endpoint: $endpoint"
+            
+            response=$(curl -s -w "\n%{http_code}" -X GET "$endpoint" \
+              -H "Accept: application/json" \
+              -H "User-Agent: GitHub-Actions-Cron/1.0" \
+              --max-time 30)
+            
+            http_code=$(echo "$response" | tail -n1)
+            response_body=$(echo "$response" | head -n -1)
+            
+            echo "📊 Response Status: $http_code"
+            
+            if [ "$http_code" -eq 200 ]; then
+              echo "✅ Brand tracker cron job completed successfully"
+              echo "📋 Response: $response_body"
+              
+              # Parse results if available
+              if echo "$response_body" | grep -q "results"; then
+                echo "📈 Results:"
+                echo "$response_body" | jq -r '.results[]? | "  - \(.brand): \(.mentioned // "unknown")"'
+              fi
+              exit 0
+            elif [ "$http_code" -eq 401 ] || [ "$http_code" -eq 403 ]; then
+              echo "🔒 Authentication required for $endpoint, trying next..."
+              continue
+            else
+              echo "❌ Failed with status $http_code: $response_body"
+              continue
+            fi
+          done
+          
+          echo "❌ All endpoints failed or require authentication"
+          echo "💡 Consider disabling Vercel authentication protection"
+          exit 1
+          
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "🚨 Brand tracker cron job failed!"
+          echo "Please check the logs above for details."
+          
+      - name: Summary
+        if: always()
+        run: |
+          echo "🏁 Brand tracker cron job completed at $(date)"
+          echo "📅 Next run: Every 5 minutes"

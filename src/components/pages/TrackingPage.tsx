@@ -151,15 +151,6 @@ export default function TrackingPage() {
   // Load trackers on component mount
   useEffect(() => {
     fetchTrackersData(false);
-    
-    // Auto-refresh every 30 seconds to catch new trackers and status changes
-    const interval = setInterval(() => {
-      console.log("🔄 Auto-refreshing trackers data...");
-      fetchTrackersData(true); // Pass true for auto-refresh
-      setLastRefresh(new Date());
-    }, 30000); // 30 seconds
-
-    return () => clearInterval(interval);
   }, []);
 
   return (

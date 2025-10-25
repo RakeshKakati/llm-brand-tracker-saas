@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabase
       .from("tracked_brands")
-      .insert([{ brand, query, interval_hours: interval || 24, active: true }]);
+      .insert([{ brand, query, interval_minutes: interval || 5, active: true }]);
 
     if (error) throw error;
 

@@ -25,7 +25,7 @@ jobs:
         
       - name: Run Brand Checks via API
         env:
-          VERCEL_URL: ${{ secrets.VERCEL_URL || 'https://llm-brand-tracker-saas-7ivrr1n0b-fractionel.vercel.app' }}
+          VERCEL_URL: ${{ secrets.VERCEL_URL || 'https://llm-brand-tracker-saas-22crxonew-fractionel.vercel.app' }}
         run: |
           echo "🔄 Starting brand tracker cron job..."
           

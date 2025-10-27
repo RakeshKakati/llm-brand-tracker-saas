@@ -179,21 +179,12 @@ export default function DashboardPage() {
       }
 
       try {
-        // Parse the raw_output JSON
-        const rawData = JSON.parse(mention.raw_output);
-        const content = rawData?.choices?.[0]?.message?.content || "";
-
-        if (!content) {
-          console.log(`⚠️ Mention ${index + 1}: No content in raw_output`);
-          return;
-        }
-
-        // Extract URLs from the content
+        // Extract URLs directly from raw_output string (handles both JSON and plain text)
         const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-        const urls = content.match(urlRegex) || [];
+        const urls = mention.raw_output.match(urlRegex) || [];
 
         if (urls.length === 0) {
-          console.log(`⚠️ Mention ${index + 1}: No URLs found in content`);
+          console.log(`⚠️ Mention ${index + 1}: No URLs found`);
         } else {
           console.log(`✅ Mention ${index + 1}: Found ${urls.length} URLs`);
         }

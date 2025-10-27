@@ -441,8 +441,17 @@ export default function DashboardPage() {
                           href={source.url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-2"
+                          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-3"
                         >
+                          <img 
+                            src={`https://www.google.com/s2/favicons?domain=${source.domain}&sz=32`}
+                            alt={`${source.domain} logo`}
+                            className="w-5 h-5 flex-shrink-0"
+                            onError={(e) => {
+                              // Fallback to globe icon if favicon fails
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
                           <span className="font-medium truncate">{source.domain}</span>
                           <ArrowUpRight className="w-4 h-4 flex-shrink-0" />
                         </a>

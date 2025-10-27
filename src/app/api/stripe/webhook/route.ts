@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { supabase } from "@/app/lib/supabaseClient";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-11-20.acacia",
+  apiVersion: "2025-09-30.clover",
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -86,19 +86,28 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   // Get subscription details from Stripe
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subData: any = subscription; // Type cast for flexible property access
 
   // Update user's subscription in database
+  const updateData: any = {
+    plan_type: "pro",
+    status: "active",
+    stripe_subscription_id: subscriptionId,
+    stripe_customer_id: subscription.customer as string,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Add period dates if available
+  if (subData.current_period_start) {
+    updateData.current_period_start = new Date(subData.current_period_start * 1000).toISOString();
+  }
+  if (subData.current_period_end) {
+    updateData.current_period_end = new Date(subData.current_period_end * 1000).toISOString();
+  }
+
   const { error } = await supabase
     .from("subscriptions")
-    .update({
-      plan_type: "pro",
-      status: "active",
-      max_trackers: 999999, // Unlimited for pro
-      stripe_subscription_id: subscriptionId,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("user_email", user_email);
 
   if (error) {
@@ -119,15 +128,24 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log("🔄 Subscription updated for:", user_email);
 
   const status = subscription.status === "active" ? "active" : "expired";
+  const subData: any = subscription; // Type cast for flexible property access
+
+  const updateData: any = {
+    status: status,
+    updated_at: new Date().toISOString(),
+  };
+
+  // Add period dates if available
+  if (subData.current_period_start) {
+    updateData.current_period_start = new Date(subData.current_period_start * 1000).toISOString();
+  }
+  if (subData.current_period_end) {
+    updateData.current_period_end = new Date(subData.current_period_end * 1000).toISOString();
+  }
 
   const { error } = await supabase
     .from("subscriptions")
-    .update({
-      status: status,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("stripe_subscription_id", subscription.id);
 
   if (error) {
@@ -153,8 +171,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     .update({
       plan_type: "free",
       status: "cancelled",
-      max_trackers: 5,
       stripe_subscription_id: null,
+      stripe_customer_id: null,
       current_period_start: null,
       current_period_end: null,
       updated_at: new Date().toISOString(),

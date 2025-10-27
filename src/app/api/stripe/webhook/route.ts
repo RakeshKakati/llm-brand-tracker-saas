@@ -105,15 +105,23 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     updateData.current_period_end = new Date(subData.current_period_end * 1000).toISOString();
   }
 
+  // Add user_email to updateData for upsert
+  updateData.user_email = user_email;
+
+  // Use upsert to create or update subscription
   const { error } = await supabaseAdmin
     .from("subscriptions")
-    .update(updateData)
-    .eq("user_email", user_email);
+    .upsert(updateData, { 
+      onConflict: "user_email",
+      ignoreDuplicates: false 
+    });
 
   if (error) {
-    console.error("❌ Failed to update subscription:", error);
+    console.error("❌ Failed to upsert subscription:", error);
+    console.error("❌ Error details:", JSON.stringify(error, null, 2));
   } else {
     console.log("✅ Subscription upgraded to Pro for:", user_email);
+    console.log("✅ Update data:", updateData);
   }
 }
 

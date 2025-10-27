@@ -36,6 +36,25 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetchUserData();
+    
+    // Check if user just upgraded or cancelled
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('upgraded') === 'true') {
+      console.log("🎉 Payment successful! Refreshing subscription data...");
+      alert("🎉 Payment successful! Your subscription is being upgraded to Pro...");
+      
+      // Refresh multiple times to catch webhook update
+      setTimeout(() => fetchUserData(), 1000);
+      setTimeout(() => fetchUserData(), 3000);
+      setTimeout(() => fetchUserData(), 5000);
+      
+      // Remove query params from URL
+      window.history.replaceState({}, '', '/dashboard?page=settings');
+    } else if (urlParams.get('cancelled') === 'true') {
+      console.log("⚠️ Payment cancelled");
+      alert("Payment was cancelled. You can upgrade anytime!");
+      window.history.replaceState({}, '', '/dashboard?page=settings');
+    }
   }, []);
 
   const fetchUserData = async () => {

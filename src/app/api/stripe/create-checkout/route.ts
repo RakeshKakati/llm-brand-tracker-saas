@@ -54,8 +54,8 @@ export async function POST(req: Request) {
           quantity: 1,
         },
       ],
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?upgraded=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?cancelled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?page=settings&upgraded=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?page=settings&cancelled=true`,
       customer_email: user_email,
       metadata: {
         user_email: user_email,

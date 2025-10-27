@@ -425,29 +425,29 @@ export default function DashboardPage() {
 
           <div className="overflow-x-auto">
             {topSources.length > 0 ? (
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source Domain</th>
-                    <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Mentions</th>
+                    <th className="w-1/3 text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source Domain</th>
+                    <th className="w-24 text-center py-3 px-4 text-sm font-medium text-muted-foreground">Mentions</th>
                     <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Queries</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topSources.map((source, index) => (
                     <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
-                      <td className="py-4 px-4">
+                      <td className="py-4 px-4 w-1/3">
                         <a 
                           href={source.url} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2"
+                          className="text-blue-600 hover:text-blue-800 hover:underline inline-flex items-center gap-2"
                         >
-                          <span className="font-medium">{source.domain}</span>
-                          <ArrowUpRight className="w-4 h-4" />
+                          <span className="font-medium truncate">{source.domain}</span>
+                          <ArrowUpRight className="w-4 h-4 flex-shrink-0" />
                         </a>
                       </td>
-                      <td className="py-4 px-4 text-center">
+                      <td className="py-4 px-4 text-center w-24">
                         <Badge variant="outline" className="font-mono">
                           {source.count}
                         </Badge>

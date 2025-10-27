@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,10 +15,66 @@ import {
   Database,
   Key,
   Globe,
-  Clock
+  Clock,
+  Crown,
+  TrendingUp,
+  CreditCard,
+  CheckCircle,
+  Target
 } from "lucide-react";
+import { supabase } from "@/app/lib/supabaseClient";
 
 export default function SettingsPage() {
+  const [subscription, setSubscription] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      setLoading(true);
+      
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user);
+
+      if (session?.user?.email) {
+        // Fetch subscription
+        const { data: subData, error: subError } = await supabase
+          .from("subscriptions")
+          .select("*")
+          .eq("user_email", session.user.email)
+          .single();
+
+        if (!subError && subData) {
+          setSubscription(subData);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getPlanColor = (plan: string) => {
+    switch (plan) {
+      case "pro": return "bg-purple-600";
+      case "enterprise": return "bg-blue-600";
+      default: return "bg-green-600";
+    }
+  };
+
+  const getPlanLabel = (plan: string) => {
+    switch (plan) {
+      case "pro": return "Pro";
+      case "enterprise": return "Enterprise";
+      default: return "Free";
+    }
+  };
   return (
     <div className="p-8 max-w-4xl mx-auto">
       {/* Header */}
@@ -25,6 +82,64 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
         <p className="text-gray-600">Manage your account and application preferences</p>
       </div>
+
+      {/* Subscription Status */}
+      {subscription && (
+        <Card className="p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-3 rounded-lg ${getPlanColor(subscription.plan_type)}`}>
+                <Crown className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Current Plan</h2>
+                <Badge variant="outline" className="mt-1">
+                  {getPlanLabel(subscription.plan_type)}
+                </Badge>
+              </div>
+            </div>
+            {subscription.plan_type !== 'pro' && subscription.plan_type !== 'enterprise' && (
+              <Button className="gap-2">
+                <TrendingUp className="w-4 h-4" />
+                Upgrade Plan
+              </Button>
+            )}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div className="p-4 bg-background rounded-lg border">
+              <div className="flex items-center gap-2 mb-2">
+                <Target className="w-5 h-5 text-gray-600" />
+                <h3 className="font-medium text-gray-900">Max Trackers</h3>
+              </div>
+              <p className="text-2xl font-bold text-gray-900">{subscription.max_trackers}</p>
+              <p className="text-sm text-gray-600">Active brand trackers</p>
+            </div>
+            
+            <div className="p-4 bg-background rounded-lg border">
+              <div className="flex items-center gap-2 mb-2">
+                <CheckCircle className="w-5 h-5 text-gray-600" />
+                <h3 className="font-medium text-gray-900">Status</h3>
+              </div>
+              <Badge className="mt-1 capitalize">
+                {subscription.status}
+              </Badge>
+            </div>
+            
+            {subscription.current_period_end && (
+              <div className="p-4 bg-background rounded-lg border">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-5 h-5 text-gray-600" />
+                  <h3 className="font-medium text-gray-900">Renews</h3>
+                </div>
+                <p className="text-sm font-medium text-gray-900">
+                  {new Date(subscription.current_period_end).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+          </div>
+        </Card>
+      )}
 
       <div className="space-y-8">
         {/* Account Settings */}

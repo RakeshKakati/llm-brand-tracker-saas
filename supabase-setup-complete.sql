@@ -21,11 +21,23 @@ CREATE TABLE IF NOT EXISTS tracked_brands (
   query TEXT NOT NULL,
   interval_minutes INTEGER DEFAULT 5,
   active BOOLEAN DEFAULT true,
-  user_email TEXT NOT NULL,
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add new columns to tracked_brands if they don't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_name = 'tracked_brands' AND column_name = 'user_email') THEN
+    ALTER TABLE tracked_brands ADD COLUMN user_email TEXT;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_name = 'tracked_brands' AND column_name = 'user_id') THEN
+    ALTER TABLE tracked_brands ADD COLUMN user_id UUID REFERENCES users(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- 3. Create brand_mentions table
 CREATE TABLE IF NOT EXISTS brand_mentions (
@@ -35,9 +47,17 @@ CREATE TABLE IF NOT EXISTS brand_mentions (
   mentioned BOOLEAN NOT NULL,
   evidence TEXT,
   raw_output TEXT,
-  user_email TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Add user_email column to brand_mentions if it doesn't exist
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                 WHERE table_name = 'brand_mentions' AND column_name = 'user_email') THEN
+    ALTER TABLE brand_mentions ADD COLUMN user_email TEXT;
+  END IF;
+END $$;
 
 -- 4. Create subscriptions table
 CREATE TABLE IF NOT EXISTS subscriptions (

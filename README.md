@@ -1,36 +1,218 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Brand Tracker SaaS
 
-## Getting Started
+A comprehensive brand monitoring platform that tracks your brand mentions across AI-powered search results in real-time.
 
-First, run the development server:
+## 🚀 Features
+
+- **Real-time Brand Monitoring**: Track brand mentions across various online sources
+- **AI-Powered Detection**: Advanced natural language processing for accurate brand detection
+- **Analytics Dashboard**: Comprehensive insights and analytics
+- **Source Tracking**: Identify and track exact sources with clickable links
+- **Competitive Analysis**: Compare your brand performance against competitors
+- **User Authentication**: Secure signup/signin with Supabase Auth
+- **Modern UI**: Beautiful, responsive design with shadcn/ui components
+- **API Integration**: RESTful API for custom integrations
+
+## 🛠️ Tech Stack
+
+- **Frontend**: Next.js 14, React 18, TypeScript
+- **Styling**: Tailwind CSS, shadcn/ui components
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **AI**: OpenAI GPT-4 API
+- **Charts**: Recharts
+- **Tables**: TanStack Table
+- **Deployment**: Vercel
+
+## 📋 Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+- Supabase account
+- OpenAI API key
+
+## 🚀 Quick Start
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/RakeshKakati/llm-brand-tracker-saas.git
+cd llm-brand-tracker-saas
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Environment Setup
+
+Copy the example environment file and fill in your credentials:
+
+```bash
+cp .env.example .env.local
+```
+
+Update `.env.local` with your actual values:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key
+
+# Next.js Configuration
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+
+# App Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_NAME="Brand Tracker"
+```
+
+### 4. Database Setup
+
+Run the SQL script in your Supabase dashboard:
+
+```bash
+# Copy the contents of supabase-setup.sql and run in Supabase SQL editor
+cat supabase-setup.sql
+```
+
+### 5. Start Development Server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Visit [http://localhost:3000](http://localhost:3000) to see your application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js app directory
+│   ├── api/               # API routes
+│   │   ├── auth/          # Authentication endpoints
+│   │   ├── checkMention/  # Brand mention checking
+│   │   ├── trackBrand/    # Brand tracking
+│   │   └── cron/          # Scheduled tasks
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Dashboard pages
+│   └── lib/               # Utilities and configurations
+├── components/            # React components
+│   ├── pages/             # Page components
+│   ├── ui/                # shadcn/ui components
+│   └── data-table/        # Table components
+└── hooks/                 # Custom React hooks
+```
 
-## Learn More
+## 🔧 Configuration
 
-To learn more about Next.js, take a look at the following resources:
+### Supabase Setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Create a new Supabase project
+2. Run the SQL script from `supabase-setup.sql`
+3. Get your project URL and anon key from Settings > API
+4. Add them to your `.env.local` file
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### OpenAI Setup
 
-## Deploy on Vercel
+1. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+2. Add it to your `.env.local` file
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📊 Database Schema
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Tables
+
+- **users**: User profiles linked to Supabase Auth
+- **tracked_brands**: Brand tracking configurations
+- **brand_mentions**: Brand mention records and results
+
+### Key Features
+
+- Row Level Security (RLS) enabled
+- Automatic user profile creation on signup
+- Timestamp tracking with triggers
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Add environment variables in Vercel dashboard
+4. Deploy!
+
+### Environment Variables for Production
+
+Make sure to set these in your production environment:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `OPENAI_API_KEY`
+- `NEXTAUTH_SECRET`
+- `NEXTAUTH_URL`
+
+## 🔄 Cron Jobs
+
+The application includes automated cron jobs for:
+
+- Brand mention checking
+- Data cleanup
+- Analytics updates
+
+Configure cron jobs in `.github/workflows/cron.yml` for GitHub Actions or set up server-side cron jobs.
+
+## 📈 Features Overview
+
+### Landing Page
+- Modern, responsive design
+- Interactive product showcase
+- Pricing plans
+- Testimonials and FAQ sections
+
+### Authentication
+- Secure signup/signin
+- Password reset functionality
+- User profile management
+
+### Dashboard
+- Real-time brand monitoring
+- Analytics and insights
+- Source tracking with clickable links
+- Competitive analysis
+
+### API Endpoints
+- `/api/auth/signup` - User registration
+- `/api/auth/signin` - User login
+- `/api/auth/reset-password` - Password reset
+- `/api/checkMention` - Brand mention checking
+- `/api/trackBrand` - Brand tracking setup
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🆘 Support
+
+For support, email support@brandtracker.com or create an issue in the GitHub repository.
+
+## 🔗 Links
+
+- [Live Demo](https://brandtracker.vercel.app)
+- [Documentation](https://docs.brandtracker.com)
+- [API Reference](https://api.brandtracker.com/docs)

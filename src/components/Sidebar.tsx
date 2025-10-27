@@ -114,3 +114,6 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}

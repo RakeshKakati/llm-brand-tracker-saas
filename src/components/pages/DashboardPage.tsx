@@ -21,6 +21,13 @@ import { supabase } from "@/app/lib/supabaseClient";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart-config";
 import { AreaChart as RechartsAreaChart, Area, CartesianGrid, XAxis } from "recharts";
 
+interface SourceData {
+  domain: string;
+  url: string;
+  count: number;
+  queries: string[];
+}
+
 export default function DashboardPage() {
   const [stats, setStats] = useState({
     totalTrackers: 0,
@@ -30,6 +37,7 @@ export default function DashboardPage() {
   });
   const [recentMentions, setRecentMentions] = useState<any[]>([]);
   const [mentionTrend, setMentionTrend] = useState<any[]>([]);
+  const [topSources, setTopSources] = useState<SourceData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -134,11 +142,70 @@ export default function DashboardPage() {
         }));
         setMentionTrend(chartData);
       }
+
+      // Process top sources
+      const sources = processTopSources(recentData || []);
+      setTopSources(sources);
+
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
       setLoading(false);
     }
+  };
+
+  const processTopSources = (mentions: any[]): SourceData[] => {
+    const sourcesMap = new Map<string, { url: string; count: number; queries: Set<string> }>();
+
+    mentions.forEach((mention) => {
+      if (!mention.raw_output || !mention.mentioned) return;
+
+      try {
+        // Parse the raw_output JSON
+        const rawData = JSON.parse(mention.raw_output);
+        const content = rawData?.choices?.[0]?.message?.content || "";
+
+        // Extract URLs from the content
+        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+        const urls = content.match(urlRegex) || [];
+
+        urls.forEach((url: string) => {
+          try {
+            const urlObj = new URL(url);
+            const domain = urlObj.hostname.replace(/^www\./, "");
+
+            if (!sourcesMap.has(domain)) {
+              sourcesMap.set(domain, {
+                url: url,
+                count: 0,
+                queries: new Set(),
+              });
+            }
+
+            const source = sourcesMap.get(domain)!;
+            source.count += 1;
+            if (mention.query) {
+              source.queries.add(mention.query);
+            }
+          } catch (e) {
+            // Invalid URL, skip
+          }
+        });
+      } catch (e) {
+        console.error("Error parsing raw_output:", e);
+      }
+    });
+
+    // Convert to array and sort by count
+    return Array.from(sourcesMap.entries())
+      .map(([domain, data]) => ({
+        domain,
+        url: data.url,
+        count: data.count,
+        queries: Array.from(data.queries),
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10); // Top 10 sources
   };
 
   const chartConfig = {
@@ -320,6 +387,72 @@ export default function DashboardPage() {
               <div className="text-center py-8 text-muted-foreground">
                 <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
                 <p className="text-sm">No recent activity</p>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Top Sources */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Top Sources</h2>
+              <p className="text-sm text-muted-foreground">Most referenced domains</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {topSources.length > 0 ? (
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Source Domain</th>
+                    <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Mentions</th>
+                    <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Queries</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topSources.map((source, index) => (
+                    <tr key={index} className="border-b last:border-b-0 hover:bg-muted/50 transition-colors">
+                      <td className="py-4 px-4">
+                        <a 
+                          href={source.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-2"
+                        >
+                          <span className="font-medium">{source.domain}</span>
+                          <ArrowUpRight className="w-4 h-4" />
+                        </a>
+                      </td>
+                      <td className="py-4 px-4 text-center">
+                        <Badge variant="outline" className="font-mono">
+                          {source.count}
+                        </Badge>
+                      </td>
+                      <td className="py-4 px-4">
+                        <div className="flex flex-wrap gap-2">
+                          {source.queries.slice(0, 3).map((query, idx) => (
+                            <Badge key={idx} variant="secondary" className="text-xs">
+                              {query.length > 30 ? query.substring(0, 30) + '...' : query}
+                            </Badge>
+                          ))}
+                          {source.queries.length > 3 && (
+                            <Badge variant="outline" className="text-xs">
+                              +{source.queries.length - 3} more
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <BarChart3 className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No source data available yet</p>
+                <p className="text-xs mt-1">Sources will appear after brand mentions are found</p>
               </div>
             )}
           </div>

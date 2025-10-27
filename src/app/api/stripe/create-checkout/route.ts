@@ -2,13 +2,18 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabase } from "@/app/lib/supabaseClient";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Check if Stripe secret key exists
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error("STRIPE_SECRET_KEY is not set in environment variables");
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2024-11-20.acacia",
 });
 
 export async function POST(req: Request) {
   try {
-    const { priceId, user_email } = await req.json();
+    const { user_email } = await req.json();
 
     if (!user_email) {
       return NextResponse.json(
@@ -17,14 +22,20 @@ export async function POST(req: Request) {
       );
     }
 
+    // Get price ID from server environment
+    const priceId = process.env.STRIPE_PRO_PRICE_ID?.replace(/['"]/g, '');
+    
     if (!priceId) {
+      console.error("❌ STRIPE_PRO_PRICE_ID not found in server environment");
       return NextResponse.json(
-        { error: "Price ID is required" },
-        { status: 400 }
+        { error: "Stripe is not configured properly. Please contact support." },
+        { status: 500 }
       );
     }
 
     console.log("💳 Creating Stripe checkout for:", user_email);
+    console.log("💳 Using Price ID:", priceId);
+    console.log("💳 App URL:", process.env.NEXT_PUBLIC_APP_URL);
 
     // Get user's current subscription
     const { data: existingSubscription } = await supabase

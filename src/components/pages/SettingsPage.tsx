@@ -44,8 +44,7 @@ export default function SettingsPage() {
       
       // Get current user
       const { data: { session } } = await supabase.auth.getSession();
-      console.log("📧 SettingsPage - Session:", session);
-      console.log("👤 SettingsPage - User email:", session?.user?.email);
+      console.log("📧 SettingsPage - Session:", session?.user?.email);
       
       setUser(session?.user);
 
@@ -56,7 +55,7 @@ export default function SettingsPage() {
           .from("subscriptions")
           .select("*")
           .eq("user_email", session.user.email)
-          .single();
+          .maybeSingle();
 
         if (subError) {
           console.error("❌ Subscription fetch error:", subError);
@@ -64,7 +63,12 @@ export default function SettingsPage() {
           console.log("✅ Subscription found:", subData);
           setSubscription(subData);
         } else {
-          console.log("⚠️ No subscription data returned");
+          console.log("⚠️ No subscription found - should be created on signup");
+          // Default to free plan if not found
+          setSubscription({
+            plan_type: "free",
+            status: "active",
+          });
         }
       } else {
         console.log("❌ No user email in session");
@@ -103,12 +107,11 @@ export default function SettingsPage() {
 
       console.log("💳 Starting upgrade process for:", user.email);
 
-      // Create Stripe checkout session
+      // Create Stripe checkout session (API will use price ID from server env)
       const response = await fetch("/api/stripe/create-checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          priceId: STRIPE_PLANS.PRO.priceId,
           user_email: user.email,
         }),
       });
@@ -116,25 +119,18 @@ export default function SettingsPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        console.error("❌ Checkout creation failed:", data);
         throw new Error(data.error || "Failed to create checkout session");
       }
 
-      console.log("✅ Checkout session created, redirecting...");
+      console.log("✅ Checkout session created:", data);
 
       // Redirect to Stripe Checkout
-      const stripe = await getStripe();
-      if (stripe && data.sessionId) {
-        const { error } = await stripe.redirectToCheckout({
-          sessionId: data.sessionId,
-        });
-
-        if (error) {
-          console.error("Stripe redirect error:", error);
-          alert("Failed to redirect to checkout. Please try again.");
-        }
-      } else {
-        // Fallback to direct URL
+      if (data.url) {
+        console.log("🔗 Redirecting to:", data.url);
         window.location.href = data.url;
+      } else {
+        throw new Error("No redirect URL returned");
       }
     } catch (error: any) {
       console.error("❌ Upgrade error:", error);
@@ -196,35 +192,21 @@ export default function SettingsPage() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         </Card>
-      ) : !subscription ? (
-        <Card className="p-6 mb-8 bg-yellow-50 border-yellow-200">
-          <div className="flex items-center gap-3 mb-4">
-            <AlertCircle className="w-6 h-6 text-yellow-600" />
-            <h2 className="text-xl font-semibold text-gray-900">No Subscription Found</h2>
-          </div>
-          <p className="text-sm text-gray-600 mb-4">
-            You don't have an active subscription. Sign up to get started with the Free plan.
-          </p>
-          <Button className="gap-2">
-            <Crown className="w-4 h-4" />
-            Create Free Subscription
-          </Button>
-        </Card>
       ) : (
         <Card className="p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${getPlanColor(subscription.plan_type)}`}>
+              <div className={`p-3 rounded-lg ${getPlanColor(subscription?.plan_type || 'free')}`}>
                 <Crown className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-semibold text-gray-900">Current Plan</h2>
                 <Badge variant="outline" className="mt-1">
-                  {getPlanLabel(subscription.plan_type)}
+                  {getPlanLabel(subscription?.plan_type || 'free')}
                 </Badge>
               </div>
             </div>
-            {subscription.plan_type === 'free' ? (
+            {subscription?.plan_type === 'free' || !subscription?.plan_type ? (
               <Button 
                 onClick={handleUpgrade} 
                 disabled={upgrading}
@@ -238,7 +220,7 @@ export default function SettingsPage() {
                 ) : (
                   <>
                     <TrendingUp className="w-4 h-4" />
-                    Upgrade to Pro
+                    Upgrade to Pro - $29/month
                   </>
                 )}
               </Button>
@@ -264,38 +246,38 @@ export default function SettingsPage() {
             ) : null}
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <div className="p-4 bg-background rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <Target className="w-5 h-5 text-gray-600" />
-                <h3 className="font-medium text-gray-900">Max Trackers</h3>
-              </div>
-              <p className="text-2xl font-bold text-gray-900">{subscription.max_trackers}</p>
-              <p className="text-sm text-gray-600">Active brand trackers</p>
-            </div>
-            
-            <div className="p-4 bg-background rounded-lg border">
-              <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-5 h-5 text-gray-600" />
-                <h3 className="font-medium text-gray-900">Status</h3>
-              </div>
-              <Badge className="mt-1 capitalize">
-                {subscription.status}
-              </Badge>
-            </div>
-            
-            {subscription.current_period_end && (
-              <div className="p-4 bg-background rounded-lg border">
-                <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-5 h-5 text-gray-600" />
-                  <h3 className="font-medium text-gray-900">Renews</h3>
-                </div>
-                <p className="text-sm font-medium text-gray-900">
-                  {new Date(subscription.current_period_end).toLocaleDateString()}
+          <div className="p-4 bg-background rounded-lg border mt-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-medium text-gray-900 mb-1">
+                  {subscription?.plan_type === 'pro' ? '💎 Pro Plan Features' : '🆓 Free Plan'}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  {subscription?.plan_type === 'pro' 
+                    ? 'Unlimited trackers, hourly checks, advanced analytics' 
+                    : '5 trackers, daily checks, basic analytics'}
                 </p>
               </div>
-            )}
+              <div className="text-right">
+                <p className="text-2xl font-bold text-gray-900">
+                  {subscription?.plan_type === 'pro' ? '$29' : '$0'}
+                </p>
+                <p className="text-sm text-gray-600">per month</p>
+              </div>
+            </div>
           </div>
+
+          {subscription?.current_period_end && (
+            <div className="p-4 bg-background rounded-lg border mt-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Clock className="w-5 h-5 text-gray-600" />
+                <h3 className="font-medium text-gray-900">Billing Period</h3>
+              </div>
+              <p className="text-sm text-gray-600">
+                Renews on {new Date(subscription.current_period_end).toLocaleDateString()}
+              </p>
+            </div>
+          )}
         </Card>
       )}
 

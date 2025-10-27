@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
               user_email: authData.user.email,
               plan_type: "free",
               status: "active",
-              max_trackers: 5,
             },
           ]);
 

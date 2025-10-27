@@ -5,7 +5,7 @@
 2. Create free account
 3. Add new cron job:
    - URL: https://llm-brand-tracker-saas.vercel.app/api/server-cron
-   - Schedule: */5 * * * * (every 5 minutes)
+   - Schedule: 0 9 * * * (once daily at 9:00 AM UTC)
    - Method: GET
    - Headers: User-Agent: External-Cron/1.0
 
@@ -14,7 +14,7 @@
 2. Create free account
 3. Add new cron job:
    - URL: https://llm-brand-tracker-saas.vercel.app/api/server-cron
-   - Schedule: */5 * * * * (every 5 minutes)
+   - Schedule: 0 9 * * * (once daily at 9:00 AM UTC)
    - Method: GET
 
 ## Option 3: UptimeRobot (Free)
@@ -22,7 +22,7 @@
 2. Create free account
 3. Add new monitor:
    - URL: https://llm-brand-tracker-saas.vercel.app/api/server-cron
-   - Interval: 5 minutes
+   - Interval: Daily at 9:00 AM UTC
    - Type: HTTP(s)
 
 ## Option 4: GitHub Actions (Current)

@@ -20,7 +20,7 @@
 - **Title:** `Brand Tracker Cron Job`
 - **Address:** `https://llm-brand-tracker-saas.vercel.app/api/server-cron`
 - **Method:** `GET`
-- **Schedule:** `*/5 * * * *` (every 5 minutes)
+- **Schedule:** `0 9 * * *` (once daily at 9:00 AM UTC)
 
 **Advanced Settings:**
 - **Timeout:** `60` seconds
@@ -37,17 +37,16 @@
 3. You'll see it in your dashboard with status "Active"
 
 ### Step 4: Test the Setup
-1. Wait 5 minutes for the first run
+1. The job will run once per day at 9:00 AM UTC
 2. Go to your cron job in the dashboard
 3. Click on the job name to see execution history
-4. You should see successful runs every 5 minutes
+4. You should see one successful run per day
 
 ### Step 5: Verify It's Working
 1. Go to your app: **https://llm-brand-tracker-saas.vercel.app**
 2. Navigate to **"Mention History"** page
-3. Wait 5-10 minutes
-4. You should see new mention entries appearing automatically
-5. The timestamps should show recent activity
+3. After 9:00 AM UTC each day, new entries will appear automatically
+4. You can manually test the cron endpoint anytime
 
 ## Alternative: EasyCron Setup
 
@@ -61,7 +60,7 @@
 2. Fill in:
    - **Job Name:** `Brand Tracker`
    - **URL:** `https://llm-brand-tracker-saas.vercel.app/api/server-cron`
-   - **Schedule:** `*/5 * * * *`
+   - **Schedule:** `0 9 * * *`
    - **HTTP Method:** `GET`
    - **Timeout:** `60`
 3. Click **"Save"**
@@ -79,7 +78,8 @@
 3. Fill in:
    - **Friendly Name:** `Brand Tracker Cron`
    - **URL:** `https://llm-brand-tracker-saas.vercel.app/api/server-cron`
-   - **Monitoring Interval:** `5 minutes`
+   - **Monitoring Interval:** `Daily`
+   - **Time:** `9:00 AM UTC`
 4. Click **"Create Monitor"**
 
 ## Testing Your Setup
@@ -92,9 +92,8 @@
 ### Method 2: Check Your App
 1. Go to **https://llm-brand-tracker-saas.vercel.app**
 2. Navigate to **"Mention History"**
-3. Wait 5-10 minutes
-4. Refresh the page
-5. You should see new entries with recent timestamps
+3. After 9:00 AM UTC daily, refresh the page
+4. You should see new entries with today's timestamps
 
 ### Method 3: Manual Test
 Run this command to test the endpoint:
@@ -115,12 +114,12 @@ Expected response:
 
 ### If Cron Job Fails:
 1. Check the URL is correct: `https://llm-brand-tracker-saas.vercel.app/api/server-cron`
-2. Verify the schedule: `*/5 * * * *`
+2. Verify the schedule: `0 9 * * *` (daily at 9:00 AM UTC)
 3. Check timeout is set to 60 seconds
 4. Look at execution logs in your cron service dashboard
 
 ### If No New Mentions Appear:
-1. Wait 10-15 minutes (sometimes takes a few cycles)
+1. Wait until after 9:00 AM UTC (the job runs once daily)
 2. Check if your trackers are active in the app
 3. Verify the cron service is actually running
 4. Check browser console for any errors
@@ -133,9 +132,9 @@ Expected response:
 
 ## Success Indicators
 
-✅ **Cron service shows successful executions**
-✅ **Mention History page shows new entries every 5 minutes**
-✅ **Timestamps are recent (within last 5 minutes)**
+✅ **Cron service shows successful execution once per day**
+✅ **Mention History page shows new entries daily**
+✅ **Timestamps are from today**
 ✅ **No manual intervention required**
 ✅ **Works even when browser is closed**
 

@@ -11,9 +11,15 @@ import {
   CheckCircle, 
   XCircle,
   Activity,
-  BarChart3
+  BarChart3,
+  ArrowUpRight,
+  ArrowDownRight,
+  Target,
+  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart-config";
+import { AreaChart as RechartsAreaChart, Area, CartesianGrid, XAxis } from "recharts";
 
 export default function DashboardPage() {
   const [stats, setStats] = useState({
@@ -23,6 +29,8 @@ export default function DashboardPage() {
     recentMentions: 0
   });
   const [recentMentions, setRecentMentions] = useState<any[]>([]);
+  const [mentionTrend, setMentionTrend] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
@@ -30,6 +38,7 @@ export default function DashboardPage() {
 
   const fetchDashboardData = async () => {
     try {
+      setLoading(true);
       // Fetch tracked brands count
       const { count: trackersCount } = await supabase
         .from("tracked_brands")
@@ -62,6 +71,16 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
         .limit(5);
 
+      // Fetch mentions for chart (last 7 days)
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      
+      const { data: mentionsData } = await supabase
+        .from("brand_mentions")
+        .select("*")
+        .gte("created_at", sevenDaysAgo.toISOString())
+        .order("created_at", { ascending: true });
+
       setStats({
         totalTrackers: trackersCount || 0,
         activeTrackers: activeCount || 0,
@@ -70,120 +89,258 @@ export default function DashboardPage() {
       });
 
       setRecentMentions(recentData || []);
+
+      // Process data for chart
+      if (mentionsData) {
+        const grouped = mentionsData.reduce((acc: any, mention: any) => {
+          const date = new Date(mention.created_at).toLocaleDateString();
+          if (!acc[date]) {
+            acc[date] = 0;
+          }
+          acc[date]++;
+          return acc;
+        }, {});
+
+        const chartData = Object.entries(grouped).map(([name, value]) => ({
+          name,
+          value: value
+        }));
+        setMentionTrend(chartData);
+      }
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const StatCard = ({ title, value, icon: Icon, trend, color }: any) => (
-    <Card className="p-6 hover:shadow-md transition-shadow">
+  const chartConfig = {
+    value: {
+      label: "Mentions",
+      color: "hsl(var(--chart-1))",
+    },
+  };
+
+  const StatCard = ({ title, value, icon: Icon, trend, color, description }: any) => (
+    <Card className="p-6 hover:shadow-lg transition-shadow border-2 hover:border-primary/20">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-gray-600">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
-          {trend && (
-            <div className="flex items-center mt-1">
-              <TrendingUp className="w-3 h-3 text-green-500 mr-1" />
-              <span className="text-xs text-green-600">{trend}</span>
-            </div>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-muted-foreground">{title}</p>
+          <div className="flex items-baseline gap-2 mt-2">
+            <p className="text-3xl font-bold">{value}</p>
+            {trend && (
+              <div className={`flex items-center gap-1 ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {trend > 0 ? (
+                  <ArrowUpRight className="w-4 h-4" />
+                ) : (
+                  <ArrowDownRight className="w-4 h-4" />
+                )}
+                <span className="text-sm font-medium">{Math.abs(trend)}%</span>
+              </div>
+            )}
+          </div>
+          {description && (
+            <p className="text-xs text-muted-foreground mt-2">{description}</p>
           )}
         </div>
-        <div className={`p-3 rounded-lg ${color}`}>
+        <div className={`p-4 rounded-xl ${color} shadow-sm`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
       </div>
     </Card>
   );
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-[1400px] mx-auto space-y-8">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Monitor your brand mentions and tracking performance</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Monitor your brand mentions and tracking performance</p>
+        </div>
+        <Button className="gap-2">
+          <Activity className="w-4 h-4" />
+          Refresh Data
+        </Button>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Trackers"
           value={stats.totalTrackers}
-          icon={Activity}
-          color="bg-blue-500"
+          icon={Target}
+          color="bg-blue-600"
+          description={`${stats.activeTrackers} active now`}
         />
         <StatCard
           title="Active Trackers"
           value={stats.activeTrackers}
-          icon={Eye}
-          color="bg-green-500"
+          icon={Activity}
+          color="bg-green-600"
+          trend={+12}
+          description="Running smoothly"
         />
         <StatCard
           title="Total Mentions"
           value={stats.totalMentions}
           icon={BarChart3}
-          color="bg-purple-500"
+          color="bg-purple-600"
+          trend={+8}
         />
         <StatCard
-          title="Recent Mentions"
+          title="Recent Activity"
           value={stats.recentMentions}
           icon={Clock}
-          color="bg-orange-500"
-          trend="+12% this week"
+          color="bg-orange-600"
+          description="Last 24 hours"
         />
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Mentions</h2>
-            <Button variant="outline" size="sm">View All</Button>
+      {/* Charts and Data */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Mention Trend Chart */}
+        <Card className="lg:col-span-2 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Mention Trends</h2>
+              <p className="text-sm text-muted-foreground">Activity over the last 7 days</p>
+            </div>
+            <Badge variant="outline" className="gap-2">
+              <TrendingUp className="w-3 h-3" />
+              +12% this week
+            </Badge>
           </div>
-          <div className="space-y-4">
-            {recentMentions.map((mention) => (
-              <div key={mention.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  {mention.mentioned ? (
-                    <CheckCircle className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <XCircle className="w-5 h-5 text-red-500" />
-                  )}
-                  <div>
-                    <p className="font-medium text-gray-900">{mention.brand}</p>
-                    <p className="text-sm text-gray-600">{mention.query}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <Badge variant={mention.mentioned ? "default" : "secondary"}>
-                    {mention.mentioned ? "Mentioned" : "Not Found"}
-                  </Badge>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(mention.created_at).toLocaleDateString()}
-                  </p>
-                </div>
+          
+          {mentionTrend.length > 0 ? (
+            <div className="h-[300px]">
+              <RechartsAreaChart data={mentionTrend}>
+                <defs>
+                  <linearGradient id="fillValue" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.1}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Area
+                  dataKey="value"
+                  type="natural"
+                  fill="url(#fillValue)"
+                  fillOpacity={0.4}
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                />
+              </RechartsAreaChart>
+            </div>
+          ) : (
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                <p>No data available yet</p>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </Card>
 
+        {/* Recent Mentions */}
         <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Quick Actions</h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Recent Activity</h2>
+              <p className="text-sm text-muted-foreground">Latest brand mentions</p>
+            </div>
           </div>
+          
           <div className="space-y-3">
-            <Button className="w-full justify-start" variant="outline">
-              <Activity className="w-4 h-4 mr-2" />
-              Create New Tracker
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <BarChart3 className="w-4 h-4 mr-2" />
-              View Analytics
-            </Button>
-            <Button className="w-full justify-start" variant="outline">
-              <Clock className="w-4 h-4 mr-2" />
-              Check All Trackers
-            </Button>
+            {recentMentions.length > 0 ? (
+              recentMentions.map((mention) => (
+                <div key={mention.id} className="p-4 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 flex-1">
+                      {mention.mentioned ? (
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm truncate">{mention.brand}</p>
+                        <p className="text-xs text-muted-foreground truncate">{mention.query}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(mention.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant={mention.mentioned ? "default" : "secondary"} className="flex-shrink-0">
+                      {mention.mentioned ? "Found" : "None"}
+                    </Badge>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Clock className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No recent activity</p>
+              </div>
+            )}
           </div>
+        </Card>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-100/50 border-blue-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-blue-600 rounded-lg">
+              <Target className="w-6 h-6 text-white" />
+            </div>
+            <Badge variant="outline">Daily</Badge>
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Check Frequency</h3>
+          <p className="text-sm text-muted-foreground mb-4">Automated checks run daily at 9 AM UTC</p>
+          <Button variant="outline" size="sm" className="w-full">
+            Configure Schedule
+          </Button>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-green-50 to-green-100/50 border-green-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-green-600 rounded-lg">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+            <Badge variant="outline">Active</Badge>
+          </div>
+          <h3 className="text-lg font-semibold mb-1">System Status</h3>
+          <p className="text-sm text-muted-foreground mb-4">All systems operational</p>
+          <Button variant="outline" size="sm" className="w-full">
+            View Logs
+          </Button>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-100/50 border-purple-200">
+          <div className="flex items-center justify-between mb-4">
+            <div className="p-3 bg-purple-600 rounded-lg">
+              <BarChart3 className="w-6 h-6 text-white" />
+            </div>
+            <Badge variant="outline">View</Badge>
+          </div>
+          <h3 className="text-lg font-semibold mb-1">Analytics</h3>
+          <p className="text-sm text-muted-foreground mb-4">Detailed insights and reports</p>
+          <Button variant="outline" size="sm" className="w-full">
+            Explore Analytics
+          </Button>
         </Card>
       </div>
     </div>

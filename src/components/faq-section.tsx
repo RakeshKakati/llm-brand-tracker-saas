@@ -1,7 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-
 // Reusable Badge Component (matching landing page)
 function Badge({ icon, text }: { icon: React.ReactNode; text: string }) {
   return (

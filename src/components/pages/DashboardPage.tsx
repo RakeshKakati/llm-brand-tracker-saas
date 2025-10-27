@@ -143,8 +143,18 @@ export default function DashboardPage() {
         setMentionTrend(chartData);
       }
 
+      // Fetch ALL mentions for top sources analysis (only where brand was mentioned)
+      const { data: allMentions } = await supabase
+        .from("brand_mentions")
+        .select("*")
+        .eq("user_email", userEmail)
+        .eq("mentioned", true) // Only get mentions where brand was found
+        .order("created_at", { ascending: false });
+
+      console.log("🔍 Fetched all mentions for sources:", allMentions?.length);
+
       // Process top sources
-      const sources = processTopSources(recentData || []);
+      const sources = processTopSources(allMentions || []);
       setTopSources(sources);
 
     } catch (error) {
@@ -155,19 +165,38 @@ export default function DashboardPage() {
   };
 
   const processTopSources = (mentions: any[]): SourceData[] => {
+    console.log("🔍 Processing top sources from", mentions.length, "mentions");
     const sourcesMap = new Map<string, { url: string; count: number; queries: Set<string> }>();
 
-    mentions.forEach((mention) => {
-      if (!mention.raw_output || !mention.mentioned) return;
+    mentions.forEach((mention, index) => {
+      if (!mention.raw_output) {
+        console.log(`⚠️ Mention ${index + 1}: No raw_output`);
+        return;
+      }
+      if (!mention.mentioned) {
+        console.log(`⚠️ Mention ${index + 1}: Not mentioned`);
+        return;
+      }
 
       try {
         // Parse the raw_output JSON
         const rawData = JSON.parse(mention.raw_output);
         const content = rawData?.choices?.[0]?.message?.content || "";
 
+        if (!content) {
+          console.log(`⚠️ Mention ${index + 1}: No content in raw_output`);
+          return;
+        }
+
         // Extract URLs from the content
         const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
         const urls = content.match(urlRegex) || [];
+
+        if (urls.length === 0) {
+          console.log(`⚠️ Mention ${index + 1}: No URLs found in content`);
+        } else {
+          console.log(`✅ Mention ${index + 1}: Found ${urls.length} URLs`);
+        }
 
         urls.forEach((url: string) => {
           try {
@@ -188,16 +217,15 @@ export default function DashboardPage() {
               source.queries.add(mention.query);
             }
           } catch (e) {
-            // Invalid URL, skip
+            console.log(`❌ Invalid URL: ${url}`);
           }
         });
       } catch (e) {
-        console.error("Error parsing raw_output:", e);
+        console.error("❌ Error parsing raw_output:", e);
       }
     });
 
-    // Convert to array and sort by count
-    return Array.from(sourcesMap.entries())
+    const results = Array.from(sourcesMap.entries())
       .map(([domain, data]) => ({
         domain,
         url: data.url,
@@ -206,6 +234,9 @@ export default function DashboardPage() {
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10); // Top 10 sources
+
+    console.log("📊 Top sources found:", results.length);
+    return results;
   };
 
   const chartConfig = {

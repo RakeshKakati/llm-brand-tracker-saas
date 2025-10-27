@@ -34,12 +34,22 @@ function inferMentionStatus(text: string, brand: string) {
 
 export async function POST(req: Request) {
   try {
-    const { brand, query } = await req.json();
+    const { brand, query, user_email } = await req.json();
 
     if (!brand || !query)
       return NextResponse.json({ error: "Missing brand or query" }, { status: 400 });
 
-    console.log(`🔍 Checking mention: brand="${brand}", query="${query}"`);
+    // Get user_email from session if not provided (for authenticated requests)
+    let userEmail = user_email;
+    if (!userEmail) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: "Unauthorized - user_email required" }, { status: 401 });
+      }
+      userEmail = session.user.email;
+    }
+
+    console.log(`🔍 Checking mention: brand="${brand}", query="${query}" for user=${userEmail}`);
 
     // ---- STEP 1: Ask OpenAI to search for the query ----
     const body = {
@@ -98,6 +108,7 @@ export async function POST(req: Request) {
         mentioned,
         evidence: evidenceSnippet,
         raw_output: rawResponseJson, // Store complete JSON response from OpenAI API
+        user_email: userEmail, // Associate with user
       },
     ]);
 

@@ -48,7 +48,8 @@ export async function GET() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
             brand: tracker.brand, 
-            query: tracker.query 
+            query: tracker.query,
+            user_email: tracker.user_email // Pass user_email from tracker
           }),
         });
         

@@ -47,6 +47,27 @@ export async function POST(req: NextRequest) {
         console.error("Profile creation error:", profileError);
         // Don't fail the signup if profile creation fails
       }
+
+      // Create free subscription for new user
+      if (authData.user.email) {
+        const { error: subError } = await supabase
+          .from("subscriptions")
+          .insert([
+            {
+              user_email: authData.user.email,
+              plan_type: "free",
+              status: "active",
+              max_trackers: 5,
+            },
+          ]);
+
+        if (subError) {
+          console.error("Subscription creation error:", subError);
+          // Don't fail the signup if subscription creation fails
+        } else {
+          console.log("✅ Free subscription created for:", authData.user.email);
+        }
+      }
     }
 
     return NextResponse.json({

@@ -39,15 +39,19 @@ export default function TrackingPage() {
     }
     try {
       setLoading(true);
-      const { error } = await supabase.from("tracked_brands").insert([
-        {
-          brand,
-          query,
-          interval_minutes: interval,
-          active: true
-        },
-      ]);
-      if (error) throw error;
+      
+      // Use the API endpoint to properly handle user auth and limits
+      const response = await fetch("/api/trackBrand", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brand, query, interval }),
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create tracker");
+      }
       
       // Refresh trackers list
       await fetchTrackersData(false);
@@ -57,8 +61,8 @@ export default function TrackingPage() {
       setInterval(5);
       alert(`✅ Successfully created tracker for "${brand}" searching "${query}" every ${interval} minutes.`);
     } catch (err: any) {
-      console.error("❌ Supabase insert error:", err);
-      alert(`❌ Failed to create tracker: ${err.message || 'Unknown error'}`);
+      console.error("❌ Error creating tracker:", err);
+      alert(err.message || "Failed to create tracker");
     } finally {
       setLoading(false);
     }
@@ -69,9 +73,20 @@ export default function TrackingPage() {
       if (!isAutoRefresh) {
         setLoading(true);
       }
+      
+      // Get current user's email
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.email) {
+        console.error("No user session found");
+        return;
+      }
+      
+      // Filter by user_email (RLS will also enforce this)
       const { data, error } = await supabase
         .from("tracked_brands")
         .select("*")
+        .eq("user_email", session.user.email)
         .order("created_at", { ascending: false });
       
       if (error) {

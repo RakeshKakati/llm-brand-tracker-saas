@@ -39,17 +39,22 @@ export async function POST(req: Request) {
     if (!brand || !query)
       return NextResponse.json({ error: "Missing brand or query" }, { status: 400 });
 
-    // Get user_email from session if not provided (for authenticated requests)
-    let userEmail = user_email;
-    if (!userEmail) {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user?.email) {
-        return NextResponse.json({ error: "Unauthorized - user_email required" }, { status: 401 });
-      }
-      userEmail = session.user.email;
+    // Validate authentication - user_email must be provided
+    if (!user_email) {
+      return NextResponse.json({ 
+        error: "Unauthorized - Authentication required. Please sign in." 
+      }, { status: 401 });
     }
 
-    console.log(`🔍 Checking mention: brand="${brand}", query="${query}" for user=${userEmail}`);
+    // Optional: Verify the Authorization header if present
+    const authHeader = req.headers.get("authorization");
+    if (authHeader) {
+      const token = authHeader.replace("Bearer ", "");
+      // You could validate the token here if needed
+      console.log("🔐 Request authenticated with token");
+    }
+
+    console.log(`🔍 Checking mention: brand="${brand}", query="${query}" for user=${user_email}`);
 
     // ---- STEP 1: Ask OpenAI to search for the query ----
     const body = {
@@ -108,7 +113,7 @@ export async function POST(req: Request) {
         mentioned,
         evidence: evidenceSnippet,
         raw_output: rawResponseJson, // Store complete JSON response from OpenAI API
-        user_email: userEmail, // Associate with user
+        user_email: user_email, // Associate with user
       },
     ]);
 

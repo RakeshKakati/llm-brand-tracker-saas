@@ -137,14 +137,32 @@ export default function TrackingPage() {
       setTestSearchLoading(true);
       setTestSearchResult(null);
       
+      // Get user email from session to pass to API
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.email) {
+        throw new Error("You must be logged in to run a search");
+      }
+      
+      console.log("🔍 Running check for:", brand, query, "User:", session.user.email);
+      
       const res = await fetch("/api/checkMention", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand, query }),
+        headers: { 
+          "Content-Type": "application/json",
+          // Pass access token for server-side auth verification
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          brand, 
+          query,
+          user_email: session.user.email  // Explicitly pass user_email
+        }),
       });
       
       if (res.ok) {
         const result = await res.json();
+        console.log("✅ Check completed:", result);
         setTestSearchResult({
           brand,
           query,
@@ -153,10 +171,11 @@ export default function TrackingPage() {
           timestamp: new Date().toISOString()
         });
       } else {
-        throw new Error(`HTTP ${res.status}`);
+        const errorData = await res.json().catch(() => ({ error: "Unknown error" }));
+        throw new Error(errorData.error || `HTTP ${res.status}`);
       }
     } catch (error) {
-      console.error("Error running check:", error);
+      console.error("❌ Error running check:", error);
       setTestSearchResult({
         brand,
         query,

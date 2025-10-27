@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import Sidebar from "@/components/Sidebar";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/Sidebar";
+import { Separator } from "@/components/ui/separator";
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbPage } from "@/components/ui/breadcrumb";
 import DashboardPage from "@/components/pages/DashboardPage";
 import TrackingPage from "@/components/pages/TrackingPage";
 import HistoryPage from "@/components/pages/HistoryPage";
@@ -60,14 +63,37 @@ export default function NotionLayout() {
     }
   };
 
+  const getPageTitle = () => {
+    switch (currentPage) {
+      case "dashboard": return "Dashboard";
+      case "tracking": return "Active Trackers";
+      case "active": return "Active Trackers";
+      case "history": return "Mention History";
+      case "analytics": return "Analytics";
+      case "settings": return "Settings";
+      default: return "Dashboard";
+    }
+  };
+
   return (
-    <div className="h-screen bg-gray-50 flex">
-      <Sidebar onPageChange={setCurrentPage} currentPage={currentPage} />
-      <main className="flex-1 overflow-auto">
-        <div className="h-full">
+    <SidebarProvider>
+      <AppSidebar onPageChange={setCurrentPage} currentPage={currentPage} userEmail={user?.email || ""} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{getPageTitle()}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4">
           {renderPage()}
         </div>
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

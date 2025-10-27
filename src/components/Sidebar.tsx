@@ -2,48 +2,40 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target } from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarRail,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, User2 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
-import { 
-  Search, 
-  BarChart3, 
-  Settings, 
-  Plus,
-  ChevronRight,
-  ChevronDown,
-  FileText,
-  Activity,
-  LogOut,
-  User
-} from "lucide-react";
 
-interface SidebarProps {
+interface AppSidebarProps {
   onPageChange: (page: string) => void;
   currentPage: string;
+  userEmail: string;
 }
 
-export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
+export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
-  const [expandedSections, setExpandedSections] = useState<string[]>(["tracking"]);
-  const [userEmail, setUserEmail] = useState<string>("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetchUserInfo();
-  }, []);
-
-  const fetchUserInfo = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user?.email) {
-        setUserEmail(session.user.email);
-        console.log("👤 Sidebar - User logged in:", session.user.email);
-      }
-    } catch (error) {
-      console.error("Error fetching user info:", error);
-    }
-  };
 
   const handleSignOut = async () => {
     if (!confirm("Are you sure you want to sign out?")) {
@@ -53,23 +45,20 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     try {
       setLoading(true);
       console.log("🚪 Signing out user:", userEmail);
-      
+
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         console.error("Sign out error:", error);
         alert("Failed to sign out. Please try again.");
         return;
       }
-      
-      // Clear localStorage
-      localStorage.removeItem('session');
-      localStorage.removeItem('user');
-      
+
+      localStorage.removeItem("session");
+      localStorage.removeItem("user");
+
       console.log("✅ Sign out successful, redirecting to home...");
-      
-      // Redirect to home page
-      router.push('/');
+      router.push("/");
     } catch (error) {
       console.error("Sign out error:", error);
       alert("Failed to sign out. Please try again.");
@@ -78,123 +67,138 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
     }
   };
 
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => 
-      prev.includes(section) 
-        ? prev.filter(s => s !== section)
-        : [...prev, section]
-    );
-  };
-
-  const menuItems = [
+  const navMain = [
     {
-      id: "dashboard",
-      label: "Dashboard",
+      title: "Dashboard",
       icon: BarChart3,
-      page: "dashboard"
+      page: "dashboard",
     },
     {
-      id: "tracking",
-      label: "Brand Tracking",
+      title: "Brand Tracking",
       icon: Search,
       page: "tracking",
-      children: [
-        { id: "active", label: "Active Trackers", page: "active" },
-        { id: "history", label: "Mention History", page: "history" },
-        { id: "analytics", label: "Analytics", page: "analytics" }
-      ]
+      items: [
+        { title: "Active Trackers", page: "active" },
+        { title: "Mention History", page: "history" },
+        { title: "Analytics", page: "analytics" },
+      ],
     },
     {
-      id: "settings",
-      label: "Settings",
+      title: "Settings",
       icon: Settings,
-      page: "settings"
-    }
+      page: "settings",
+    },
   ];
 
   return (
-    <div className="w-64 bg-white border-r border-gray-200 h-full flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black rounded-md flex items-center justify-center">
-            <Activity className="w-4 h-4 text-white" />
-          </div>
-          <span className="font-semibold text-gray-900">Brand Tracker</span>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => (
-          <div key={item.id}>
-            <Button
-              variant="ghost"
-              className={`w-full justify-start h-8 px-2 text-sm font-normal ${
-                currentPage === item.page ? "bg-gray-100 text-gray-900" : "text-gray-600 hover:text-gray-900"
-              }`}
-              onClick={() => {
-                if (item.children) {
-                  toggleSection(item.id);
-                } else {
-                  onPageChange(item.page);
-                }
-              }}
-            >
-              <item.icon className="w-4 h-4 mr-2" />
-              {item.label}
-              {item.children && (
-                expandedSections.includes(item.id) ? 
-                  <ChevronDown className="w-3 h-3 ml-auto" /> : 
-                  <ChevronRight className="w-3 h-3 ml-auto" />
-              )}
-            </Button>
-            
-            {item.children && expandedSections.includes(item.id) && (
-              <div className="ml-6 mt-1 space-y-1">
-                {item.children.map((child) => (
-                  <Button
-                    key={child.id}
-                    variant="ghost"
-                    className={`w-full justify-start h-7 px-2 text-xs font-normal ${
-                      currentPage === child.page ? "bg-gray-100 text-gray-900" : "text-gray-500 hover:text-gray-700"
-                    }`}
-                    onClick={() => onPageChange(child.page)}
-                  >
-                    <FileText className="w-3 h-3 mr-2" />
-                    {child.label}
-                  </Button>
-                ))}
+    <Sidebar collapsible="icon" {...props}>
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Target className="size-4" />
               </div>
-            )}
-          </div>
-        ))}
-      </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-semibold">Brand Tracker</span>
+                <span className="truncate text-xs">SaaS Platform</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
 
-      {/* User Info & Sign Out at Bottom */}
-      <div className="p-4 border-t border-gray-200 space-y-2">
-        {/* User Info */}
-        <div className="px-3 py-2 rounded-lg bg-gray-50">
-          <div className="flex items-center gap-2 mb-1">
-            <User className="w-3 h-3 text-gray-600" />
-            <span className="text-xs font-medium text-gray-700">Logged in as</span>
-          </div>
-          <p className="text-xs text-gray-600 truncate" title={userEmail}>
-            {userEmail || "Loading..."}
-          </p>
-        </div>
+      <SidebarContent>
+        <SidebarMenu>
+          {navMain.map((item) =>
+            item.items ? (
+              <Collapsible
+                key={item.title}
+                asChild
+                defaultOpen={item.page === "tracking"}
+                className="group/collapsible"
+              >
+                <SidebarMenuItem>
+                  <CollapsibleTrigger asChild>
+                    <SidebarMenuButton tooltip={item.title}>
+                      {item.icon && <item.icon />}
+                      <span>{item.title}</span>
+                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                    </SidebarMenuButton>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <SidebarMenuSub>
+                      {item.items.map((subItem) => (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton
+                            asChild
+                            isActive={currentPage === subItem.page}
+                            onClick={() => onPageChange(subItem.page)}
+                          >
+                            <span className="cursor-pointer">{subItem.title}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      ))}
+                    </SidebarMenuSub>
+                  </CollapsibleContent>
+                </SidebarMenuItem>
+              </Collapsible>
+            ) : (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton
+                  asChild
+                  isActive={currentPage === item.page}
+                  tooltip={item.title}
+                  onClick={() => onPageChange(item.page)}
+                >
+                  <span className="cursor-pointer">
+                    {item.icon && <item.icon />}
+                    <span>{item.title}</span>
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          )}
+        </SidebarMenu>
+      </SidebarContent>
 
-        {/* Sign Out Button */}
-        <Button
-          onClick={handleSignOut}
-          disabled={loading}
-          variant="ghost"
-          className="w-full justify-start h-8 px-2 text-sm font-normal text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
-        >
-          <LogOut className="w-4 h-4 mr-2" />
-          {loading ? "Signing out..." : "Sign Out"}
-        </Button>
-      </div>
-    </div>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarFallback className="rounded-lg">
+                      {userEmail ? userEmail.slice(0, 2).toUpperCase() : "US"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-semibold">Account</span>
+                    <span className="truncate text-xs">{userEmail}</span>
+                  </div>
+                  <ChevronDown className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuItem onClick={handleSignOut} disabled={loading}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {loading ? "Signing out..." : "Sign Out"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

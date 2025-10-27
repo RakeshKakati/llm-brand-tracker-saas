@@ -20,7 +20,8 @@ import {
   TrendingUp,
   CreditCard,
   CheckCircle,
-  Target
+  Target,
+  AlertCircle
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -84,7 +85,27 @@ export default function SettingsPage() {
       </div>
 
       {/* Subscription Status */}
-      {subscription && (
+      {loading ? (
+        <Card className="p-6 mb-8">
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        </Card>
+      ) : !subscription ? (
+        <Card className="p-6 mb-8 bg-yellow-50 border-yellow-200">
+          <div className="flex items-center gap-3 mb-4">
+            <AlertCircle className="w-6 h-6 text-yellow-600" />
+            <h2 className="text-xl font-semibold text-gray-900">No Subscription Found</h2>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">
+            You don't have an active subscription. Sign up to get started with the Free plan.
+          </p>
+          <Button className="gap-2">
+            <Crown className="w-4 h-4" />
+            Create Free Subscription
+          </Button>
+        </Card>
+      ) : (
         <Card className="p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -149,30 +170,62 @@ export default function SettingsPage() {
             <h2 className="text-lg font-semibold text-gray-900">Account</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Email</Label>
-              <Input 
-                placeholder="your@email.com" 
-                className="mt-1"
-                disabled
-              />
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
-            <div>
-              <Label className="text-sm font-medium text-gray-700">Display Name</Label>
-              <Input 
-                placeholder="Your Name" 
-                className="mt-1"
-                disabled
-              />
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <Button variant="outline" disabled>
-              Update Account
-            </Button>
-          </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">Email</Label>
+                  <Input 
+                    value={user?.email || ""}
+                    placeholder="your@email.com" 
+                    className="mt-1"
+                    disabled
+                  />
+                  {user?.email && (
+                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" />
+                      Verified
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-700">User ID</Label>
+                  <Input 
+                    value={user?.id || ""}
+                    placeholder="User ID" 
+                    className="mt-1"
+                    disabled
+                  />
+                </div>
+              </div>
+              
+              {user && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    <h3 className="font-medium text-blue-900">Account Information</h3>
+                  </div>
+                  <div className="space-y-1 text-sm text-blue-800">
+                    <p><strong>Email:</strong> {user.email}</p>
+                    {user.user_metadata?.full_name && (
+                      <p><strong>Name:</strong> {user.user_metadata.full_name}</p>
+                    )}
+                    <p><strong>Created:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-6">
+                <Button variant="outline" disabled>
+                  Update Account
+                </Button>
+              </div>
+            </>
+          )}
         </Card>
 
         {/* API Settings */}

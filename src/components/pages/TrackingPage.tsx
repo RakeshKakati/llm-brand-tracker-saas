@@ -369,15 +369,39 @@ export default function TrackingPage() {
                   onClick={async () => {
                     try {
                       setLoading(true);
-                      const { error } = await supabase.from("tracked_brands").insert([
-                        {
+                      
+                      // Get user session
+                      const { data: { session } } = await supabase.auth.getSession();
+                      
+                      if (!session?.user?.email) {
+                        throw new Error("You must be logged in to create a tracker");
+                      }
+                      
+                      console.log("🔍 Creating tracker from test results for:", session.user.email);
+                      
+                      // Use the API endpoint instead of direct insert
+                      const response = await fetch("/api/trackBrand", {
+                        method: "POST",
+                        headers: { 
+                          "Content-Type": "application/json",
+                          "Authorization": `Bearer ${session.access_token}`
+                        },
+                        body: JSON.stringify({ 
                           brand: testSearchResult.brand,
                           query: testSearchResult.query,
-                          interval_minutes: interval,
-                          active: true
-                        },
-                      ]);
-                      if (error) throw error;
+                          interval,
+                          user_email: session.user.email,
+                          user_id: session.user.id
+                        }),
+                      });
+                      
+                      const result = await response.json();
+                      
+                      if (!response.ok) {
+                        throw new Error(result.error || "Failed to create tracker");
+                      }
+                      
+                      console.log("✅ Tracker created successfully from test results");
                       
                       // Refresh trackers list
                       await fetchTrackersData(false);
@@ -390,7 +414,7 @@ export default function TrackingPage() {
                       
                       alert(`✅ Successfully created tracker for "${testSearchResult.brand}" searching "${testSearchResult.query}" every ${interval} minutes.`);
                     } catch (err: any) {
-                      console.error("❌ Supabase insert error:", err);
+                      console.error("❌ Error creating tracker:", err);
                       alert(`❌ Failed to create tracker: ${err.message || 'Unknown error'}`);
                     } finally {
                       setLoading(false);

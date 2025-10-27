@@ -89,14 +89,15 @@ export async function POST(req: Request) {
 
     console.log(`✅ Mention detected: ${mentioned ? "YES" : "NO"} (${brand})`);
 
-    // ---- STEP 4: Store in Supabase ----
+    // ---- STEP 4: Store in Supabase with full raw response ----
+    const rawResponseJson = JSON.stringify(data);
     const { error } = await supabase.from("brand_mentions").insert([
       {
         brand,
         query,
         mentioned,
         evidence: evidenceSnippet,
-        raw_output: outputText.slice(0, 2000),
+        raw_output: rawResponseJson, // Store complete JSON response from OpenAI API
       },
     ]);
 

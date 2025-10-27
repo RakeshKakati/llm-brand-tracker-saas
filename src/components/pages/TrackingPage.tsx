@@ -76,13 +76,16 @@ export default function TrackingPage() {
       
       // Get current user's email
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("📧 TrackingPage - Session:", session);
+      console.log("👤 TrackingPage - User email:", session?.user?.email);
       
       if (!session?.user?.email) {
-        console.error("No user session found");
+        console.error("❌ No user session found in TrackingPage");
         return;
       }
       
       // Filter by user_email (RLS will also enforce this)
+      console.log("🔍 Fetching trackers for:", session.user.email);
       const { data, error } = await supabase
         .from("tracked_brands")
         .select("*")
@@ -90,10 +93,11 @@ export default function TrackingPage() {
         .order("created_at", { ascending: false });
       
       if (error) {
-        console.error("Error fetching trackers:", error);
+        console.error("❌ Error fetching trackers:", error);
         return;
       }
       
+      console.log("✅ Trackers fetched:", data?.length || 0);
       setTrackers(data || []);
     } catch (err) {
       console.error("Error fetching trackers:", err);

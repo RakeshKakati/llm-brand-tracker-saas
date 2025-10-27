@@ -40,19 +40,30 @@ export default function SettingsPage() {
       
       // Get current user
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("📧 SettingsPage - Session:", session);
+      console.log("👤 SettingsPage - User email:", session?.user?.email);
+      
       setUser(session?.user);
 
       if (session?.user?.email) {
         // Fetch subscription
+        console.log("🔍 Fetching subscription for:", session.user.email);
         const { data: subData, error: subError } = await supabase
           .from("subscriptions")
           .select("*")
           .eq("user_email", session.user.email)
           .single();
 
-        if (!subError && subData) {
+        if (subError) {
+          console.error("❌ Subscription fetch error:", subError);
+        } else if (subData) {
+          console.log("✅ Subscription found:", subData);
           setSubscription(subData);
+        } else {
+          console.log("⚠️ No subscription data returned");
         }
+      } else {
+        console.log("❌ No user email in session");
       }
     } catch (error) {
       console.error("Error fetching user data:", error);

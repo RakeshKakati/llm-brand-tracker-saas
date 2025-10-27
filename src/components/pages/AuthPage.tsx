@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/app/lib/supabaseClient";
 import { 
   Search, 
   Mail, 
@@ -99,9 +100,19 @@ export default function AuthPage() {
         const data = await response.json();
         
         if (response.ok) {
-          // Store session data
-          localStorage.setItem('user', JSON.stringify(data.user));
-          localStorage.setItem('session', JSON.stringify(data.session));
+          // Set session in Supabase client (this syncs with localStorage automatically)
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token
+          });
+          
+          if (sessionError) {
+            console.error("Session sync error:", sessionError);
+            alert("Failed to sync session. Please try again.");
+            return;
+          }
+          
+          console.log("✅ Session synced successfully");
           
           // Redirect to specified page with brand and query parameters
           const redirectUrl = brandName && query 

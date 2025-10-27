@@ -21,14 +21,18 @@ import {
   CreditCard,
   CheckCircle,
   Target,
-  AlertCircle
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
+import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
 
 export default function SettingsPage() {
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [upgrading, setUpgrading] = useState(false);
+  const [managingSubscription, setManagingSubscription] = useState(false);
 
   useEffect(() => {
     fetchUserData();
@@ -87,6 +91,96 @@ export default function SettingsPage() {
       default: return "Free";
     }
   };
+
+  const handleUpgrade = async () => {
+    try {
+      setUpgrading(true);
+
+      if (!user?.email) {
+        alert("Please sign in to upgrade");
+        return;
+      }
+
+      console.log("💳 Starting upgrade process for:", user.email);
+
+      // Create Stripe checkout session
+      const response = await fetch("/api/stripe/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId: STRIPE_PLANS.PRO.priceId,
+          user_email: user.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session");
+      }
+
+      console.log("✅ Checkout session created, redirecting...");
+
+      // Redirect to Stripe Checkout
+      const stripe = await getStripe();
+      if (stripe && data.sessionId) {
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: data.sessionId,
+        });
+
+        if (error) {
+          console.error("Stripe redirect error:", error);
+          alert("Failed to redirect to checkout. Please try again.");
+        }
+      } else {
+        // Fallback to direct URL
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error("❌ Upgrade error:", error);
+      alert(error.message || "Failed to start upgrade process");
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    try {
+      setManagingSubscription(true);
+
+      if (!user?.email) {
+        alert("Please sign in to manage subscription");
+        return;
+      }
+
+      console.log("🏛️  Opening customer portal for:", user.email);
+
+      // Create portal session
+      const response = await fetch("/api/stripe/create-portal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_email: user.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create portal session");
+      }
+
+      console.log("✅ Portal session created, redirecting...");
+
+      // Redirect to Stripe Customer Portal
+      window.location.href = data.url;
+    } catch (error: any) {
+      console.error("❌ Portal error:", error);
+      alert(error.message || "Failed to open customer portal");
+    } finally {
+      setManagingSubscription(false);
+    }
+  };
   return (
     <div className="p-8 max-w-4xl mx-auto">
       {/* Header */}
@@ -130,12 +224,44 @@ export default function SettingsPage() {
                 </Badge>
               </div>
             </div>
-            {subscription.plan_type !== 'pro' && subscription.plan_type !== 'enterprise' && (
-              <Button className="gap-2">
-                <TrendingUp className="w-4 h-4" />
-                Upgrade Plan
+            {subscription.plan_type === 'free' ? (
+              <Button 
+                onClick={handleUpgrade} 
+                disabled={upgrading}
+                className="gap-2"
+              >
+                {upgrading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <TrendingUp className="w-4 h-4" />
+                    Upgrade to Pro
+                  </>
+                )}
               </Button>
-            )}
+            ) : subscription.stripe_subscription_id ? (
+              <Button 
+                onClick={handleManageSubscription}
+                disabled={managingSubscription}
+                variant="outline" 
+                className="gap-2"
+              >
+                {managingSubscription ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="w-4 h-4" />
+                    Manage Subscription
+                  </>
+                )}
+              </Button>
+            ) : null}
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">

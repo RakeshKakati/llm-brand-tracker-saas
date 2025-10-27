@@ -40,11 +40,29 @@ export default function TrackingPage() {
     try {
       setLoading(true);
       
+      // Get user session to pass to API
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.email) {
+        throw new Error("You must be logged in to create a tracker");
+      }
+      
+      console.log("🔍 Creating tracker for:", brand, query, "User:", session.user.email);
+      
       // Use the API endpoint to properly handle user auth and limits
       const response = await fetch("/api/trackBrand", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ brand, query, interval }),
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ 
+          brand, 
+          query, 
+          interval,
+          user_email: session.user.email,
+          user_id: session.user.id
+        }),
       });
       
       const result = await response.json();
@@ -52,6 +70,8 @@ export default function TrackingPage() {
       if (!response.ok) {
         throw new Error(result.error || "Failed to create tracker");
       }
+      
+      console.log("✅ Tracker created successfully");
       
       // Refresh trackers list
       await fetchTrackersData(false);

@@ -41,15 +41,18 @@ export async function POST(req: Request) {
 
     console.log(`🔍 Checking mention: brand="${brand}", query="${query}"`);
 
-    // ---- STEP 1: Ask OpenAI to search only for the query ----
+    // ---- STEP 1: Ask OpenAI to search for the query ----
     const body = {
-      model: "gpt-4.1",
-      tools: [{ type: "web_search" }],
-      input: `Search the web for: "${query}". 
-Return a short list of search results and summaries. Include brand and product names if mentioned.`,
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: `Search the web for: "${query}". Return a short list of search results and summaries. Include brand and product names if mentioned.`
+        }
+      ],
     };
 
-    const res = await fetch("https://api.openai.com/v1/responses", {
+    const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -68,16 +71,11 @@ Return a short list of search results and summaries. Include brand and product n
     console.log("📦 Raw OpenAI response:", data);
 
     // ---- STEP 2: Extract text from model output ----
-    let outputText = "";
-    if (data?.output && Array.isArray(data.output)) {
-      for (const o of data.output) {
-        if (o.type === "message" && o.content) {
-          const contentArr = Array.isArray(o.content) ? o.content : [o.content];
-          outputText += contentArr
-            .map((c: any) => (typeof c === "string" ? c : c.text || ""))
-            .join("\n");
-        }
-      }
+    let outputText = data?.choices?.[0]?.message?.content || "";
+    
+    if (!outputText && data?.choices?.[0]?.message) {
+      // Try alternative response structure
+      outputText = JSON.stringify(data.choices[0].message);
     }
 
     outputText = outputText.trim();

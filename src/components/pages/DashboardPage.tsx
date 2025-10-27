@@ -39,47 +39,74 @@ export default function DashboardPage() {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      // Fetch tracked brands count
+      
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("📊 Dashboard - User session:", session?.user?.email);
+      
+      if (!session?.user?.email) {
+        console.error("❌ No user session found in Dashboard");
+        setLoading(false);
+        return;
+      }
+
+      const userEmail = session.user.email;
+      console.log("🔍 Fetching dashboard data for:", userEmail);
+      
+      // Fetch tracked brands count (filtered by user)
       const { count: trackersCount } = await supabase
         .from("tracked_brands")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("user_email", userEmail);
 
-      // Fetch active trackers count
+      // Fetch active trackers count (filtered by user)
       const { count: activeCount } = await supabase
         .from("tracked_brands")
         .select("*", { count: "exact", head: true })
+        .eq("user_email", userEmail)
         .eq("active", true);
 
-      // Fetch total mentions count
+      // Fetch total mentions count (filtered by user)
       const { count: mentionsCount } = await supabase
         .from("brand_mentions")
-        .select("*", { count: "exact", head: true });
+        .select("*", { count: "exact", head: true })
+        .eq("user_email", userEmail);
 
-      // Fetch recent mentions (last 24 hours)
+      // Fetch recent mentions (last 24 hours, filtered by user)
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
       const { count: recentCount } = await supabase
         .from("brand_mentions")
         .select("*", { count: "exact", head: true })
+        .eq("user_email", userEmail)
         .gte("created_at", yesterday.toISOString());
 
-      // Fetch recent mentions for display
+      // Fetch recent mentions for display (filtered by user)
       const { data: recentData } = await supabase
         .from("brand_mentions")
         .select("*")
+        .eq("user_email", userEmail)
         .order("created_at", { ascending: false })
         .limit(5);
 
-      // Fetch mentions for chart (last 7 days)
+      // Fetch mentions for chart (last 7 days, filtered by user)
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
       const { data: mentionsData } = await supabase
         .from("brand_mentions")
         .select("*")
+        .eq("user_email", userEmail)
         .gte("created_at", sevenDaysAgo.toISOString())
         .order("created_at", { ascending: true });
+
+      console.log("✅ Dashboard data fetched:", {
+        trackers: trackersCount,
+        active: activeCount,
+        mentions: mentionsCount,
+        recent: recentCount
+      });
 
       setStats({
         totalTrackers: trackersCount || 0,

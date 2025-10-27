@@ -54,20 +54,40 @@ export default function AnalyticsPage() {
     try {
       setLoading(true);
       
-      // Fetch all brand mentions
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("📈 Analytics - User session:", session?.user?.email);
+      
+      if (!session?.user?.email) {
+        console.error("❌ No user session found in Analytics");
+        setLoading(false);
+        return;
+      }
+
+      const userEmail = session.user.email;
+      console.log("🔍 Fetching analytics data for:", userEmail);
+      
+      // Fetch brand mentions (filtered by user)
       const { data: mentions, error: mentionsError } = await supabase
         .from("brand_mentions")
         .select("*")
+        .eq("user_email", userEmail)
         .order("created_at", { ascending: false });
 
       if (mentionsError) throw mentionsError;
 
-      // Fetch all tracked brands
+      // Fetch tracked brands (filtered by user)
       const { data: trackers, error: trackersError } = await supabase
         .from("tracked_brands")
-        .select("*");
+        .select("*")
+        .eq("user_email", userEmail);
 
       if (trackersError) throw trackersError;
+
+      console.log("✅ Analytics data fetched:", {
+        mentions: mentions?.length || 0,
+        trackers: trackers?.length || 0
+      });
 
       // Process the data
       const totalChecks = mentions?.length || 0;

@@ -79,7 +79,7 @@ export default function TrackingPage() {
       setBrand("");
       setQuery("");
       setInterval(5);
-      alert(`✅ Successfully created tracker for "${brand}" searching "${query}" every ${interval} minutes.`);
+      alert(`✅ Successfully created tracker for "${brand}" searching "${query}".`);
     } catch (err: any) {
       console.error("❌ Error creating tracker:", err);
       alert(err.message || "Failed to create tracker");
@@ -412,7 +412,7 @@ export default function TrackingPage() {
                       setInterval(5);
                       setTestSearchResult(null);
                       
-                      alert(`✅ Successfully created tracker for "${testSearchResult.brand}" searching "${testSearchResult.query}" every ${interval} minutes.`);
+                      alert(`✅ Successfully created tracker for "${testSearchResult.brand}" searching "${testSearchResult.query}".`);
                     } catch (err: any) {
                       console.error("❌ Error creating tracker:", err);
                       alert(`❌ Failed to create tracker: ${err.message || 'Unknown error'}`);

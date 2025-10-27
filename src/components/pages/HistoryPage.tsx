@@ -42,16 +42,35 @@ export default function HistoryPage() {
       if (!isSilentRefresh) {
         setLoading(true);
       }
+      
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      console.log("📜 History - User session:", session?.user?.email);
+      
+      if (!session?.user?.email) {
+        console.error("❌ No user session found in History");
+        setLoading(false);
+        return;
+      }
+
+      const userEmail = session.user.email;
+      console.log("🔍 Fetching mention history for:", userEmail);
+      
+      // Fetch mentions filtered by user
       const { data, error } = await supabase
         .from("brand_mentions")
         .select("*")
+        .eq("user_email", userEmail)
         .order("created_at", { ascending: false });
       
       if (!error && data) {
+        console.log("✅ History fetched:", data.length, "mentions");
         setRecords(data);
         if (!isSilentRefresh) {
           setLastRefresh(new Date());
         }
+      } else if (error) {
+        console.error("❌ Error fetching mentions:", error);
       }
     } catch (error) {
       console.error("Error fetching mentions:", error);

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/app/lib/supabaseClient";
 import { 
   Search, 
   BarChart3, 
@@ -11,7 +13,9 @@ import {
   ChevronRight,
   ChevronDown,
   FileText,
-  Activity
+  Activity,
+  LogOut,
+  User
 } from "lucide-react";
 
 interface SidebarProps {
@@ -20,7 +24,59 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
+  const router = useRouter();
   const [expandedSections, setExpandedSections] = useState<string[]>(["tracking"]);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    fetchUserInfo();
+  }, []);
+
+  const fetchUserInfo = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.email) {
+        setUserEmail(session.user.email);
+        console.log("👤 Sidebar - User logged in:", session.user.email);
+      }
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+    }
+  };
+
+  const handleSignOut = async () => {
+    if (!confirm("Are you sure you want to sign out?")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      console.log("🚪 Signing out user:", userEmail);
+      
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error("Sign out error:", error);
+        alert("Failed to sign out. Please try again.");
+        return;
+      }
+      
+      // Clear localStorage
+      localStorage.removeItem('session');
+      localStorage.removeItem('user');
+      
+      console.log("✅ Sign out successful, redirecting to home...");
+      
+      // Redirect to home page
+      router.push('/');
+    } catch (error) {
+      console.error("Sign out error:", error);
+      alert("Failed to sign out. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleSection = (section: string) => {
     setExpandedSections(prev => 
@@ -113,6 +169,31 @@ export default function Sidebar({ onPageChange, currentPage }: SidebarProps) {
             )}
           </div>
         ))}
+      </div>
+
+      {/* User Info & Sign Out at Bottom */}
+      <div className="p-4 border-t border-gray-200 space-y-2">
+        {/* User Info */}
+        <div className="px-3 py-2 rounded-lg bg-gray-50">
+          <div className="flex items-center gap-2 mb-1">
+            <User className="w-3 h-3 text-gray-600" />
+            <span className="text-xs font-medium text-gray-700">Logged in as</span>
+          </div>
+          <p className="text-xs text-gray-600 truncate" title={userEmail}>
+            {userEmail || "Loading..."}
+          </p>
+        </div>
+
+        {/* Sign Out Button */}
+        <Button
+          onClick={handleSignOut}
+          disabled={loading}
+          variant="ghost"
+          className="w-full justify-start h-8 px-2 text-sm font-normal text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          <LogOut className="w-4 h-4 mr-2" />
+          {loading ? "Signing out..." : "Sign Out"}
+        </Button>
       </div>
     </div>
   );

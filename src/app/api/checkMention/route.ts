@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 
 import { NextResponse } from "next/server";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
 // --- helper: safely escape brand in regex ---
 function escapeRegExp(s: string) {
@@ -106,7 +106,7 @@ export async function POST(req: Request) {
 
     // ---- STEP 4: Store in Supabase with full raw response ----
     const rawResponseJson = JSON.stringify(data);
-    const { error } = await supabase.from("brand_mentions").insert([
+    const { error } = await supabaseAdmin.from("brand_mentions").insert([
       {
         brand,
         query,

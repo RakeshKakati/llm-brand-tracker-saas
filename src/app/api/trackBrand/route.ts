@@ -1,4 +1,4 @@
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     console.log(`🔍 Creating tracker for user: ${user_email}`);
 
     // Check subscription limits
-    const { data: subscription } = await supabase
+    const { data: subscription } = await supabaseAdmin
       .from("subscriptions")
       .select("max_trackers")
       .eq("user_email", user_email)
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     console.log(`📊 Subscription:`, subscription);
 
     // Count current trackers
-    const { count } = await supabase
+    const { count } = await supabaseAdmin
       .from("tracked_brands")
       .select("*", { count: "exact", head: true })
       .eq("user_email", user_email)
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     }
 
     // Insert with user_email and user_id
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("tracked_brands")
       .insert([{ 
         brand, 

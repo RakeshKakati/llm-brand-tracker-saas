@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -105,7 +105,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     updateData.current_period_end = new Date(subData.current_period_end * 1000).toISOString();
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("subscriptions")
     .update(updateData)
     .eq("user_email", user_email);
@@ -143,7 +143,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     updateData.current_period_end = new Date(subData.current_period_end * 1000).toISOString();
   }
 
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("subscriptions")
     .update(updateData)
     .eq("stripe_subscription_id", subscription.id);
@@ -166,7 +166,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log("🗑️  Subscription cancelled for:", user_email);
 
   // Downgrade to free plan
-  const { error } = await supabase
+  const { error } = await supabaseAdmin
     .from("subscriptions")
     .update({
       plan_type: "free",

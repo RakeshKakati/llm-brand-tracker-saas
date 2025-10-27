@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,13 +18,12 @@ export async function POST(req: NextRequest) {
 
     // Create user in Supabase Auth
     console.log("🔐 Creating user in Supabase Auth...");
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          full_name: fullName,
-        },
+      email_confirm: true, // Auto-confirm email for admin-created users
+      user_metadata: {
+        full_name: fullName,
       },
     });
 
@@ -41,7 +40,7 @@ export async function POST(req: NextRequest) {
     // Create user profile in our custom users table (optional)
     if (authData.user) {
       console.log("👤 Creating user profile...");
-      const { error: profileError } = await supabase
+      const { error: profileError } = await supabaseAdmin
         .from("users")
         .insert([
           {
@@ -62,7 +61,7 @@ export async function POST(req: NextRequest) {
       // Create free subscription for new user
       if (authData.user.email) {
         console.log("💳 Creating free subscription...");
-        const { error: subError } = await supabase
+        const { error: subError } = await supabaseAdmin
           .from("subscriptions")
           .insert([
             {

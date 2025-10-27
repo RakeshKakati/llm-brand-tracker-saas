@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
 // Check if Stripe secret key exists
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     console.log("💳 App URL:", process.env.NEXT_PUBLIC_APP_URL);
 
     // Get user's current subscription
-    const { data: existingSubscription } = await supabase
+    const { data: existingSubscription } = await supabaseAdmin
       .from("subscriptions")
       .select("stripe_subscription_id")
       .eq("user_email", user_email)

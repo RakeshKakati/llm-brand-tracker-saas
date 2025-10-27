@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { supabase } from "@/app/lib/supabaseClient";
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-09-30.clover",
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     console.log("🏛️  Creating portal session for:", user_email);
 
     // Get user's subscription
-    const { data: subscription } = await supabase
+    const { data: subscription } = await supabaseAdmin
       .from("subscriptions")
       .select("stripe_subscription_id")
       .eq("user_email", user_email)

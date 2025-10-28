@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target, Users } from "lucide-react";
+import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target, Users, ChevronDown } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,9 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
 import {
@@ -23,8 +20,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, User2 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
 interface AppSidebarProps {
@@ -79,19 +74,19 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       page: "mentions",
     },
     {
+      title: "Active Trackers",
+      icon: Target,
+      page: "active",
+    },
+    {
+      title: "Mention History",
+      icon: Clock,
+      page: "history",
+    },
+    {
       title: "Competitors",
       icon: Users,
       page: "competitors",
-    },
-    {
-      title: "Brand Tracking",
-      icon: Search,
-      page: "tracking",
-      items: [
-        { title: "Active Trackers", page: "active" },
-        { title: "Mention History", page: "history" },
-        { title: "Analytics", page: "analytics" },
-      ],
     },
     {
       title: "Settings",
@@ -120,55 +115,21 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
 
       <SidebarContent>
         <SidebarMenu>
-          {navMain.map((item) =>
-            item.items ? (
-              <Collapsible
-                key={item.title}
+          {navMain.map((item) => (
+            <SidebarMenuItem key={item.title}>
+              <SidebarMenuButton
                 asChild
-                defaultOpen={item.page === "tracking"}
-                className="group/collapsible"
+                isActive={currentPage === item.page}
+                tooltip={item.title}
+                onClick={() => onPageChange(item.page)}
               >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton tooltip={item.title}>
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                      <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      {item.items.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.title}>
-                          <SidebarMenuSubButton
-                            asChild
-                            isActive={currentPage === subItem.page}
-                            onClick={() => onPageChange(subItem.page)}
-                          >
-                            <span className="cursor-pointer">{subItem.title}</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            ) : (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton
-                  asChild
-                  isActive={currentPage === item.page}
-                  tooltip={item.title}
-                  onClick={() => onPageChange(item.page)}
-                >
-                  <span className="cursor-pointer">
-                    {item.icon && <item.icon />}
-                    <span>{item.title}</span>
-                  </span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          )}
+                <span className="cursor-pointer">
+                  {item.icon && <item.icon />}
+                  <span>{item.title}</span>
+                </span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
 

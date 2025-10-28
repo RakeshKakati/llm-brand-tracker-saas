@@ -79,7 +79,22 @@ export async function POST(req: Request) {
     if (!res.ok) {
       const errText = await res.text();
       console.error("❌ OpenAI API error:", res.status, errText.slice(0, 200));
-      return NextResponse.json({ error: "OpenAI API error" }, { status: 500 });
+      // Fallback: still record the search so analytics/visibility have denominators
+      try {
+        await supabaseAdmin.from("brand_mentions").insert([
+          {
+            brand,
+            query,
+            mentioned: false,
+            evidence: "Search failed",
+            raw_output: JSON.stringify({ status: res.status, error: errText.slice(0, 500) }),
+            user_email,
+          },
+        ]);
+      } catch (e) {
+        console.error("❌ Supabase insert fallback error:", e);
+      }
+      return NextResponse.json({ brand, query, mentioned: false, evidence: "Search failed" }, { status: 200 });
     }
 
     const data = await res.json();
@@ -131,9 +146,27 @@ export async function POST(req: Request) {
     });
   } catch (err: any) {
     console.error("💥 Fatal error in checkMention route:", err);
-    return NextResponse.json(
-      { error: err.message || "Unknown error" },
-      { status: 500 }
-    );
+    // Fallback: record failed search
+    try {
+      const body = await req.json().catch(() => ({} as any));
+      const brand = body?.brand;
+      const query = body?.query;
+      const user_email = body?.user_email;
+      if (brand && query && user_email) {
+        await supabaseAdmin.from("brand_mentions").insert([
+          {
+            brand,
+            query,
+            mentioned: false,
+            evidence: "Unexpected error",
+            raw_output: JSON.stringify({ error: String(err?.message || err) }),
+            user_email,
+          },
+        ]);
+      }
+    } catch (e) {
+      console.error("❌ Supabase insert on catch failed:", e);
+    }
+    return NextResponse.json({ error: err?.message || "Unknown error", mentioned: false }, { status: 200 });
   }
 }

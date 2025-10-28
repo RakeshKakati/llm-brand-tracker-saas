@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target } from "lucide-react";
+import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -72,6 +72,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       title: "Dashboard",
       icon: BarChart3,
       page: "dashboard",
+    },
+    {
+      title: "Competitors",
+      icon: Users,
+      page: "competitors",
     },
     {
       title: "Brand Tracking",

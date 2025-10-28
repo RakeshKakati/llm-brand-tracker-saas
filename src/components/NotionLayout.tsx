@@ -12,6 +12,7 @@ import TrackingPage from "@/components/pages/TrackingPage";
 import HistoryPage from "@/components/pages/HistoryPage";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
+import CompetitorsPage from "@/components/pages/CompetitorsPage";
 
 export default function NotionLayout() {
   const router = useRouter();
@@ -58,6 +59,8 @@ export default function NotionLayout() {
         return <AnalyticsPage />;
       case "settings":
         return <SettingsPage />;
+      case "competitors":
+        return <CompetitorsPage />;
       default:
         return <DashboardPage />;
     }

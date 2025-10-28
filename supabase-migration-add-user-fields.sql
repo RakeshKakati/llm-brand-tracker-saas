@@ -93,3 +93,63 @@ CREATE POLICY "Users can insert their own mentions" ON brand_mentions
 
 SELECT '🎉 Migration complete! Your tables now support multi-tenant data.' AS status;
 
+-- ========================================
+-- Tracked competitors support (idempotent)
+-- ========================================
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'tracked_competitors'
+  ) THEN
+    CREATE TABLE public.tracked_competitors (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_email text NOT NULL,
+      name text NOT NULL,
+      domain text NOT NULL,
+      active boolean NOT NULL DEFAULT true,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
+  END IF;
+END $$;
+
+DO $$ BEGIN
+  ALTER TABLE public.tracked_competitors
+    ADD CONSTRAINT tracked_competitors_user_domain_key UNIQUE (user_email, domain);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Constraint tracked_competitors_user_domain_key already exists';
+END $$;
+
+ALTER TABLE public.tracked_competitors ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY tracked_competitors_select ON public.tracked_competitors
+    FOR SELECT USING (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy tracked_competitors_select exists';
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY tracked_competitors_insert ON public.tracked_competitors
+    FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy tracked_competitors_insert exists';
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY tracked_competitors_update ON public.tracked_competitors
+    FOR UPDATE USING (auth.jwt() ->> 'email' = user_email)
+    WITH CHECK (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy tracked_competitors_update exists';
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY tracked_competitors_delete ON public.tracked_competitors
+    FOR DELETE USING (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy tracked_competitors_delete exists';
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_tracked_competitors_user_email
+  ON public.tracked_competitors(user_email);
+

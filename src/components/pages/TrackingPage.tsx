@@ -7,6 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   Search, 
   Plus, 
@@ -18,8 +34,10 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  MoreVertical
 } from "lucide-react";
+import { IconDotsVertical } from "@tabler/icons-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
 export default function TrackingPage() {
@@ -31,6 +49,7 @@ export default function TrackingPage() {
   const [testSearchLoading, setTestSearchLoading] = useState(false);
   const [testSearchResult, setTestSearchResult] = useState<any>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const handleTrack = async () => {
     if (!brand || !query) {
@@ -212,37 +231,30 @@ export default function TrackingPage() {
   }, []);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="flex flex-1 flex-col gap-6 p-6">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Brand Tracking</h1>
-            <p className="text-gray-600">Create and manage brand mention trackers</p>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-500">Last updated</p>
-              <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
-            </div>
-            <button
-              onClick={() => {
-                console.log("🔄 Manual refresh triggered");
-                fetchTrackersData(false); // Pass false for manual refresh
-                setLastRefresh(new Date());
-              }}
-              disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-bold tracking-tight">Brand Tracking</h1>
+          <p className="text-sm text-muted-foreground">Create and manage brand mention trackers</p>
         </div>
+        <Button
+          onClick={() => {
+            console.log("🔄 Manual refresh triggered");
+            fetchTrackersData(false);
+            setLastRefresh(new Date());
+          }}
+          disabled={loading}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Create New Tracker */}
-      <Card className="p-6 mb-8">
+      <Card className="p-6">
         <div className="flex items-center gap-2 mb-4">
           <Plus className="w-5 h-5 text-gray-600" />
           <h2 className="text-lg font-semibold text-gray-900">Create New Tracker</h2>
@@ -294,7 +306,7 @@ export default function TrackingPage() {
 
       {/* Test Search Results */}
       {testSearchResult && (
-        <Card className="p-6 mb-8">
+        <Card className="p-6">
           <div className="flex items-center gap-2 mb-4">
             <Search className="w-5 h-5 text-gray-600" />
             <h2 className="text-lg font-semibold text-gray-900">Test Search Results</h2>
@@ -432,80 +444,159 @@ export default function TrackingPage() {
       )}
 
       {/* Active Trackers */}
-      <Card className="p-6">
-        <div className="flex items-center justify-between mb-6">
+      <Card>
+        <div className="flex items-center justify-between border-b p-6">
           <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Active Trackers</h2>
+            <Activity className="w-5 h-5 text-muted-foreground" />
+            <h2 className="text-base font-semibold">Active Trackers</h2>
             <Badge variant="secondary">{trackers.length}</Badge>
           </div>
-        </div>
-
-        <div className="space-y-4">
-          {trackers.map((tracker) => (
-            <div key={tracker.id} className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-medium text-gray-900">{tracker.brand}</h3>
-                    <Badge variant={tracker.active ? "default" : "secondary"}>
-                      {tracker.active ? "Active" : "Paused"}
-                    </Badge>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-2">{tracker.query}</p>
-                  <div className="flex items-center gap-4 text-xs text-gray-500">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      Every {tracker.interval_minutes} min
-                    </div>
-                    <div>
-                      Created {new Date(tracker.created_at).toLocaleDateString()}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => runCheck(tracker.brand, tracker.query)}
-                  >
-                    <Search className="w-3 h-3 mr-1" />
-                    Check Now
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => toggleTracker(tracker.id, tracker.active)}
-                  >
-                    {tracker.active ? (
-                      <Pause className="w-3 h-3 mr-1" />
-                    ) : (
-                      <Play className="w-3 h-3 mr-1" />
-                    )}
-                    {tracker.active ? "Pause" : "Resume"}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => deleteTracker(tracker.id)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-          
-          {trackers.length === 0 && (
-            <div className="text-center py-8 text-gray-500">
-              <Activity className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-              <p>No trackers created yet</p>
-              <p className="text-sm">Create your first brand tracker above</p>
+          {selectedRows.size > 0 && (
+            <div className="text-sm text-muted-foreground">
+              {selectedRows.size} of {trackers.length} row(s) selected
             </div>
           )}
         </div>
+
+        {trackers.length === 0 ? (
+          <div className="p-12 text-center text-muted-foreground">
+            <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
+            <p className="text-sm font-medium">No trackers created yet</p>
+            <p className="text-xs mt-1">Create your first brand tracker above</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden">
+            <Table>
+              <TableHeader className="bg-muted">
+                <TableRow>
+                  <TableHead className="w-12">
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={selectedRows.size === trackers.length}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedRows(new Set(trackers.map(t => t.id)));
+                          } else {
+                            setSelectedRows(new Set());
+                          }
+                        }}
+                        aria-label="Select all"
+                      />
+                    </div>
+                  </TableHead>
+                  <TableHead>Brand</TableHead>
+                  <TableHead>Query</TableHead>
+                  <TableHead className="w-32">Status</TableHead>
+                  <TableHead className="w-40">Schedule</TableHead>
+                  <TableHead className="w-40">Created</TableHead>
+                  <TableHead className="w-20"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {trackers.map((tracker) => (
+                  <TableRow
+                    key={tracker.id}
+                    data-state={selectedRows.has(tracker.id) && "selected"}
+                  >
+                    <TableCell>
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={selectedRows.has(tracker.id)}
+                          onCheckedChange={(checked) => {
+                            const newSelected = new Set(selectedRows);
+                            if (checked) {
+                              newSelected.add(tracker.id);
+                            } else {
+                              newSelected.delete(tracker.id);
+                            }
+                            setSelectedRows(newSelected);
+                          }}
+                          aria-label="Select row"
+                        />
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{tracker.brand}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {tracker.query}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={tracker.active ? "default" : "secondary"}
+                        className="text-muted-foreground px-1.5"
+                      >
+                        {tracker.active ? (
+                          <>
+                            <Activity className="w-3 h-3 mr-1" />
+                            Active
+                          </>
+                        ) : (
+                          <>
+                            <Pause className="w-3 h-3 mr-1" />
+                            Paused
+                          </>
+                        )}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        Daily at 9:00 AM
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {new Date(tracker.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
+                            size="icon"
+                          >
+                            <IconDotsVertical />
+                            <span className="sr-only">Open menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem
+                            onClick={() => runCheck(tracker.brand, tracker.query)}
+                          >
+                            <Search className="w-4 h-4 mr-2" />
+                            Check Now
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => toggleTracker(tracker.id, tracker.active)}
+                          >
+                            {tracker.active ? (
+                              <>
+                                <Pause className="w-4 h-4 mr-2" />
+                                Pause
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-4 h-4 mr-2" />
+                                Resume
+                              </>
+                            )}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => deleteTracker(tracker.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </Card>
     </div>
   );

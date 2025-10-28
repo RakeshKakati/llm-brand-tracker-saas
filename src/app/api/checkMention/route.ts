@@ -34,7 +34,11 @@ function inferMentionStatus(text: string, brand: string) {
 
 export async function POST(req: Request) {
   try {
-    const { brand, query, user_email } = await req.json();
+    const bodyIn = await req.json();
+    const user_email = bodyIn?.user_email;
+    // Normalize brand/query: trim and collapse whitespace
+    const brand = String(bodyIn?.brand ?? "").trim().replace(/\s+/g, " ");
+    const query = String(bodyIn?.query ?? "").trim().replace(/\s+/g, " ");
 
     if (!brand || !query)
       return NextResponse.json({ error: "Missing brand or query" }, { status: 400 });
@@ -149,8 +153,8 @@ export async function POST(req: Request) {
     // Fallback: record failed search
     try {
       const body = await req.json().catch(() => ({} as any));
-      const brand = body?.brand;
-      const query = body?.query;
+      const brand = String(body?.brand ?? "").trim().replace(/\s+/g, " ");
+      const query = String(body?.query ?? "").trim().replace(/\s+/g, " ");
       const user_email = body?.user_email;
       if (brand && query && user_email) {
         await supabaseAdmin.from("brand_mentions").insert([

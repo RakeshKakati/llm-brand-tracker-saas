@@ -13,6 +13,7 @@ import HistoryPage from "@/components/pages/HistoryPage";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import CompetitorsPage from "@/components/pages/CompetitorsPage";
+import MentionsPage from "@/components/pages/MentionsPage";
 
 export default function NotionLayout() {
   const router = useRouter();
@@ -61,6 +62,8 @@ export default function NotionLayout() {
         return <SettingsPage />;
       case "competitors":
         return <CompetitorsPage />;
+      case "mentions":
+        return <MentionsPage />;
       default:
         return <DashboardPage />;
     }
@@ -74,6 +77,7 @@ export default function NotionLayout() {
       case "history": return "Mention History";
       case "analytics": return "Analytics";
       case "settings": return "Settings";
+      case "mentions": return "Brand Mentions";
       default: return "Dashboard";
     }
   };

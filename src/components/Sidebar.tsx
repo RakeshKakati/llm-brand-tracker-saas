@@ -74,6 +74,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       page: "dashboard",
     },
     {
+      title: "Brand Mentions",
+      icon: FileText,
+      page: "mentions",
+    },
+    {
       title: "Competitors",
       icon: Users,
       page: "competitors",

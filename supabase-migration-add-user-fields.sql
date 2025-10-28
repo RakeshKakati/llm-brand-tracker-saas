@@ -94,6 +94,47 @@ CREATE POLICY "Users can insert their own mentions" ON brand_mentions
 SELECT '🎉 Migration complete! Your tables now support multi-tenant data.' AS status;
 
 -- ========================================
+-- Dashboard layouts (per-user) - idempotent
+-- ========================================
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'dashboard_layouts'
+  ) THEN
+    CREATE TABLE public.dashboard_layouts (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_email text NOT NULL UNIQUE,
+      layout jsonb NOT NULL,
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+  END IF;
+END $$;
+
+ALTER TABLE public.dashboard_layouts ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+  CREATE POLICY dashboard_layouts_select ON public.dashboard_layouts
+    FOR SELECT USING (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy dashboard_layouts_select exists';
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY dashboard_layouts_upsert ON public.dashboard_layouts
+    FOR INSERT WITH CHECK (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy dashboard_layouts_upsert exists';
+END $$;
+
+DO $$ BEGIN
+  CREATE POLICY dashboard_layouts_update ON public.dashboard_layouts
+    FOR UPDATE USING (auth.jwt() ->> 'email' = user_email)
+    WITH CHECK (auth.jwt() ->> 'email' = user_email);
+EXCEPTION WHEN duplicate_object THEN
+  RAISE NOTICE 'Policy dashboard_layouts_update exists';
+END $$;
+
+-- ========================================
 -- Tracked competitors support (idempotent)
 -- ========================================
 DO $$ BEGIN

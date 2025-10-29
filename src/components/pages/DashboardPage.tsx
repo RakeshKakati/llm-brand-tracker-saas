@@ -603,8 +603,24 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           'closed', 'open', 'fresh', 'baked', 'goodness', 'bakery', 'sweets', 'snacks',
           'worst', 'better', 'offering', 'organic', 'healthy', 'natural', 'official',
           'line', 'indian', 'india', 'brands', 'brand', 'for', 'your', 'pets',
-          'shop', 'store', 'website', 'online', 'treats', 'food', 'headphones', 'wireless'
+          'shop', 'store', 'website', 'online', 'treats', 'food', 'headphones', 'wireless',
+          'lack', 'poor', 'limited', 'absence', 'missing', 'customization', 'integration',
+          'interface', 'options', 'user', 'men', 'women', 'shoes', 'sneakers', 'running'
         ]);
+        
+        // Patterns that indicate complaint/feature descriptions (not brand names)
+        const complaintPatterns = [
+          /^(lack of|poor|limited|absence of|missing|no|weak|strong|excellent|great|good|bad)\s+/i,
+          /^(lack|poor|limited|absence|missing|weak|strong|excellent|great|good|bad)\s+(of|in|with|for)\s+/i,
+        ];
+        
+        // Patterns that indicate product names (model numbers, product types)
+        const productPatterns = [
+          /\b(men'?s|women'?s|kids'?|children'?s)\s+(shoes?|sneakers?|running|boots?|sandals?|slippers?)\b/i,
+          /\b(shoes?|sneakers?|running|boots?|sandals?|slippers?)\s+(for|by|from)\s+/i,
+          /\b(model|version)\s+\d+/i,
+          /\d+\s*(st|nd|rd|th)\s+(generation|version|edition)/i,
+        ];
         
         // Query-like patterns to exclude (common search query words)
         const queryPatterns = [
@@ -709,6 +725,24 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
             continue;
           }
           
+          // Skip complaint/feature descriptive phrases (not brand names)
+          if (complaintPatterns.some(pattern => pattern.test(brandName))) {
+            console.log(`🚫 Skipped complaint/feature pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip product names (with model numbers, product types, etc.)
+          if (productPatterns.some(pattern => pattern.test(brandName))) {
+            console.log(`🚫 Skipped product name pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it starts with complaint adjectives followed by descriptive nouns
+          if (/^(poor|limited|lack|weak|strong|excellent|great|good|bad|missing|absence)\s+(customization|integration|interface|ui|ux|options?|features?|support|quality|design|performance|functionality|speed|reliability)\s*/i.test(brandName)) {
+            console.log(`🚫 Skipped complaint + feature phrase: "${brandName}"`);
+            continue;
+          }
+          
           // Skip if it contains "for", "with", "offering", etc. in the middle (likely description)
           if (/\s+(for|with|without|offering|providing|including|featuring)\s+/i.test(brandName)) {
             console.log(`🚫 Skipped contains descriptive phrase: "${brandName}"`);
@@ -718,6 +752,18 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           // Skip if it ends with descriptive words like "Shop", "Store", "Official", "Line", etc.
           if (/\s+(shop|store|official|line|products?|services?|website|online|site)\s*$/i.test(brandName)) {
             console.log(`🚫 Skipped ends with descriptive word: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it ends with product type words (likely product names, not brands)
+          if (/\s+(shoes?|sneakers?|running|boots?|sandals?|slippers?|headphones?|earbuds?|earphones?|speakers?|devices?|products?|items?)\s*$/i.test(brandName)) {
+            console.log(`🚫 Skipped ends with product type: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it looks like a product model (contains numbers + product words)
+          if (/\d+/.test(brandName) && /\b(shoes?|sneakers?|running|boots?|model|version|edition|gen|generation)\b/i.test(brandName)) {
+            console.log(`🚫 Skipped product model pattern: "${brandName}"`);
             continue;
           }
           

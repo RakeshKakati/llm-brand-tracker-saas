@@ -18,7 +18,7 @@ export default function TestimonialsSection() {
       name: "Sarah Chen",
       role: "Marketing Director",
       company: "TechFlow",
-      content: "Brand Tracker has revolutionized how we monitor our brand presence. The real-time alerts help us stay ahead of the competition.",
+      content: "kommi has revolutionized how we monitor our brand presence. The real-time alerts help us stay ahead of the competition.",
       rating: 5
     },
     {
@@ -56,7 +56,7 @@ export default function TestimonialsSection() {
           <div className="self-stretch text-center text-[#605A57] text-sm sm:text-base font-normal leading-6 sm:leading-7 font-sans">
             See what our customers say about their experience
             <br />
-            with Brand Tracker.
+            with kommi.
           </div>
         </div>
       </div>

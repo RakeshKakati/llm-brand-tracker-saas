@@ -131,7 +131,7 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
                 <Target className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">Brand Tracker</span>
+                <span className="truncate font-semibold">kommi</span>
                 <span className="truncate text-xs">SaaS Platform</span>
               </div>
             </SidebarMenuButton>

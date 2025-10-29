@@ -58,7 +58,7 @@ export default function FAQSection() {
             Frequently asked questions
           </div>
           <div className="self-stretch text-center text-[#605A57] text-sm sm:text-base font-normal leading-6 sm:leading-7 font-sans">
-            Everything you need to know about Brand Tracker
+            Everything you need to know about kommi
             <br />
             and how it can help your business.
           </div>

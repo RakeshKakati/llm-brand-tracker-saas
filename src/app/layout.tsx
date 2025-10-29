@@ -4,7 +4,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = { 
-  title: "Brand Tracker",
+  title: "kommi",
   description: "Monitor real-time brand mentions via OpenAI"
 };
 

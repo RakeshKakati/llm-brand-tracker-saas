@@ -42,7 +42,8 @@ import {
   AlertCircle,
   Globe,
   ExternalLink,
-  Calendar
+  Calendar,
+  RefreshCw
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { 
@@ -72,6 +73,7 @@ interface CompetitorData {
   competitorName: string;
   citationLinks: Array<{ url: string; title?: string }>;
   searchAppearances: number; // How many unique searches this competitor appeared in
+  bestPosition: number | null; // Best (lowest) position achieved (1 = first, 2 = second, etc.)
 }
 
 export default function DashboardPage() {
@@ -95,6 +97,8 @@ export default function DashboardPage() {
   const [trackedCompetitors, setTrackedCompetitors] = useState<{ name: string; domain: string }[]>([]);
   const [currentMentionsPage, setCurrentMentionsPage] = useState(1);
   const mentionsPerPage = 10;
+  const [currentCompetitorsPage, setCurrentCompetitorsPage] = useState(1);
+  const competitorsPerPage = 10;
   const hasFetchedRef = useRef(false);
 
   useEffect(() => {
@@ -214,10 +218,18 @@ export default function DashboardPage() {
       }
 
       console.log("🔍 Fetched mentions for analysis:", allMentions?.length);
+      console.log("📊 Sample mention:", allMentions && allMentions.length > 0 ? {
+        mentioned: allMentions[0].mentioned,
+        has_raw_output: !!allMentions[0].raw_output,
+        has_source_urls: !!allMentions[0].source_urls,
+        source_urls_count: Array.isArray(allMentions[0].source_urls) ? allMentions[0].source_urls.length : 0
+      } : 'no mentions');
 
-      // Process top sources (only where brand was mentioned)
-      const mentionedOnly = (allMentions || []).filter(m => m.mentioned === true);
-      const sources = processTopSources(mentionedOnly);
+      // Process top sources from ALL mentions (includes citations from all searches)
+      // Note: We include all mentions because citations are available even when brand wasn't mentioned
+      console.log("✅ Processing all mentions for top sources:", allMentions?.length || 0);
+      const sources = processTopSources(allMentions || []);
+      console.log("📈 Top sources result:", sources.length, "domains");
       setTopSources(sources);
 
       // Process competitors
@@ -239,13 +251,13 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false });
       setTrackedCompetitors((tc || []).map((r: any) => ({ name: r.name, domain: (r.domain || '').toLowerCase() })));
 
-      // Fetch mentions for chart (last 90 days)
+      // Fetch mentions for chart (last 90 days) - include source_urls and raw_output for domain extraction
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       
       const { data: chartMentions } = await supabase
         .from("brand_mentions")
-        .select("created_at, mentioned, query, brand")
+        .select("created_at, mentioned, query, brand, source_urls, raw_output")
         .eq("user_email", userEmail)
         .gte("created_at", ninetyDaysAgo.toISOString())
         .order("created_at", { ascending: true });
@@ -268,74 +280,103 @@ export default function DashboardPage() {
     }
   }, []);
 
+  // Helper function to extract URLs from a mention (shared by processTopSources and newDomains)
+  const extractUrlsFromMention = (mention: any): string[] => {
+    let urls: string[] = [];
+    
+    // Priority 1: Use source_urls from database if available
+    if (mention.source_urls) {
+      if (Array.isArray(mention.source_urls)) {
+        // Filter out any null/undefined/empty values
+        urls = mention.source_urls.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0);
+      } else if (typeof mention.source_urls === 'string') {
+        // Handle case where it might be a string representation of array
+        try {
+          const parsed = JSON.parse(mention.source_urls);
+          if (Array.isArray(parsed)) {
+            urls = parsed.filter((url: any) => url && typeof url === 'string' && url.trim().length > 0);
+          }
+        } catch (e) {
+          // Not a JSON string, skip
+        }
+      }
+    }
+    
+    // Priority 2: If no source_urls, extract from raw_output (find message item)
+    if (urls.length === 0 && mention.raw_output) {
+      try {
+        const parsed = typeof mention.raw_output === 'string' 
+          ? JSON.parse(mention.raw_output) 
+          : mention.raw_output;
+        
+        if (parsed?.output && Array.isArray(parsed.output)) {
+          // Find message item
+          const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
+          
+          // Extract from annotations (url_citation)
+          if (messageItem?.content?.[0]?.annotations) {
+            const annotations = messageItem.content[0].annotations;
+            annotations.forEach((ann: any) => {
+              if (ann.type === 'url_citation' && ann.url) {
+                urls.push(ann.url);
+              }
+            });
+          }
+          
+          // Also check web_search_call.action.sources
+          for (const item of parsed.output) {
+            if (item?.type === 'web_search_call' && item?.action?.sources) {
+              const sources = item.action.sources;
+              sources.forEach((source: any) => {
+                if (source?.url) {
+                  if (!urls.includes(source.url)) {
+                    urls.push(source.url);
+                  }
+                }
+              });
+            }
+          }
+          
+          // Fallback: regex from text
+          if (urls.length === 0 && messageItem?.content?.[0]?.text) {
+            const text = messageItem.content[0].text;
+            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+            const extracted = text.match(urlRegex) || [];
+            urls = [...urls, ...extracted];
+          }
+        } else {
+          // Fallback: try regex on raw string if not v1/responses format
+          const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+          urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
+        }
+      } catch (e) {
+        // If parsing fails, try regex on raw string
+        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
+        urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
+      }
+    }
+    
+    // Deduplicate URLs
+    return Array.from(new Set(urls));
+  };
+
   const processTopSources = (mentions: any[]): SourceData[] => {
     console.log("🔍 Processing top sources from", mentions.length, "mentions");
     const sourcesMap = new Map<string, { count: number; queries: Set<string>; lastSeen: string; mentions: MentionDetail[] }>();
 
+    if (mentions.length === 0) {
+      console.log("⚠️ No mentions provided to processTopSources");
+      return [];
+    }
+
     mentions.forEach((mention, index) => {
-      if (!mention.raw_output) {
-        console.log(`⚠️ Mention ${index + 1}: No raw_output`);
-        return;
-      }
-      if (!mention.mentioned) {
-        console.log(`⚠️ Mention ${index + 1}: Not mentioned`);
-        return;
-      }
+      // Process all mentions - citations are available even when brand wasn't mentioned
+      // Optional: You can filter by mentioned === true if you only want sources where brand was found
+      // For now, we process all to show all citation sources
 
       try {
-        // Use source_urls if available first
-        let urls: string[] = mention.source_urls || [];
-        
-        // If no source_urls, extract from raw_output (find message item)
-        if (urls.length === 0 && mention.raw_output) {
-          try {
-            const parsed = typeof mention.raw_output === 'string' 
-              ? JSON.parse(mention.raw_output) 
-              : mention.raw_output;
-            
-            if (parsed?.output && Array.isArray(parsed.output)) {
-              // Find message item
-              const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
-              
-              // Extract from annotations (url_citation)
-              if (messageItem?.content?.[0]?.annotations) {
-                const annotations = messageItem.content[0].annotations;
-                annotations.forEach((ann: any) => {
-                  if (ann.type === 'url_citation' && ann.url) {
-                    urls.push(ann.url);
-                  }
-                });
-              }
-              
-              // Also check web_search_call.action.sources
-              for (const item of parsed.output) {
-                if (item?.type === 'web_search_call' && item?.action?.sources) {
-                  const sources = item.action.sources;
-                  sources.forEach((source: any) => {
-                    if (source?.url) {
-                      urls.push(source.url);
-                    }
-                  });
-                }
-              }
-              
-              // Fallback: regex from text
-              if (urls.length === 0 && messageItem?.content?.[0]?.text) {
-                const text = messageItem.content[0].text;
-                const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-                urls = text.match(urlRegex) || [];
-              }
-            } else {
-              // Fallback: try regex on raw string if not v1/responses format
-              const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-              urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
-            }
-          } catch (e) {
-            // If parsing fails, try regex on raw string
-            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-            urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
-          }
-        }
+        // Use the shared helper function to extract URLs (same logic as newDomains)
+        const urls = extractUrlsFromMention(mention);
 
         if (urls.length === 0) {
           console.log(`⚠️ Mention ${index + 1}: No URLs found`);
@@ -404,6 +445,7 @@ export default function DashboardPage() {
       name: string;
       citationLinks: Map<string, { url: string; title?: string }>; // Use Map to deduplicate URLs
       searchQueries: Set<string>; // Track unique search queries this competitor appeared in
+      positions: number[]; // Track all positions this competitor achieved across searches
     }>();
 
     mentions.forEach((mention) => {
@@ -412,6 +454,7 @@ export default function DashboardPage() {
         let responseText = '';
         let citations: Array<{ url: string; title?: string }> = [];
         let parsedRawOutput: any = null;
+        let messageItem: any = null;
 
         // Try to parse raw_output as JSON
         if (mention.raw_output) {
@@ -422,7 +465,7 @@ export default function DashboardPage() {
             
             // Extract text from /v1/responses format - find message item
             if (parsedRawOutput?.output && Array.isArray(parsedRawOutput.output)) {
-              const messageItem = parsedRawOutput.output.find((item: any) => item.type === "message" && item.content);
+              messageItem = parsedRawOutput.output.find((item: any) => item.type === "message" && item.content);
               if (messageItem?.content?.[0]?.text) {
                 responseText = messageItem.content[0].text;
               }
@@ -480,16 +523,53 @@ export default function DashboardPage() {
           'when', 'where', 'why', 'how', 'what', 'which', 'who', 'whom', 'whose',
           'and', 'or', 'but', 'if', 'then', 'else', 'because', 'since', 'until',
           'next', 'previous', 'first', 'last', 'back', 'forward', 'up', 'down',
-          'left', 'right', 'start', 'end', 'begin', 'finish', 'complete', 'done'
+          'left', 'right', 'start', 'end', 'begin', 'finish', 'complete', 'done',
+          'closed', 'open', 'fresh', 'baked', 'goodness', 'bakery', 'sweets', 'snacks',
+          'worst', 'better', 'offering', 'organic', 'healthy', 'natural', 'official',
+          'line', 'indian', 'india', 'brands', 'brand', 'for', 'your', 'pets',
+          'shop', 'store', 'website', 'online', 'treats', 'food', 'headphones', 'wireless'
         ]);
+        
+        // Query-like patterns to exclude (common search query words)
+        const queryPatterns = [
+          /\b(best|worst|top|cheap|expensive|free|paid|premium|budget)\s+/i, // Rating/price indicators at start
+          /\b(india|indian|usa|american|european|global|local|international)\s*$/i, // Location indicators at end
+          /\b(for|with|without|including|offering|providing|featuring)\s+/i, // Prepositional phrases
+        ];
+        
+        // Patterns that indicate metadata, not brand names
+        const metadataPatterns = [
+          /^(closed|open)\s*·/i, // Status indicators like "Closed ·" or "Open ·"
+          /\d+\.\d+\s*\(\d+\s*reviews?\)/i, // Rating patterns like "4.4 (1482 reviews)"
+          /[$₹€£¥]+\s*[-–—]/i, // Price ranges like "$$$" or "₹200–400"
+          /^[·•]\s*[a-z]+\s*[·•]/i, // Bullet point metadata
+          /\d+\s*reviews?/i, // Just review counts
+          /^\d+\.\d+/i, // Starts with a rating number
+          /^[·•]+\s*$/i, // Just bullet points or separators
+        ];
 
-        // Extract brand names from **brand name** patterns
+        // Extract brand names from **brand name** patterns with their positions
         const brandPattern = /\*\*([^*]+)\*\*/g;
-        const extractedBrands = new Set<string>();
+        const extractedBrands: Array<{ name: string; position: number; endPosition: number }> = [];
         let match;
         
         while ((match = brandPattern.exec(responseText)) !== null) {
-          const brandName = match[1].trim();
+          let brandName = match[1].trim();
+          const fullMatch = match[0]; // includes the ** markers
+          const position = match.index; // position of ** before brand name
+          const endPosition = match.index + fullMatch.length; // position after closing **
+          
+          // Clean markdown link syntax: extract text from [text](url) patterns
+          // Handle full markdown link: [text](url) -> text
+          // Also handle multiple or partial markdown links within the name
+          brandName = brandName.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
+          
+          // Remove any remaining URL patterns that might be in the name
+          brandName = brandName.replace(/https?:\/\/[^\s<>"{}|\\^`\[\]]+/g, '').trim();
+          
+          // Clean up any extra spaces
+          brandName = brandName.replace(/\s+/g, ' ').trim();
+          
           const brandLower = brandName.toLowerCase().trim();
           
           // Skip if empty or the tracked brand
@@ -497,14 +577,103 @@ export default function DashboardPage() {
             continue;
           }
           
+          // Skip if it matches metadata patterns (status, ratings, prices, etc.)
+          if (metadataPatterns.some(pattern => pattern.test(brandName))) {
+            console.log(`🚫 Skipped metadata pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if contains rating/review patterns anywhere in the string
+          if (/\d+\.\d+\s*\(/.test(brandName) || /\d+\s*reviews?/i.test(brandName)) {
+            console.log(`🚫 Skipped rating pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if contains price indicators
+          if (/[$₹€£¥]+/.test(brandName) || /\d+\s*[-–—]\s*\d+/.test(brandName)) {
+            console.log(`🚫 Skipped price pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if contains status indicators (closed, open) as standalone or with separators
+          if (/^(closed|open)\s*(now|·|•)/i.test(brandName) || /(closed|open)\s*·/i.test(brandName)) {
+            console.log(`🚫 Skipped status indicator: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it contains too many separators (likely metadata, not a brand name)
+          const separatorCount = (brandName.match(/[·•]/g) || []).length;
+          if (separatorCount >= 2) {
+            console.log(`🚫 Skipped too many separators: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it looks like a search query (contains query patterns)
+          if (queryPatterns.some(pattern => pattern.test(brandName))) {
+            console.log(`🚫 Skipped query pattern: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it starts with common query words followed by a brand-like word
+          if (/^(best|worst|top|cheap|good|bad|new|old)\s+.+/i.test(brandName)) {
+            console.log(`🚫 Skipped query-like phrase: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it's too long (likely an article title or description, not a brand name)
+          // Brand names are typically 2-5 words, max ~40 characters
+          if (brandName.length > 40 || brandName.split(/\s+/).length > 5) {
+            console.log(`🚫 Skipped too long (likely article title): "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it contains quoted text or article title markers
+          if (/"|«|»|—|–/.test(brandName)) {
+            console.log(`🚫 Skipped contains quotes/dashes (article title): "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it contains "for", "with", "offering", etc. in the middle (likely description)
+          if (/\s+(for|with|without|offering|providing|including|featuring)\s+/i.test(brandName)) {
+            console.log(`🚫 Skipped contains descriptive phrase: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it ends with descriptive words like "Shop", "Store", "Official", "Line", etc.
+          if (/\s+(shop|store|official|line|products?|services?|website|online|site)\s*$/i.test(brandName)) {
+            console.log(`🚫 Skipped ends with descriptive word: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if it starts with "The" followed by an adjective and location (like "The Better India")
+          // Actually, "The Better India" is a real brand, so we'll be more specific
+          // Only skip if it's "The [generic adjective] [location]" and the middle word is generic
+          if (/^the\s+(better|best|good|new|top|worst|local|national|international)\s+(india|indian|usa|american)\s*$/i.test(brandName)) {
+            console.log(`🚫 Skipped generic "The [adj] [location]" pattern: "${brandName}"`);
+            continue;
+          }
+          
           // Check if it's a generic word (case-insensitive)
-          if (genericWords.has(brandLower)) {
+          const words = brandName.split(/\s+/).filter(w => w.length > 0);
+          if (words.length === 1 && genericWords.has(brandLower)) {
             console.log(`🚫 Skipped generic word: "${brandName}"`);
             continue;
           }
           
+          // Skip if all words are generic
+          if (words.length > 0 && words.every(word => genericWords.has(word.toLowerCase()))) {
+            console.log(`🚫 Skipped all generic words: "${brandName}"`);
+            continue;
+          }
+          
+          // Skip if most words are generic (more than 50% generic words)
+          const genericWordCount = words.filter(word => genericWords.has(word.toLowerCase())).length;
+          if (words.length > 2 && genericWordCount / words.length > 0.5) {
+            console.log(`🚫 Skipped mostly generic words: "${brandName}"`);
+            continue;
+          }
+          
           // Skip single words that are too short (likely not brand names)
-          const words = brandName.split(/\s+/).filter(w => w.length > 0);
           if (words.length === 1 && brandName.length < 4) {
             console.log(`🚫 Skipped too short: "${brandName}"`);
             continue;
@@ -516,23 +685,43 @@ export default function DashboardPage() {
             continue;
           }
           
-          extractedBrands.add(brandName);
-          console.log(`🏷️  Extracted brand from **: ${brandName}`);
+          // Skip if it contains location names as standalone words (not part of brand)
+          // But allow if it's a proper compound like "The Better India" (which has "The" prefix)
+          if (/^(indian|india|american|usa|european|global)\s*$/i.test(brandName)) {
+            console.log(`🚫 Skipped location-only: "${brandName}"`);
+            continue;
+          }
+          
+          extractedBrands.push({ name: brandName, position, endPosition });
+          console.log(`🏷️  Extracted brand from **: ${brandName} at position ${position}`);
         }
 
+        // Calculate position ranking for all brands in this response
+        // Sort all extracted brands by their position to determine ranking (1st, 2nd, 3rd, etc.)
+        const sortedBrands = [...extractedBrands].sort((a, b) => a.position - b.position);
+        
+        // Create a map of brand name to rank position
+        const brandRankMap = new Map<string, number>();
+        sortedBrands.forEach((brand, index) => {
+          const brandKey = brand.name.toLowerCase();
+          // Rank is 1-based (1 = first, 2 = second, etc.)
+          brandRankMap.set(brandKey, index + 1);
+        });
+
         // Process each extracted brand as a competitor
-        extractedBrands.forEach(brand => {
+        extractedBrands.forEach(brandInfo => {
           // Skip if it's the tracked brand
-          if (brand.toLowerCase() === mention.brand?.toLowerCase()) {
+          if (brandInfo.name.toLowerCase() === mention.brand?.toLowerCase()) {
             return;
           }
 
-          const key = brand.toLowerCase();
+          const key = brandInfo.name.toLowerCase();
           if (!competitorsMap.has(key)) {
             competitorsMap.set(key, {
-              name: brand,
+              name: brandInfo.name,
               citationLinks: new Map(),
               searchQueries: new Set(),
+              positions: [],
             });
           }
 
@@ -544,8 +733,59 @@ export default function DashboardPage() {
             competitor.searchQueries.add(query);
           }
           
-          // Add citation links (deduplicated by URL)
-          urls.forEach(link => {
+          // Track the position/rank for this competitor in this search
+          const brandRank = brandRankMap.get(key);
+          if (brandRank) {
+            competitor.positions.push(brandRank);
+          }
+          
+          // Find citations that are near this competitor mention
+          // Look for citations within 300 characters before or after the competitor mention
+          const citationWindow = 300;
+          const competitorStart = brandInfo.position;
+          const competitorEnd = brandInfo.endPosition;
+          
+          // Extract citations with position info from annotations
+          const citationsWithPosition: Array<{ url: string; title?: string }> = [];
+          
+          // If we have annotations with position info, use those
+          if (messageItem?.content?.[0]?.annotations && Array.isArray(messageItem.content[0].annotations)) {
+            messageItem.content[0].annotations.forEach((ann: any) => {
+              if (ann.type === 'url_citation' && ann.url) {
+                const citationStart = ann.start_index || 0;
+                const citationEnd = ann.end_index || 0;
+                
+                // Check if citation overlaps with or is near the competitor mention
+                // Citation is considered "near" if it's within the window
+                const citationCenter = (citationStart + citationEnd) / 2;
+                const competitorCenter = (competitorStart + competitorEnd) / 2;
+                
+                if (Math.abs(citationCenter - competitorCenter) <= citationWindow) {
+                  citationsWithPosition.push({
+                    url: ann.url,
+                    title: ann.title
+                  });
+                }
+              }
+            });
+          }
+          
+          // If no position-based citations found, fall back to all URLs (for backward compatibility)
+          // But only if we're not using annotations with positions
+          if (citationsWithPosition.length === 0 && (!messageItem?.content?.[0]?.annotations || messageItem.content[0].annotations.length === 0)) {
+            // Fallback: use all URLs if no annotation position data available
+            urls.forEach(link => {
+              if (link.url) {
+                citationsWithPosition.push({
+                  url: link.url,
+                  title: link.title
+                });
+              }
+            });
+          }
+          
+          // Add only the relevant citation links for this competitor
+          citationsWithPosition.forEach(link => {
             if (link.url) {
               competitor.citationLinks.set(link.url, {
                 url: link.url,
@@ -560,13 +800,29 @@ export default function DashboardPage() {
     });
 
     const results = Array.from(competitorsMap.values())
-      .map(comp => ({
-        competitorName: comp.name,
-        citationLinks: Array.from(comp.citationLinks.values()),
-        searchAppearances: comp.searchQueries.size, // Count of unique searches
-      }))
+      .map(comp => {
+        // Calculate best position (lowest number = highest rank = best)
+        const bestPosition = comp.positions.length > 0 
+          ? Math.min(...comp.positions) 
+          : null;
+        
+        return {
+          competitorName: comp.name,
+          citationLinks: Array.from(comp.citationLinks.values()),
+          searchAppearances: comp.searchQueries.size, // Count of unique searches
+          bestPosition: bestPosition, // Best position achieved (1 = first, lower is better)
+        };
+      })
       .filter(comp => comp.searchAppearances > 0) // Only show competitors that appeared in at least one search
-      .sort((a, b) => b.searchAppearances - a.searchAppearances); // Sort by search appearances
+      .sort((a, b) => {
+        // Sort by best position first (lower is better), then by search appearances
+        if (a.bestPosition !== null && b.bestPosition !== null) {
+          return a.bestPosition - b.bestPosition; // Lower position = better
+        }
+        if (a.bestPosition !== null) return -1; // Has position comes first
+        if (b.bestPosition !== null) return 1;
+        return b.searchAppearances - a.searchAppearances; // Then by search appearances
+      });
 
     console.log("🎯 Competitors found:", results.length);
     return results;
@@ -670,57 +926,27 @@ export default function DashboardPage() {
 
   // New domains discovered in range (not seen before range) - extracted from citations in all mentions
   const newDomains = React.useMemo(() => {
-    if (!chartMentionsRaw || chartMentionsRaw.length === 0) return [];
+    if (!chartMentionsRaw || chartMentionsRaw.length === 0) {
+      console.log("⚠️ No chart mentions data for new domains detection");
+      return [];
+    }
     
     const ref = new Date();
     const days = timeRange === "90d" ? 90 : timeRange === "7d" ? 7 : 30;
     const since = new Date(ref); 
     since.setDate(ref.getDate() - days);
     
+    console.log(`📅 New domains check: timeRange=${timeRange}, days=${days}, since=${since.toISOString()}, total mentions=${chartMentionsRaw.length}`);
+    
     // Extract all domains from citations in mentions before the time range (prior domains)
     const priorDomains = new Set<string>();
+    let priorMentionCount = 0;
     chartMentionsRaw.forEach((mention: any) => {
       const mentionDate = new Date(mention.created_at);
       if (mentionDate < since) {
-        // Extract domains from citations in this mention
-        let urls: string[] = [];
-        
-        // Try source_urls first
-        if (mention.source_urls && Array.isArray(mention.source_urls)) {
-          urls = mention.source_urls;
-        } else if (mention.raw_output) {
-          // Extract from raw_output citations
-          try {
-            const parsed = typeof mention.raw_output === 'string' 
-              ? JSON.parse(mention.raw_output) 
-              : mention.raw_output;
-            
-            // Extract from annotations - find message item in output array
-            if (parsed?.output && Array.isArray(parsed.output)) {
-              const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
-              
-              if (messageItem?.content?.[0]?.annotations) {
-                const annotations = messageItem.content[0].annotations;
-                annotations.forEach((ann: any) => {
-                  if (ann.type === 'url_citation' && ann.url) {
-                    urls.push(ann.url);
-                  }
-                });
-              }
-              
-              // Fallback: regex from text
-              if (urls.length === 0 && messageItem?.content?.[0]?.text) {
-                const text = messageItem.content[0].text;
-                const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-                urls = text.match(urlRegex) || [];
-              }
-            }
-          } catch (e) {
-            // If parsing fails, try regex on raw string
-            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-            urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
-          }
-        }
+        priorMentionCount++;
+        // Extract URLs using the helper function
+        const urls = extractUrlsFromMention(mention);
         
         // Extract domains from URLs
         urls.forEach((url: string) => {
@@ -739,47 +965,17 @@ export default function DashboardPage() {
     
     // Extract domains from citations in mentions within the time range
     const inRangeDomains = new Set<string>();
+    let inRangeMentionCount = 0;
+    let inRangeMentionsWithUrls = 0;
     chartMentionsRaw.forEach((mention: any) => {
       const mentionDate = new Date(mention.created_at);
       if (mentionDate >= since) {
-        // Extract domains from citations in this mention
-        let urls: string[] = [];
+        inRangeMentionCount++;
+        // Extract URLs using the helper function
+        const urls = extractUrlsFromMention(mention);
         
-        // Try source_urls first
-        if (mention.source_urls && Array.isArray(mention.source_urls)) {
-          urls = mention.source_urls;
-        } else if (mention.raw_output) {
-          // Extract from raw_output citations
-          try {
-            const parsed = typeof mention.raw_output === 'string' 
-              ? JSON.parse(mention.raw_output) 
-              : mention.raw_output;
-            
-            // Extract from annotations - find message item in output array
-            if (parsed?.output && Array.isArray(parsed.output)) {
-              const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
-              
-              if (messageItem?.content?.[0]?.annotations) {
-                const annotations = messageItem.content[0].annotations;
-                annotations.forEach((ann: any) => {
-                  if (ann.type === 'url_citation' && ann.url) {
-                    urls.push(ann.url);
-                  }
-                });
-              }
-              
-              // Fallback: regex from text
-              if (urls.length === 0 && messageItem?.content?.[0]?.text) {
-                const text = messageItem.content[0].text;
-                const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-                urls = text.match(urlRegex) || [];
-              }
-            }
-          } catch (e) {
-            // If parsing fails, try regex on raw string
-            const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/g;
-            urls = (typeof mention.raw_output === 'string' ? mention.raw_output : '').match(urlRegex) || [];
-          }
+        if (urls.length > 0) {
+          inRangeMentionsWithUrls++;
         }
         
         // Extract domains from URLs
@@ -800,7 +996,15 @@ export default function DashboardPage() {
     // Find domains that appear in range but not in prior (new domains)
     const newDomainsList = Array.from(inRangeDomains).filter(d => !priorDomains.has(d));
     
-    console.log(`🔍 New domains found: ${newDomainsList.length} (prior: ${priorDomains.size}, in range: ${inRangeDomains.size})`);
+    console.log(`🔍 New domains analysis:`, {
+      priorMentions: priorMentionCount,
+      priorDomains: priorDomains.size,
+      inRangeMentions: inRangeMentionCount,
+      inRangeMentionsWithUrls: inRangeMentionsWithUrls,
+      inRangeDomains: inRangeDomains.size,
+      newDomains: newDomainsList.length,
+      newDomainsList: newDomainsList.slice(0, 5) // Show first 5 for debugging
+    });
     
     return newDomainsList.slice(0, 8);
   }, [chartMentionsRaw, timeRange]);
@@ -934,121 +1138,18 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Monitor your brand mentions and tracking performance</p>
         </div>
-        <Button onClick={fetchDashboardData} className="gap-2" size="sm">
-          <Activity className="h-4 w-4" />
+        <Button 
+          onClick={fetchDashboardData} 
+          disabled={loading}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>
 
-      {/* Query Performance + New Domains */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Query Performance Table */}
-        <Card>
-          <div className="border-b p-6 pb-4">
-            <h3 className="text-base font-semibold">Query Performance</h3>
-            <p className="text-sm text-muted-foreground">Brand + query performance across the selected time range</p>
-          </div>
-          <div className="p-6 pt-4">
-            {queryPerformance.length > 0 ? (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <Input placeholder="Search brand or query" value={qpSearch} onChange={(e) => { setQpSearch(e.target.value); setQpPage(1); }} className="max-w-sm" />
-                  <div className="text-xs text-muted-foreground">{qpFiltered.length} rows</div>
-                </div>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[160px]">Brand</TableHead>
-                        <TableHead>Query</TableHead>
-                        <TableHead className="w-[120px] text-center">Mentions</TableHead>
-                        <TableHead className="w-[120px] text-center">Searches</TableHead>
-                        <TableHead className="w-[120px] text-center">Rate</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {qpPageData.map((row, idx) => (
-                        <TableRow key={`${row.brand}-${row.query}-${idx}`}>
-                          <TableCell className="font-medium">{row.brand || '-'}</TableCell>
-                          <TableCell className="truncate max-w-[360px]">{row.query}</TableCell>
-                          <TableCell className="text-center">{row.mentions}</TableCell>
-                          <TableCell className="text-center">{row.searches}</TableCell>
-                          <TableCell className="text-center">{row.rate.toFixed(1)}%</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-                <div className="flex items-center justify-between pt-2">
-                  <div className="text-xs text-muted-foreground">Page {qpPage} of {qpTotalPages}</div>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setQpPage(p => Math.max(1, p-1))} disabled={qpPage===1}>Previous</Button>
-                    <Button variant="outline" size="sm" onClick={() => setQpPage(p => Math.min(qpTotalPages, p+1))} disabled={qpPage===qpTotalPages}>Next</Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">No query data</div>
-            )}
-          </div>
-        </Card>
-        {/* New Domains */}
-        <Card>
-          <div className="border-b p-6 pb-4">
-            <h3 className="text-base font-semibold">New Domains This Period</h3>
-            <p className="text-sm text-muted-foreground">Sources not seen before the selected window</p>
-          </div>
-          <div className="p-6 pt-4">
-            {newDomains.length > 0 ? (
-              <div className="grid grid-cols-1 gap-2">
-                {newDomains.map((d) => (
-                  <a key={d} href={`https://${d}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm hover:text-primary">
-                    <span className="flex h-5 w-5 items-center justify-center rounded border bg-background">
-                      <img src={`https://www.google.com/s2/favicons?domain=${d}&sz=32`} alt="favicon" className="h-4 w-4" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-                    </span>
-                    {d}
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <div className="text-sm text-muted-foreground">No new domains detected</div>
-            )}
-          </div>
-        </Card>
-      </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard
-          title="Total Trackers"
-          value={stats.totalTrackers}
-          icon={Target}
-          color="bg-blue-600"
-          description={`${stats.activeTrackers} active now`}
-        />
-        <StatCard
-          title="Active Trackers"
-          value={stats.activeTrackers}
-          icon={Activity}
-          color="bg-green-600"
-          trend={+12}
-          description="Running smoothly"
-        />
-        <StatCard
-          title="Total Mentions"
-          value={stats.totalMentions}
-          icon={BarChart3}
-          color="bg-purple-600"
-          trend={+8}
-        />
-        <StatCard
-          title="Recent Activity"
-          value={stats.recentMentions}
-          icon={Clock}
-          color="bg-orange-600"
-          description="Last 24 hours"
-        />
-      </div>
 
       {/* New KPI row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -1413,23 +1514,24 @@ export default function DashboardPage() {
               {competitors.length} {competitors.length === 1 ? 'competitor' : 'competitors'}
             </Badge>
           </div>
-          <CardDescription>
-            Brands extracted from search results (detected from **brand name** patterns with citation links)
-          </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {competitors.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[200px]">Competitor Name</TableHead>
-                    <TableHead>Citation Links</TableHead>
-                    <TableHead className="w-[150px] text-center">Search Appearances</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {competitors.map((competitor, index) => (
+            <>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="min-w-[200px]">Competitor Name</TableHead>
+                      <TableHead>Citation Links</TableHead>
+                      <TableHead className="w-[120px] text-center">Best Position</TableHead>
+                      <TableHead className="w-[150px] text-center">Search Appearances</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {competitors
+                      .slice((currentCompetitorsPage - 1) * competitorsPerPage, currentCompetitorsPage * competitorsPerPage)
+                      .map((competitor, index) => (
                     <TableRow key={index} className="group">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
@@ -1484,6 +1586,18 @@ export default function DashboardPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-center">
+                        {competitor.bestPosition !== null ? (
+                          <Badge 
+                            variant={competitor.bestPosition <= 3 ? "default" : "secondary"} 
+                            className="font-mono"
+                          >
+                            #{competitor.bestPosition}
+                          </Badge>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">N/A</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Badge variant="secondary" className="font-mono">
                           {competitor.searchAppearances}
                         </Badge>
@@ -1492,7 +1606,61 @@ export default function DashboardPage() {
                   ))}
                 </TableBody>
               </Table>
-            </div>
+              </div>
+              
+              {/* Pagination Controls */}
+              {competitors.length > competitorsPerPage && (
+                <div className="flex items-center justify-between border-t px-6 py-4">
+                  <div className="text-sm text-muted-foreground">
+                    Showing {((currentCompetitorsPage - 1) * competitorsPerPage) + 1} to {Math.min(currentCompetitorsPage * competitorsPerPage, competitors.length)} of {competitors.length} competitors
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentCompetitorsPage(p => Math.max(1, p - 1))}
+                      disabled={currentCompetitorsPage === 1}
+                    >
+                      Previous
+                    </Button>
+                    <div className="flex items-center gap-1">
+                      {Array.from({ length: Math.min(5, Math.ceil(competitors.length / competitorsPerPage)) }, (_, i) => {
+                        const totalCompetitorsPages = Math.ceil(competitors.length / competitorsPerPage);
+                        let pageNum;
+                        if (totalCompetitorsPages <= 5) {
+                          pageNum = i + 1;
+                        } else if (currentCompetitorsPage <= 3) {
+                          pageNum = i + 1;
+                        } else if (currentCompetitorsPage >= totalCompetitorsPages - 2) {
+                          pageNum = totalCompetitorsPages - 4 + i;
+                        } else {
+                          pageNum = currentCompetitorsPage - 2 + i;
+                        }
+                        return (
+                          <Button
+                            key={pageNum}
+                            variant={currentCompetitorsPage === pageNum ? "default" : "outline"}
+                            size="sm"
+                            className="w-10"
+                            onClick={() => setCurrentCompetitorsPage(pageNum)}
+                          >
+                            {pageNum}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentCompetitorsPage(p => Math.min(Math.ceil(competitors.length / competitorsPerPage), p + 1))}
+                      disabled={currentCompetitorsPage === Math.ceil(competitors.length / competitorsPerPage)}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Target className="w-12 h-12 mb-4 opacity-50" />
@@ -1502,60 +1670,6 @@ export default function DashboardPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Quick Actions */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <Card className="relative overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-lg bg-blue-600/10">
-                <Target className="h-5 w-5 text-blue-600" />
-              </div>
-              <Badge variant="outline" className="bg-white">Daily</Badge>
-            </div>
-            <h3 className="text-base font-semibold mb-2">Check Frequency</h3>
-            <p className="text-sm text-muted-foreground mb-4">Automated checks run daily at 9 AM UTC</p>
-            <Button variant="outline" size="sm" className="w-full">
-              Configure Schedule
-            </Button>
-          </div>
-          <div className="h-1 bg-blue-600/20"></div>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-lg bg-green-600/10">
-                <Activity className="h-5 w-5 text-green-600" />
-              </div>
-              <Badge variant="outline" className="bg-white">Active</Badge>
-            </div>
-            <h3 className="text-base font-semibold mb-2">System Status</h3>
-            <p className="text-sm text-muted-foreground mb-4">All systems operational</p>
-            <Button variant="outline" size="sm" className="w-full">
-              View Logs
-            </Button>
-          </div>
-          <div className="h-1 bg-green-600/20"></div>
-        </Card>
-
-        <Card className="relative overflow-hidden">
-          <div className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-lg bg-purple-600/10">
-                <BarChart3 className="h-5 w-5 text-purple-600" />
-              </div>
-              <Badge variant="outline" className="bg-white">View</Badge>
-            </div>
-            <h3 className="text-base font-semibold mb-2">Analytics</h3>
-            <p className="text-sm text-muted-foreground mb-4">Detailed insights and reports</p>
-            <Button variant="outline" size="sm" className="w-full">
-              Explore Analytics
-            </Button>
-          </div>
-          <div className="h-1 bg-purple-600/20"></div>
-        </Card>
-      </div>
 
       {/* Mention Details Sheet */}
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>

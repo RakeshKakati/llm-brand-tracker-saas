@@ -14,7 +14,7 @@ export const getStripe = () => {
 export const STRIPE_PLANS = {
   PRO: {
     name: "Pro",
-    price: 29,
+    price: 19,
     features: [
       "Unlimited trackers",
       "Hourly checks",

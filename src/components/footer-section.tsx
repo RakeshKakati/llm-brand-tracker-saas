@@ -7,7 +7,7 @@ export default function FooterSection() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="flex flex-col gap-4">
-            <div className="text-[#37322F] text-lg font-semibold">Brand Tracker</div>
+            <div className="text-[#37322F] text-lg font-semibold">kommi</div>
             <div className="text-[#605A57] text-sm">
               Monitor your brand's AI visibility and stay ahead of the competition with real-time tracking and analytics.
             </div>
@@ -50,7 +50,7 @@ export default function FooterSection() {
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-[rgba(55,50,47,0.12)] flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-[#605A57] text-xs">
-            © 2024 Brand Tracker. All rights reserved.
+            © 2024 kommi. All rights reserved.
           </div>
           <div className="flex items-center gap-6">
             <a href="#" className="text-[#605A57] text-xs hover:text-[#37322F] transition-colors">Privacy Policy</a>

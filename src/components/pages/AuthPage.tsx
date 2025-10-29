@@ -137,7 +137,7 @@ export default function AuthPage() {
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-semibold text-xl">Brand Tracker</span>
+            <span className="font-semibold text-xl">kommi</span>
           </div>
           <div className="flex items-center gap-4">
             <Button

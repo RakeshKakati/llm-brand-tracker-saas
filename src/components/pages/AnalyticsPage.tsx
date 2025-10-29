@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -250,18 +251,19 @@ export default function AnalyticsPage() {
               <p className="text-sm text-gray-500">Last updated</p>
               <p className="text-xs text-gray-400">{lastRefresh.toLocaleTimeString()}</p>
             </div>
-            <button
+            <Button
               onClick={async () => {
                 console.log("🔄 Manual refresh triggered");
                 await fetchAnalyticsData();
                 setLastRefresh(new Date());
               }}
               disabled={loading}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors disabled:opacity-50"
+              variant="outline"
+              size="sm"
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
-            </button>
+            </Button>
           </div>
         </div>
       </div>

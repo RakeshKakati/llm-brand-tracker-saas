@@ -232,7 +232,64 @@ export async function POST(req: Request) {
 
     console.log(`🔗 Extracted ${source_urls.length} unique URLs (${source_urls.length > 0 ? source_urls.slice(0, 3).join(', ') : 'none'})`);
 
-    // ---- STEP 4: Store in Supabase with full raw response and extracted URLs ----
+    // ---- STEP 3.6: Calculate brand position/rank based on order of mentions ----
+    let brandPosition: number | null = null;
+    
+    if (mentioned && outputText) {
+      try {
+        // Extract all brands mentioned (including the tracked brand) from **brand name** patterns
+        const brandPattern = /\*\*([^*]+)\*\*/g;
+        const allBrands: Array<{ name: string; position: number }> = [];
+        let match;
+        
+        while ((match = brandPattern.exec(outputText)) !== null) {
+          let brandName = match[1].trim();
+          // Clean markdown links
+          brandName = brandName.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1').trim();
+          const position = match.index;
+          
+          if (brandName.length > 0) {
+            allBrands.push({ name: brandName.toLowerCase(), position });
+          }
+        }
+        
+        // Also check for brand mentions without ** markers (fallback)
+        // Look for brand name with word boundaries
+        const brandRegex = new RegExp(`\\b${brand.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+        const brandMatch = brandRegex.exec(outputText);
+        if (brandMatch && !allBrands.some(b => b.position === brandMatch.index)) {
+          allBrands.push({ name: brand.toLowerCase(), position: brandMatch.index });
+        }
+        
+        // Sort all brands by their position in the text
+        allBrands.sort((a, b) => a.position - b.position);
+        
+        // Find the rank of our tracked brand
+        const trackedBrandIndex = allBrands.findIndex(b => 
+          b.name === brand.toLowerCase() || 
+          b.name.includes(brand.toLowerCase()) || 
+          brand.toLowerCase().includes(b.name)
+        );
+        
+        if (trackedBrandIndex !== -1) {
+          brandPosition = trackedBrandIndex + 1; // Rank: 1-based (1st, 2nd, 3rd...)
+          console.log(`📍 Brand position: ${brandPosition} out of ${allBrands.length} brands mentioned`);
+        } else if (mentioned) {
+          // If brand is mentioned but not in **bold**, estimate position from text location
+          const brandTextPosition = outputText.toLowerCase().indexOf(brand.toLowerCase());
+          if (brandTextPosition !== -1) {
+            // Count how many brands appear before this position
+            const brandsBefore = allBrands.filter(b => b.position < brandTextPosition).length;
+            brandPosition = brandsBefore + 1;
+            console.log(`📍 Estimated brand position: ${brandPosition} based on text location`);
+          }
+        }
+      } catch (e) {
+        console.error("❌ Error calculating brand position:", e);
+      }
+    }
+
+    // ---- STEP 4: Store in Supabase with full raw response, extracted URLs, and position ----
     const rawResponseJson = JSON.stringify(data);
     const { error } = await supabaseAdmin.from("brand_mentions").insert([
       {
@@ -242,6 +299,7 @@ export async function POST(req: Request) {
         evidence: evidenceSnippet,
         raw_output: rawResponseJson, // Store complete JSON response from OpenAI API
         source_urls: source_urls, // Store extracted URLs as array
+        position: brandPosition, // Store position/rank (1st, 2nd, 3rd, etc.)
         user_email: user_email, // Associate with user
       },
     ]);

@@ -147,8 +147,13 @@ export default function MentionsPage() {
             Search and filter all your brand mentions data
           </p>
         </div>
-        <Button onClick={fetchMentions} className="gap-2" size="sm">
-          <RefreshCw className="h-4 w-4" />
+        <Button 
+          onClick={fetchMentions} 
+          disabled={loading}
+          variant="outline"
+          size="sm"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
       </div>

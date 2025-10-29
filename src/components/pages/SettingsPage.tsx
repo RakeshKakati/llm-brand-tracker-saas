@@ -411,7 +411,7 @@ export default function SettingsPage() {
                           </Badge>
                         </div>
                         <p className="text-lg font-semibold text-gray-700">
-                          ${subscription?.plan_type === 'pro' ? '29' : '0'} <span className="text-sm font-normal text-gray-600">/month</span>
+                          ${subscription?.plan_type === 'pro' ? '19' : '0'} <span className="text-sm font-normal text-gray-600">/month</span>
                         </p>
                       </div>
                     </div>

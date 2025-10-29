@@ -24,8 +24,16 @@ import {
   RefreshCw,
   FileText,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  MoreVertical
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { supabase } from "@/app/lib/supabaseClient";
 
 export default function HistoryPage() {
@@ -34,6 +42,8 @@ export default function HistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterMentioned, setFilterMentioned] = useState<boolean | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [evidenceSheetOpen, setEvidenceSheetOpen] = useState(false);
+  const [selectedEvidence, setSelectedEvidence] = useState<{ brand: string; query: string; evidence: string } | null>(null);
 
   useEffect(() => {
     fetchMentions();
@@ -98,6 +108,102 @@ export default function HistoryPage() {
     return matchesSearch && matchesFilter;
   });
 
+  // Helper function to extract and format evidence from a record
+  const extractEvidence = (record: any): string => {
+    let fullText = '';
+    
+    if (record.raw_output) {
+      try {
+        const parsed = typeof record.raw_output === 'string' 
+          ? JSON.parse(record.raw_output) 
+          : record.raw_output;
+        
+        // Extract text from /v1/responses format - find message item
+        if (parsed?.output && Array.isArray(parsed.output)) {
+          const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
+          if (messageItem?.content?.[0]?.text) {
+            fullText = messageItem.content[0].text;
+          }
+        }
+      } catch (e) {
+        fullText = '';
+      }
+    }
+    
+    // Function to summarize text intelligently
+    const summarizeText = (text: string): string => {
+      if (!text || text.trim().length === 0) return '';
+      
+      // Remove disclaimer patterns
+      const disclaimerPatterns = [
+        /I can't browse the web in real-time, but I can provide insights based on my last training data[^.]*\./gi,
+        /I'm unable to browse the web directly or fetch real-time search results[^.]*\./gi,
+        /I'm unable to search the web or provide real-time data[^.]*\./gi,
+        /I'm unable to search the web in real-time[^.]*\./gi,
+        /I don't have real-time access to the internet[^.]*\./gi,
+        /I cannot browse the web[^.]*\./gi,
+        /I'm unable to browse the web[^.]*\./gi,
+        /based on my last training data[^.]*\./gi,
+        /based on my training data[^.]*\./gi,
+        /based on information available up to[^.]*\./gi,
+        /my knowledge cutoff[^.]*\./gi,
+        /my capabilities are limited to information[^.]*\./gi,
+        /based on what I know up to[^.]*\./gi,
+        /as my capabilities are limited[^.]*\./gi,
+        /However, I can provide[^.]*information based on[^.]*\./gi,
+        /For the most accurate and up-to-date information[^.]*\./gi,
+        /If you're looking for the most current information[^.]*\./gi,
+        /I recommend checking[^.]*for the latest[^.]*\./gi,
+      ];
+      
+      let cleaned = text;
+      disclaimerPatterns.forEach(pattern => {
+        cleaned = cleaned.replace(pattern, '').trim();
+      });
+      
+      // Remove sentences that start with disclaimers
+      cleaned = cleaned.replace(/^I'?m?\s+(unable|cannot|can't)\s+[^.]*\./gmi, '').trim();
+      cleaned = cleaned.replace(/^However,\s+[^.]*based on[^.]*\./gmi, '').trim();
+      cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+      
+      // Remove URL fragments and markdown link artifacts
+      cleaned = cleaned.replace(/\(\[([^\]]+)\]\([^\)]+\)\)/g, '$1').trim();
+      cleaned = cleaned.replace(/utm_source=openai[\)]*/gi, '').trim();
+      cleaned = cleaned.replace(/\)+\s*\*\*/g, '**').trim();
+      cleaned = cleaned.replace(/\(+/g, '(').replace(/\)+/g, ')').trim();
+      cleaned = cleaned.replace(/\s*\)+\s*\*\*/g, '**').trim();
+      cleaned = cleaned.replace(/\s*\)+\s*([A-Z])/g, ' $1').trim();
+      cleaned = cleaned.replace(/\s+\)\s+/g, ' ').trim();
+      
+      if (cleaned.length === 0) return '';
+      
+      return cleaned;
+    };
+    
+    if (fullText && fullText.trim().length > 0) {
+      const summary = summarizeText(fullText);
+      if (summary && summary.trim().length > 0) {
+        return summary;
+      }
+    }
+    
+    if (record.evidence && record.evidence !== "No mention found") {
+      return record.evidence;
+    }
+    
+    return 'No response data available';
+  };
+
+  const handleShowEvidence = (record: any) => {
+    const evidence = extractEvidence(record);
+    setSelectedEvidence({
+      brand: record.brand || 'Unknown',
+      query: record.query || 'Unknown',
+      evidence: evidence
+    });
+    setEvidenceSheetOpen(true);
+  };
+
   const getTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -110,17 +216,17 @@ export default function HistoryPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-6 p-6">
+    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 max-w-full overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Mention History</h1>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Mention History</h1>
           <p className="text-sm text-muted-foreground">
             View all brand mention checks and results
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="text-right text-sm text-muted-foreground">
+          <div className="hidden sm:block text-right text-sm text-muted-foreground">
             <p>Last updated</p>
             <p className="font-medium">{lastRefresh.toLocaleTimeString()}</p>
           </div>
@@ -219,15 +325,16 @@ export default function HistoryPage() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table>
+            <div className="overflow-x-auto w-full -mx-4 md:mx-0">
+              <div className="inline-block min-w-full align-middle px-4 md:px-0">
+                <Table className="min-w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[120px]">Status</TableHead>
-                    <TableHead className="w-[150px]">Brand</TableHead>
-                    <TableHead>Query</TableHead>
-                    <TableHead className="hidden lg:table-cell">Evidence</TableHead>
-                    <TableHead className="hidden lg:table-cell min-w-[200px]">Citation Links</TableHead>
+                    <TableHead className="w-[100px] md:w-[120px]">Status</TableHead>
+                    <TableHead className="w-[120px] md:w-[150px]">Brand</TableHead>
+                    <TableHead className="min-w-[200px] md:min-w-[250px]">Query</TableHead>
+                    <TableHead className="hidden md:table-cell w-[200px] md:w-[250px] lg:w-[300px]">Citation Links</TableHead>
+                    <TableHead className="w-[50px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -254,223 +361,13 @@ export default function HistoryPage() {
                       <TableCell className="font-medium">
                         {record.brand}
                       </TableCell>
-                      <TableCell className="max-w-[300px]">
+                      <TableCell className="min-w-[200px] md:min-w-[250px] max-w-[300px] md:max-w-none">
                         <div className="flex items-start gap-2">
                           <FileText className="w-4 h-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                          <span className="text-sm">{record.query}</span>
+                          <span className="text-sm break-words">{record.query}</span>
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell max-w-[500px]">
-                        {(() => {
-                          // Extract and summarize text from raw_output
-                          let fullText = '';
-                          
-                          if (record.raw_output) {
-                            try {
-                              const parsed = typeof record.raw_output === 'string' 
-                                ? JSON.parse(record.raw_output) 
-                                : record.raw_output;
-                              
-                              // Extract text from /v1/responses format - find message item
-                              if (parsed?.output && Array.isArray(parsed.output)) {
-                                const messageItem = parsed.output.find((item: any) => item.type === "message" && item.content);
-                                if (messageItem?.content?.[0]?.text) {
-                                  fullText = messageItem.content[0].text;
-                                }
-                              }
-                            } catch (e) {
-                              // If parsing fails, return empty (don't show incomplete data)
-                              fullText = '';
-                            }
-                          }
-                          
-                          // Function to summarize text intelligently
-                          const summarizeText = (text: string): string => {
-                            if (!text || text.trim().length === 0) return '';
-                            
-                            // Remove disclaimer patterns
-                            const disclaimerPatterns = [
-                              /I can't browse the web in real-time, but I can provide insights based on my last training data[^.]*\./gi,
-                              /I'm unable to browse the web directly or fetch real-time search results[^.]*\./gi,
-                              /I'm unable to search the web or provide real-time data[^.]*\./gi,
-                              /I'm unable to search the web in real-time[^.]*\./gi,
-                              /I don't have real-time access to the internet[^.]*\./gi,
-                              /I cannot browse the web[^.]*\./gi,
-                              /I'm unable to browse the web[^.]*\./gi,
-                              /based on my last training data[^.]*\./gi,
-                              /based on my training data[^.]*\./gi,
-                              /based on information available up to[^.]*\./gi,
-                              /my knowledge cutoff[^.]*\./gi,
-                              /my capabilities are limited to information[^.]*\./gi,
-                              /based on what I know up to[^.]*\./gi,
-                              /as my capabilities are limited[^.]*\./gi,
-                              /However, I can provide[^.]*information based on[^.]*\./gi,
-                              /For the most accurate and up-to-date information[^.]*\./gi,
-                              /If you're looking for the most current information[^.]*\./gi,
-                              /I recommend checking[^.]*for the latest[^.]*\./gi,
-                            ];
-                            
-                            let cleaned = text;
-                            disclaimerPatterns.forEach(pattern => {
-                              cleaned = cleaned.replace(pattern, '').trim();
-                            });
-                            
-                            // Remove sentences that start with disclaimers
-                            cleaned = cleaned.replace(/^I'?m?\s+(unable|cannot|can't)\s+[^.]*\./gmi, '').trim();
-                            cleaned = cleaned.replace(/^However,\s+[^.]*based on[^.]*\./gmi, '').trim();
-                            cleaned = cleaned.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
-                            
-                            // Remove URL fragments and markdown link artifacts
-                            // Remove patterns like "([domain.com](url))" or "utm_source=openai))"
-                            cleaned = cleaned.replace(/\(\[([^\]]+)\]\([^\)]+\)\)/g, '$1').trim(); // Remove markdown links but keep text
-                            cleaned = cleaned.replace(/utm_source=openai[\)]*/gi, '').trim(); // Remove utm_source fragments
-                            cleaned = cleaned.replace(/\)+\s*\*\*/g, '**').trim(); // Remove trailing closing parens before **
-                            cleaned = cleaned.replace(/\(+/g, '(').replace(/\)+/g, ')').trim(); // Remove multiple consecutive parens
-                            cleaned = cleaned.replace(/\s*\)+\s*\*\*/g, '**').trim(); // Clean up ")) **Brand**"
-                            cleaned = cleaned.replace(/\s*\)+\s*([A-Z])/g, ' $1').trim(); // Clean up ")) Brand"
-                            cleaned = cleaned.replace(/\s+\)\s+/g, ' ').trim(); // Remove isolated closing parens
-                            
-                            if (cleaned.length === 0) return '';
-                            
-                            // Extract key mentions (brand names in **bold**)
-                            const brandMentions: string[] = [];
-                            const brandPattern = /\*\*([^*]+)\*\*/g;
-                            let match;
-                            while ((match = brandPattern.exec(cleaned)) !== null) {
-                              const mention = match[1].trim();
-                              if (mention && mention.toLowerCase() !== record.brand?.toLowerCase()) {
-                                brandMentions.push(mention);
-                              }
-                            }
-                            
-                            // Split into sentences
-                            const sentences = cleaned.split(/[.!?]+/).filter(s => s.trim().length > 20);
-                            
-                            // Create intelligent summary
-                            let summary = '';
-                            
-                            // Strategy 1: If brand was mentioned, collect ALL sentences mentioning the brand
-                            if (record.mentioned && record.brand) {
-                              const brandRegex = new RegExp(`\\b${record.brand}\\b`, 'i');
-                              const brandSentences = sentences.filter(s => brandRegex.test(s));
-                              if (brandSentences.length > 0) {
-                                // Take first 2 sentences mentioning the brand
-                                summary = brandSentences.slice(0, 2).map(s => s.trim()).join('. ') + '.';
-                              }
-                            }
-                            
-                            // Strategy 2: If brand was mentioned but not found in sentences, look for brand-specific product mentions
-                            if (!summary && record.mentioned && record.brand) {
-                              const brandLower = record.brand.toLowerCase();
-                              // Find bold mentions that include the brand name
-                              const brandProducts = brandMentions.filter(m => 
-                                m.toLowerCase().includes(brandLower) || brandLower.includes(m.toLowerCase().split(' ')[0])
-                              );
-                              if (brandProducts.length > 0) {
-                                // Get sentences that mention these products
-                                const productSentences = sentences.filter(s => 
-                                  brandProducts.some(p => s.includes(p))
-                                );
-                                if (productSentences.length > 0) {
-                                  summary = productSentences.slice(0, 2).map(s => s.trim()).join('. ') + '.';
-                                }
-                              }
-                            }
-                            
-                            // Strategy 3: Create a structured summary if we have brand mentions (competitors or products)
-                            if (!summary && brandMentions.length > 0) {
-                              // Group by brand if multiple products from same brand
-                              const brandGrouped: Record<string, string[]> = {};
-                              brandMentions.forEach(mention => {
-                                const brandName = mention.split(' ')[0]; // Get first word (likely brand)
-                                if (!brandGrouped[brandName]) brandGrouped[brandName] = [];
-                                brandGrouped[brandName].push(mention);
-                              });
-                              
-                              const summaryParts: string[] = [];
-                              Object.keys(brandGrouped).slice(0, 3).forEach(brand => {
-                                const products = brandGrouped[brand];
-                                if (products.length === 1) {
-                                  summaryParts.push(products[0]);
-                                } else {
-                                  summaryParts.push(`${brand} (${products.slice(0, 2).join(', ')}${products.length > 2 ? '...' : ''})`);
-                                }
-                              });
-                              
-                              if (summaryParts.length > 0) {
-                                summary = `Top mentions: ${summaryParts.join('; ')}.`;
-                              }
-                            }
-                            
-                            // Strategy 4: Take first meaningful sentence that introduces the topic
-                            if (!summary && sentences.length > 0) {
-                              // Find opening sentence (first substantial sentence)
-                              const opening = sentences.find(s => {
-                                const lower = s.toLowerCase();
-                                return s.trim().length > 40 && 
-                                  (lower.includes('here') || lower.includes('some') || lower.includes('top') || 
-                                   lower.includes('popular') || lower.includes('best'));
-                              });
-                              if (opening) {
-                                summary = opening.trim() + '.';
-                              }
-                            }
-                            
-                            // Strategy 5: First 2 substantial sentences
-                            if (!summary && sentences.length > 0) {
-                              const meaningful = sentences.filter(s => s.trim().length > 40).slice(0, 2);
-                              if (meaningful.length > 0) {
-                                summary = meaningful.map(s => s.trim()).join('. ') + 
-                                  (!meaningful[meaningful.length - 1].endsWith('.') ? '.' : '');
-                              }
-                            }
-                            
-                            // Strategy 6: Intelligent truncation fallback
-                            if (!summary || summary.length < 20) {
-                              summary = cleaned.slice(0, 300).trim();
-                              if (summary.length === 300) {
-                                const lastPeriod = summary.lastIndexOf('.');
-                                const lastNewline = summary.lastIndexOf('\n');
-                                const cutoff = Math.max(lastPeriod, lastNewline);
-                                if (cutoff > 150) {
-                                  summary = summary.slice(0, cutoff + 1);
-                                } else {
-                                  summary += '...';
-                                }
-                              }
-                            }
-                            
-                            return summary;
-                          };
-                          
-                          if (fullText && fullText.trim().length > 0) {
-                            const summary = summarizeText(fullText);
-                            if (summary && summary.trim().length > 0) {
-                              return (
-                                <div className="text-sm text-muted-foreground line-clamp-3 break-words">
-                                  {summary}
-                                </div>
-                              );
-                            }
-                          }
-                          
-                          if (record.evidence && record.evidence !== "No mention found") {
-                            // Fallback to evidence if no full text available
-                            return (
-                              <div className="text-sm text-muted-foreground line-clamp-2">
-                                {record.evidence}
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <span className="text-xs text-muted-foreground italic">
-                                No response data
-                              </span>
-                            );
-                          }
-                        })()}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden md:table-cell w-[200px] md:w-[250px] lg:w-[300px]">
                         {(() => {
                           // Extract citation links from record - comprehensive extraction
                           let citationLinks: Array<{ url: string; title?: string }> = [];
@@ -548,7 +445,7 @@ export default function HistoryPage() {
                           
                           if (uniqueLinks.length > 0) {
                             return (
-                              <div className="flex flex-col gap-1.5 max-h-[200px] overflow-y-auto">
+                              <div className="flex flex-col gap-1.5 max-h-[150px] md:max-h-[200px] overflow-y-auto pr-1">
                                 {uniqueLinks.map((link, idx) => {
                                   try {
                                     const urlObj = new URL(link.url);
@@ -586,21 +483,62 @@ export default function HistoryPage() {
                             );
                           } else {
                             return (
-                              <span className="text-xs text-muted-foreground italic">
+                              <span className="text-xs text-muted-foreground">
                                 No citation links
                               </span>
                             );
                           }
                         })()}
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleShowEvidence(record)}
+                          title="View evidence"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
+              </div>
             </div>
           )}
         </CardContent>
       </Card>
+
+      {/* Evidence Sheet */}
+      <Sheet open={evidenceSheetOpen} onOpenChange={setEvidenceSheetOpen}>
+        <SheetContent className="sm:max-w-[600px] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>Evidence Details</SheetTitle>
+            <SheetDescription>
+              {selectedEvidence && (
+                <div className="space-y-1 mt-2">
+                  <p className="font-medium">Brand: {selectedEvidence.brand}</p>
+                  <p className="text-sm text-muted-foreground">Query: {selectedEvidence.query}</p>
+                </div>
+              )}
+            </SheetDescription>
+          </SheetHeader>
+          <div className="mt-6">
+            {selectedEvidence && (
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-sm font-semibold mb-2">Response Summary:</h3>
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap break-words bg-muted/50 p-4 rounded-lg max-h-[60vh] overflow-y-auto">
+                    {selectedEvidence.evidence || 'No evidence available'}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

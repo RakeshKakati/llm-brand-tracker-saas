@@ -36,6 +36,7 @@ export async function POST(req: Request) {
   try {
     const bodyIn = await req.json();
     const user_email = bodyIn?.user_email;
+    const team_id = bodyIn?.team_id || null;
     // Normalize brand/query: trim and collapse whitespace
     const brand = String(bodyIn?.brand ?? "").trim().replace(/\s+/g, " ");
     const query = String(bodyIn?.query ?? "").trim().replace(/\s+/g, " ");
@@ -301,6 +302,7 @@ export async function POST(req: Request) {
         source_urls: source_urls, // Store extracted URLs as array
         position: brandPosition, // Store position/rank (1st, 2nd, 3rd, etc.)
         user_email: user_email, // Associate with user
+        team_id: team_id, // Associate with team (if provided)
       },
     ]);
 

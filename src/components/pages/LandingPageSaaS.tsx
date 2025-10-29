@@ -10,7 +10,6 @@ import {
   Zap,
   BarChart3,
   CheckCircle,
-  Sparkles,
   ArrowRight,
   Rocket,
   Target,
@@ -19,55 +18,25 @@ import {
   Search,
   Bell,
   FileText,
-  Database,
   ArrowDown,
   PlayCircle,
   Clock,
   Activity,
   Link2,
-  ExternalLink
+  ExternalLink,
+  Building2,
+  Layers,
+  Sparkles
 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LandingPageSaaS() {
-  const features = [
-    {
-      icon: <Zap className="w-6 h-6" />,
-      title: "Real-time Monitoring",
-      description: "Track brand mentions across AI-powered search results instantly"
-    },
-    {
-      icon: <Target className="w-6 h-6" />,
-      title: "AI-Powered Detection",
-      description: "Advanced NLP for accurate brand mention identification"
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Analytics Dashboard",
-      description: "Comprehensive insights and performance metrics"
-    },
-    {
-      icon: <Globe className="w-6 h-6" />,
-      title: "Source Tracking",
-      description: "Identify and track exact sources with clickable links"
-    },
-    {
-      icon: <Shield className="w-6 h-6" />,
-      title: "Secure & Private",
-      description: "End-to-end encryption and data protection"
-    },
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Multi-user Support",
-      description: "Collaborate with team members seamlessly"
-    }
-  ];
-
   const pricingPlans = [
     {
       name: "Free",
       price: "$0",
-      period: "forever",
+      period: "/forever",
       description: "Perfect for getting started",
       features: [
         "5 brand trackers",
@@ -82,17 +51,17 @@ export default function LandingPageSaaS() {
     {
       name: "Pro",
       price: "$19",
-      period: "month",
+      period: "/month",
       description: "For growing businesses",
       features: [
-        "Unlimited trackers",
+        "10 brand trackers",
         "Hourly checks",
         "Advanced analytics",
         "Priority support",
         "1 year history",
-        "API access"
+        "Team collaboration"
       ],
-      cta: "Start Free Trial",
+      cta: "Get Started",
       popular: true
     },
     {
@@ -119,7 +88,13 @@ export default function LandingPageSaaS() {
       <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Image 
+              src="/logo.svg" 
+              alt="kommi logo" 
+              width={24} 
+              height={24}
+              className="object-contain"
+            />
             <span className="font-semibold text-xl">kommi</span>
           </div>
           <div className="flex items-center gap-4">
@@ -138,31 +113,25 @@ export default function LandingPageSaaS() {
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              AI search analytics for{" "}
-              <span className="text-primary">marketing teams</span>
+              Monitor and improve your{" "}
+              <span className="text-primary">brand visibility in AI</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Track, analyze, and improve brand performance on AI search platforms
+              Track how often AI assistants like ChatGPT mention your brand and dominate AI search results
             </p>
-            <p className="text-lg text-muted-foreground mb-8">
-              through key metrics like{" "}
-              <span className="font-semibold text-foreground">Visibility</span>,{" "}
-              <span className="font-semibold text-foreground">Position</span>, and{" "}
-              <span className="font-semibold text-foreground">Sentiment</span>
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
               <Link href="/auth">
                 <Button size="lg" className="text-lg px-8 py-6">
-                  Start Free Trial
+                  Analyze For Free
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
               <Button size="lg" variant="outline" className="text-lg px-8 py-6">
-                Talk to Sales
+                Try live demo
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">
-              No credit card required • Trusted by 1000+ marketing teams
+            <p className="text-sm text-muted-foreground">
+              Free forever • No credit card required
             </p>
           </div>
           
@@ -178,56 +147,80 @@ export default function LandingPageSaaS() {
               <Badge variant="outline" className="text-xs">Last 7 days</Badge>
             </div>
             <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <Card className="p-6 border-2 border-primary/20 bg-background">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Visibility</span>
-                    <TrendingUp className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-muted-foreground">Unique Sources</span>
+                    <Globe className="w-4 h-4 text-blue-600" />
+                  </div>
+                  <div className="text-3xl font-bold">3</div>
+                  <div className="text-xs text-muted-foreground mt-1">Last 30d</div>
+                </Card>
+                <Card className="p-6 border-2 border-primary/20 bg-background">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-muted-foreground">Unique Competitors</span>
+                    <Target className="w-4 h-4 text-green-600" />
+                  </div>
+                  <div className="text-3xl font-bold">5</div>
+                  <div className="text-xs text-muted-foreground mt-1">Last 30d</div>
+                </Card>
+                <Card className="p-6 border-2 border-primary/20 bg-background">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-muted-foreground">Mention Rate</span>
+                    <BarChart3 className="w-4 h-4 text-purple-600" />
                   </div>
                   <div className="text-3xl font-bold">63%</div>
-                  <div className="text-xs text-muted-foreground mt-1">Rank: 3/14</div>
+                  <div className="text-xs text-muted-foreground mt-1">Mentions / Searches</div>
                 </Card>
                 <Card className="p-6 border-2 border-primary/20 bg-background">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Sentiment</span>
-                    <TrendingUp className="w-4 h-4 text-green-600" />
+                    <span className="text-sm font-medium text-muted-foreground">Query Coverage</span>
+                    <Activity className="w-4 h-4 text-orange-600" />
                   </div>
-                  <div className="text-3xl font-bold">90</div>
-                  <div className="text-xs text-muted-foreground mt-1">Rank: 2/14</div>
-                </Card>
-                <Card className="p-6 border-2 border-primary/20 bg-background">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Position</span>
-                    <Target className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="text-3xl font-bold">2</div>
-                  <div className="text-xs text-muted-foreground mt-1">Average rank</div>
+                  <div className="text-3xl font-bold">45%</div>
+                  <div className="text-xs text-muted-foreground mt-1">Queries with ≥ 1 mention</div>
                 </Card>
               </div>
               <Card className="bg-background border-2 border-primary/10">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">Competitive Comparison</h3>
-                    <Badge>April 2025</Badge>
+                    <h3 className="font-semibold text-lg">Recent Activity</h3>
+                    <Badge>Latest searches</Badge>
                   </div>
                   <div className="space-y-3">
                     {[
-                      { brand: "Salesforce", visibility: 62, trend: "up" },
-                      { brand: "Your Brand", visibility: 47, trend: "up", highlight: true },
-                      { brand: "HubSpot", visibility: 65, trend: "down" },
-                      { brand: "Zero", visibility: 32, trend: "stable" },
-                      { brand: "Pipedrive", visibility: 21, trend: "up" }
+                      { brand: "adidas", query: "best running shoes", mentioned: true, sources: ["letsrun.com", "techradar.com"], time: "4h ago" },
+                      { brand: "nike", query: "top sneakers 2024", mentioned: true, sources: ["techradar.com"], time: "6h ago" },
+                      { brand: "puma", query: "athletic footwear", mentioned: false, sources: [], time: "1d ago" }
                     ].map((item, idx) => (
-                      <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${item.highlight ? 'bg-primary/10 border-2 border-primary/30' : 'bg-muted/50'}`}>
-                        <span className={`font-medium ${item.highlight ? 'text-primary' : ''}`}>{item.brand}</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 bg-muted rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${item.highlight ? 'bg-primary' : 'bg-primary/40'}`}
-                              style={{ width: `${item.visibility}%` }}
-                            ></div>
+                      <div key={idx} className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Badge variant={item.mentioned ? "default" : "secondary"}>
+                              {item.mentioned ? "Mentioned" : "Not Found"}
+                            </Badge>
+                            <span className="font-medium">{item.brand}</span>
+                            <span className="text-sm text-muted-foreground">• {item.query}</span>
                           </div>
-                          <span className="text-sm font-semibold w-12 text-right">{item.visibility}%</span>
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                            {item.sources.length > 0 ? (
+                              <>
+                                {item.sources.slice(0, 2).map((src, i) => (
+                                  <span key={i} className="flex items-center gap-1">
+                                    <Link2 className="w-3 h-3" />
+                                    {src}
+                                  </span>
+                                ))}
+                                {item.sources.length > 2 && (
+                                  <span>+{item.sources.length - 2} more</span>
+                                )}
+                              </>
+                            ) : (
+                              <span>No sources</span>
+                            )}
+                            <span>•</span>
+                            <span>{item.time}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -239,259 +232,319 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-
-      {/* Product Features - Dashboard Views */}
+      {/* Features Section */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
-        <div className="mx-auto max-w-5xl text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4">All Your Insights in One Place</h2>
-          <p className="text-xl text-muted-foreground">
-            Comprehensive dashboard with real-time metrics and competitive intelligence
-          </p>
-        </div>
-        
-        {/* Feature 1: Overview Dashboard */}
-        <div className="max-w-6xl mx-auto mb-16">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Overview Dashboard</h3>
-            <p className="text-muted-foreground">Real-time metrics at a glance</p>
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">Track Your AI Visibility</h2>
+            <p className="text-xl text-muted-foreground">
+              See exactly how often you appear in AI-powered search results across major platforms
+            </p>
           </div>
-          <div className="rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden">
-            <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-4 text-sm font-medium text-foreground">kommi Dashboard</span>
-              </div>
-              <Badge variant="outline" className="text-xs">Last 7 days</Badge>
-            </div>
-            <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="p-6 border-2 border-primary/20 bg-background">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Visibility</span>
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div className="text-3xl font-bold">63%</div>
-                  <div className="text-xs text-muted-foreground mt-1">Rank: 3/14</div>
-                </Card>
-                <Card className="p-6 border-2 border-primary/20 bg-background">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Sentiment</span>
-                    <TrendingUp className="w-4 h-4 text-green-600" />
-                  </div>
-                  <div className="text-3xl font-bold">90</div>
-                  <div className="text-xs text-muted-foreground mt-1">Rank: 2/14</div>
-                </Card>
-                <Card className="p-6 border-2 border-primary/20 bg-background">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-muted-foreground">Position</span>
-                    <Target className="w-4 h-4 text-primary" />
-                  </div>
-                  <div className="text-3xl font-bold">2</div>
-                  <div className="text-xs text-muted-foreground mt-1">Average rank</div>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* Feature 2: Competitive Comparison */}
-        <div className="max-w-6xl mx-auto mb-16">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Competitive Comparison</h3>
-            <p className="text-muted-foreground">See how you stack up against competitors</p>
-          </div>
-          <div className="rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden">
-            <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-4 text-sm font-medium text-foreground">kommi Dashboard</span>
-              </div>
-              <Badge variant="outline" className="text-xs">April 2025</Badge>
+          {/* Feature 1: Visibility Tracking */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+              <h3 className="text-3xl font-bold mb-4">Track your visibility score</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Monitor your visibility across all major AI platforms and see exactly how often you appear in customer conversations. Get comprehensive analytics on mention rates, position rankings, and competitor comparisons.
+              </p>
+              <Link href="/auth">
+                <Button size="lg">
+                  View live demo
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
             </div>
-            <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <Card className="bg-background border-2 border-primary/10">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">Competitive Comparison</h3>
-                    <Badge>April 2025</Badge>
-                  </div>
-                  <div className="space-y-3">
-                    {[
-                      { brand: "Salesforce", visibility: 62 },
-                      { brand: "Your Brand", visibility: 47, highlight: true },
-                      { brand: "HubSpot", visibility: 65 },
-                      { brand: "Zero", visibility: 32 },
-                      { brand: "Pipedrive", visibility: 21 }
-                    ].map((item, idx) => (
-                      <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${item.highlight ? 'bg-primary/10 border-2 border-primary/30' : 'bg-muted/50'}`}>
-                        <span className={`font-medium ${item.highlight ? 'text-primary font-semibold' : ''}`}>{item.brand}</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-32 bg-muted rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${item.highlight ? 'bg-primary' : 'bg-primary/40'}`}
-                              style={{ width: `${item.visibility}%` }}
-                            ></div>
-                          </div>
-                          <span className="text-sm font-semibold w-12 text-right">{item.visibility}%</span>
-                        </div>
+            <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Dashboard</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <div className="space-y-4">
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-semibold">Visibility Score</span>
+                      <Badge className="bg-green-600">63%</Badge>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>ChatGPT</span>
+                        <span className="font-semibold">45%</span>
                       </div>
-                    ))}
-                  </div>
+                      <div className="w-full bg-muted rounded-full h-2">
+                        <div className="bg-primary h-2 rounded-full" style={{ width: '45%' }}></div>
+                      </div>
+                    </div>
+                  </Card>
+                  <Card className="p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="font-semibold">Best Position</span>
+                      <Badge variant="default">#2</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Average ranking across all searches</p>
+                  </Card>
                 </div>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature 3: Source Tracking */}
-        <div className="max-w-6xl mx-auto mb-16">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Top Sources</h3>
-            <p className="text-muted-foreground">Identify where your brand mentions originate</p>
-          </div>
-          <div className="rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden">
-            <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-4 text-sm font-medium text-foreground">kommi Dashboard</span>
               </div>
-              <Badge variant="outline" className="text-xs">Top 10 Sources</Badge>
             </div>
-            <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <Card className="bg-background border-2 border-primary/10">
-                <div className="p-6">
-                  <div className="space-y-3">
-                    {[
-                      { domain: "techcrunch.com", mentions: 142, trend: "up" },
-                      { domain: "producthunt.com", mentions: 98, trend: "up" },
-                      { domain: "forbes.com", mentions: 76, trend: "stable" },
-                      { domain: "theverge.com", mentions: 65, trend: "up" },
-                      { domain: "wired.com", mentions: 54, trend: "down" }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-4 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors">
-                        <div className="flex items-center gap-4">
-                          <Globe className="w-5 h-5 text-primary" />
-                          <div>
-                            <div className="font-medium">{item.domain}</div>
-                            <div className="text-xs text-muted-foreground">{item.mentions} mentions</div>
-                          </div>
-                        </div>
+          </div>
+
+          {/* Feature 2: Source Tracking */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Dashboard</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <div className="space-y-3">
+                  <h4 className="font-semibold mb-4">Top Sources</h4>
+                  {[
+                    { domain: "techcrunch.com", mentions: 42, status: "mentioned" },
+                    { domain: "forbes.com", mentions: 28, status: "mentioned" },
+                    { domain: "theverge.com", mentions: 15, status: "not mentioned" },
+                    { domain: "wired.com", mentions: 8, status: "not mentioned" }
+                  ].map((source, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg border bg-background">
+                      <div className="flex items-center gap-3">
+                        <Globe className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium">{source.domain}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant={source.status === "mentioned" ? "default" : "secondary"}>
+                          {source.mentions}
+                        </Badge>
+                        {source.status === "not mentioned" && (
+                          <span className="text-xs text-muted-foreground">No mention</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <h3 className="text-3xl font-bold mb-4">Identify the sources that don't mention you</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                See the URLs that AI models cite when answering questions. Know exactly which sources mention you and which don't. Get publisher contact information to pitch for mentions.
+              </p>
+              <Link href="/auth">
+                <Button size="lg">
+                  View live demo
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Feature 3: Competitor Analysis */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+              <h3 className="text-3xl font-bold mb-4">Find out your competitors' AI visibility</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Measure your visibility against your competitors. See who's getting mentioned more often, track their position rankings, and identify opportunities to outrank them.
+              </p>
+              <Link href="/auth">
+                <Button size="lg">
+                  View live demo
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+            <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Dashboard</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <h4 className="font-semibold mb-4">Competitor Analysis</h4>
+                <div className="space-y-3">
+                  {[
+                    { name: "Salesforce", appearances: 12, position: "#1" },
+                    { name: "Your Brand", appearances: 8, position: "#2", highlight: true },
+                    { name: "HubSpot", appearances: 6, position: "#3" },
+                    { name: "Pipedrive", appearances: 4, position: "#5" }
+                  ].map((comp, idx) => (
+                    <div key={idx} className={`flex items-center justify-between p-3 rounded-lg ${comp.highlight ? 'bg-primary/10 border-2 border-primary/30' : 'bg-muted/50 border'}`}>
+                      <div className="flex items-center gap-3">
+                        <Target className="w-4 h-4 text-primary" />
+                        <span className={`font-medium ${comp.highlight ? 'text-primary' : ''}`}>{comp.name}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <Badge variant="outline">{comp.position}</Badge>
+                        <span className="text-sm text-muted-foreground">{comp.appearances} searches</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 4: Position Tracking */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Dashboard</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <h4 className="font-semibold mb-4">Position Tracking</h4>
+                <div className="space-y-3">
+                  {[
+                    { query: "best CRM software", position: "#2", trend: "up" },
+                    { query: "enterprise solutions", position: "#1", trend: "up" },
+                    { query: "project management", position: "#3", trend: "stable" }
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-4 rounded-lg border bg-background">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm mb-1">{item.query}</p>
                         <div className="flex items-center gap-2">
+                          <Badge className="bg-primary">#{item.position}</Badge>
                           {item.trend === "up" && <TrendingUp className="w-4 h-4 text-green-600" />}
-                          {item.trend === "down" && <TrendingUp className="w-4 h-4 text-red-600 rotate-180" />}
-                          {item.trend === "stable" && <Activity className="w-4 h-4 text-gray-400" />}
-                          <ExternalLink className="w-4 h-4 text-muted-foreground" />
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <h3 className="text-3xl font-bold mb-4">Track your brand position in AI answers</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Know exactly where your brand ranks when AI answers questions. Track position changes over time and see how you compare to competitors. Most businesses have no idea what's being said about them by AI.
+              </p>
+              <Link href="/auth">
+                <Button size="lg">
+                  View live demo
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Feature 5: Team Collaboration */}
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+            <div>
+              <h3 className="text-3xl font-bold mb-4">Team collaboration for market expansion</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Share workspaces with your team. Collaborate on tracking strategies, share insights, and manage multiple brand trackers together. Perfect for agencies and growing teams.
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                  <span>Shared team workspaces</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                  <span>Role-based permissions</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                  <span>Team dashboards and analytics</span>
+                </li>
+              </ul>
+              <Link href="/auth">
+               <Button size="lg">
+                  Start collaborating
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+            <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Team Workspace</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Building2 className="w-5 h-5 text-primary" />
+                      <div>
+                        <p className="font-semibold">Marketing Team</p>
+                        <p className="text-xs text-muted-foreground">5 members</p>
+                      </div>
+                    </div>
+                    <Badge>Active</Badge>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Card className="p-4">
+                      <div className="text-2xl font-bold mb-1">12</div>
+                      <div className="text-xs text-muted-foreground">Team Trackers</div>
+                    </Card>
+                    <Card className="p-4">
+                      <div className="text-2xl font-bold mb-1">47</div>
+                      <div className="text-xs text-muted-foreground">Total Mentions</div>
+                    </Card>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Members</span>
+                      <div className="flex -space-x-2">
+                          {[1,2,3,4].map((i) => (
+                            <div key={i} className="w-6 h-6 rounded-full bg-primary/20 border-2 border-background"></div>
+                          ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </Card>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 6: Search Query Analytics */}
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Dashboard</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <h4 className="font-semibold mb-4">AI Search Queries</h4>
+                <div className="space-y-2">
+                  {[
+                    "best CRM for startups",
+                    "top project management tools",
+                    "enterprise software solutions",
+                    "small business CRM software"
+                  ].map((query, idx) => (
+                    <div key={idx} className="flex items-center gap-2 p-2 rounded-lg bg-muted/50">
+                      <Search className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-sm">{query}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2">
+              <h3 className="text-3xl font-bold mb-4">See what search queries AI uses</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                When AI answers questions, it searches the web with specific queries. Know exactly which keywords ChatGPT, Claude, and Gemini use. It's a critical insight for your content strategy.
+              </p>
+              <Link href="/auth">
+                <Button size="lg">
+                  View live demo
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
+      </section>
 
-        {/* Feature 4: Trend Analysis */}
-        <div className="max-w-6xl mx-auto mb-16">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Trend Analysis</h3>
-            <p className="text-muted-foreground">Track performance over time</p>
-          </div>
-          <div className="rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden">
-            <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-4 text-sm font-medium text-foreground">kommi Dashboard</span>
-              </div>
-              <Badge variant="outline" className="text-xs">Last 30 days</Badge>
-            </div>
-            <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <Card className="bg-background border-2 border-primary/10">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h3 className="font-semibold text-lg">Visibility Trend</h3>
-                    <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                      +5.2% this month
-                    </Badge>
-                  </div>
-                  <div className="h-48 flex items-end justify-between gap-2">
-                    {[45, 48, 52, 49, 55, 58, 61, 59, 63, 65, 68, 63].map((value, idx) => (
-                      <div key={idx} className="flex-1 flex flex-col items-center gap-2">
-                        <div 
-                          className="w-full bg-primary rounded-t transition-all hover:bg-primary/80"
-                          style={{ height: `${(value / 70) * 100}%` }}
-                        ></div>
-                        <span className="text-xs text-muted-foreground">{idx + 1}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Jan</span>
-                    <span className="text-muted-foreground">Current</span>
-                  </div>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </div>
-
-        {/* Feature 5: Mention History */}
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-8">
-            <h3 className="text-2xl font-bold mb-2">Mention History</h3>
-            <p className="text-muted-foreground">Track all brand mentions with full context</p>
-          </div>
-          <div className="rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden">
-            <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                <span className="ml-4 text-sm font-medium text-foreground">kommi Dashboard</span>
-              </div>
-              <Badge variant="outline" className="text-xs">Recent Mentions</Badge>
-            </div>
-            <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-              <Card className="bg-background border-2 border-primary/10">
-                <div className="p-6">
-                  <div className="space-y-4">
-                    {[
-                      { query: "best CRM for startups", mentioned: true, sources: 5, time: "2h ago" },
-                      { query: "top project management tools", mentioned: true, sources: 3, time: "5h ago" },
-                      { query: "enterprise software solutions", mentioned: false, sources: 0, time: "1d ago" },
-                      { query: "small business CRM software", mentioned: true, sources: 7, time: "2d ago" }
-                    ].map((item, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-4 rounded-lg border bg-muted/30">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Badge variant={item.mentioned ? "default" : "secondary"}>
-                              {item.mentioned ? "Mentioned" : "Not Found"}
-                            </Badge>
-                            <span className="font-medium text-sm">{item.query}</span>
-                          </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <span>{item.sources} sources</span>
-                            <span>•</span>
-                            <span>{item.time}</span>
-                          </div>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
-            </div>
+      {/* Social Proof Section */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/20">
+        <div className="mx-auto max-w-4xl text-center">
+          <h2 className="text-3xl font-bold mb-8">Trusted by marketing teams worldwide</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="p-6">
+              <div className="text-4xl font-bold text-primary mb-2">1,450+</div>
+              <div className="text-sm text-muted-foreground">Companies signed up</div>
+            </Card>
+            <Card className="p-6">
+              <div className="text-4xl font-bold text-primary mb-2">50K+</div>
+              <div className="text-sm text-muted-foreground">Brand mentions tracked</div>
+            </Card>
+            <Card className="p-6">
+              <div className="text-4xl font-bold text-primary mb-2">98%</div>
+              <div className="text-sm text-muted-foreground">Customer satisfaction</div>
+            </Card>
           </div>
         </div>
       </section>
@@ -504,7 +557,7 @@ export default function LandingPageSaaS() {
             Choose the plan that fits your needs
           </p>
           <Badge variant="outline" className="text-sm">
-            No credit card required • 14-day free trial
+            No credit card required • Free forever plan available
           </Badge>
         </div>
         
@@ -520,7 +573,7 @@ export default function LandingPageSaaS() {
             >
               {plan.popular && (
                 <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white border-0 px-4 py-1">
-                  Most Popular
+                  79% pick this
                 </Badge>
               )}
               
@@ -529,7 +582,7 @@ export default function LandingPageSaaS() {
                 <div className="flex items-baseline justify-center gap-1 mb-2">
                   <span className="text-5xl font-bold">{plan.price}</span>
                   {plan.period && (
-                    <span className="text-lg text-muted-foreground">/{plan.period}</span>
+                    <span className="text-lg text-muted-foreground">{plan.period}</span>
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">{plan.description}</p>
@@ -556,44 +609,24 @@ export default function LandingPageSaaS() {
             </Card>
           ))}
         </div>
-        
-        <div className="mt-12 text-center">
-          <p className="text-sm text-muted-foreground mb-4">
-            Trusted by 1000+ marketing teams
-          </p>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              Free trial
-            </span>
-            <span className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              No credit card
-            </span>
-            <span className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              Cancel anytime
-            </span>
-          </div>
-        </div>
       </section>
 
       {/* Final CTA Section */}
       <section className="container max-w-screen-2xl px-4 py-20">
         <Card className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 border-0 text-primary-foreground p-12 text-center shadow-2xl">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to start tracking your brand?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">Is your brand mentioned in ChatGPT?</h2>
           <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
-            Join thousands of businesses monitoring their brand mentions in AI search results
+            Get a free analysis of your brand mentions and visibility in AI like ChatGPT, Claude, Gemini and more.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth">
               <Button size="lg" variant="secondary" className="text-lg px-8 bg-background text-foreground hover:bg-background/90">
-                Start Free Trial
+                Analyze For Free
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-              Talk to Sales
+              Start for free
             </Button>
           </div>
         </Card>
@@ -602,15 +635,21 @@ export default function LandingPageSaaS() {
       {/* Footer */}
       <footer className="border-t border-border/40 bg-muted/30">
         <div className="container max-w-screen-2xl px-4 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-8">
             {/* Brand */}
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
+                <Image 
+                  src="/logo.svg" 
+                  alt="kommi logo" 
+                  width={24} 
+                  height={24}
+                  className="object-contain"
+                />
                 <span className="font-bold text-lg">kommi</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI search analytics for marketing teams. Track, analyze, and improve your brand performance.
+                Monitor and improve your brand visibility in AI. Track, analyze, and optimize your presence in AI-powered search results.
               </p>
             </div>
             
@@ -629,10 +668,22 @@ export default function LandingPageSaaS() {
             <div>
               <h4 className="font-semibold mb-4">Resources</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/blogs/comparisons" className="hover:text-foreground transition-colors">Comparisons</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">API Reference</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
+              </ul>
+            </div>
+            
+            {/* Comparisons */}
+            <div>
+              <h4 className="font-semibold mb-4">Comparisons</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="/blogs/comparisons/kommi-vs-peec-ai" className="hover:text-foreground transition-colors">vs Peec AI</a></li>
+                <li><a href="/blogs/comparisons/kommi-vs-otterly-ai" className="hover:text-foreground transition-colors">vs Otterly AI</a></li>
+                <li><a href="/blogs/comparisons/kommi-vs-knowatoa-ai" className="hover:text-foreground transition-colors">vs Knowatoa AI</a></li>
+                <li><a href="/blogs/comparisons/kommi-vs-profound-ai" className="hover:text-foreground transition-colors">vs Profound AI</a></li>
+                <li><a href="/blogs/comparisons/kommi-vs-rankshift" className="hover:text-foreground transition-colors">vs Rankshift</a></li>
               </ul>
             </div>
             
@@ -641,7 +692,6 @@ export default function LandingPageSaaS() {
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#" className="hover:text-foreground transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Careers</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Contact</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Privacy</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Terms</a></li>
@@ -656,7 +706,6 @@ export default function LandingPageSaaS() {
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-foreground transition-colors">Cookie Policy</a>
             </div>
           </div>
         </div>
@@ -664,4 +713,3 @@ export default function LandingPageSaaS() {
     </div>
   );
 }
-

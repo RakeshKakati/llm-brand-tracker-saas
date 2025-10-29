@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { brand, query, interval, user_email, user_id } = await req.json();
+    const { brand, query, interval, user_email, user_id, team_id } = await req.json();
 
     if (!brand || !query) {
       return NextResponse.json({ error: "Missing brand or query" }, { status: 400 });
@@ -49,7 +49,7 @@ export async function POST(req: Request) {
       }, { status: 403 });
     }
 
-    // Insert with user_email and user_id
+    // Insert with user_email, user_id, and optional team_id
     const { data, error } = await supabaseAdmin
       .from("tracked_brands")
       .insert([{ 
@@ -58,7 +58,8 @@ export async function POST(req: Request) {
         interval_minutes: interval || 5, 
         active: true,
         user_email: user_email,
-        user_id: user_id
+        user_id: user_id,
+        team_id: team_id || null // Optional team assignment
       }]);
 
     if (error) throw error;

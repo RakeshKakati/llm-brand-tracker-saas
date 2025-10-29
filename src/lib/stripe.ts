@@ -16,12 +16,11 @@ export const STRIPE_PLANS = {
     name: "Pro",
     price: 19,
     features: [
-      "Unlimited trackers",
+      "10 brand trackers",
       "Hourly checks",
       "Advanced analytics",
       "Priority support",
       "1 year history",
-      "API access",
     ],
   },
 };

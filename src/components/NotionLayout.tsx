@@ -13,7 +13,7 @@ import HistoryPage from "@/components/pages/HistoryPage";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import CompetitorsPage from "@/components/pages/CompetitorsPage";
-import MentionsPage from "@/components/pages/MentionsPage";
+import TeamsPage from "@/components/pages/TeamsPage";
 
 export default function NotionLayout() {
   const router = useRouter();
@@ -62,8 +62,8 @@ export default function NotionLayout() {
         return <SettingsPage />;
       case "competitors":
         return <CompetitorsPage />;
-      case "mentions":
-        return <MentionsPage />;
+      case "teams":
+        return <TeamsPage />;
       default:
         return <DashboardPage />;
     }
@@ -77,8 +77,8 @@ export default function NotionLayout() {
       case "history": return "Web Visibility";
       case "analytics": return "Analytics";
       case "settings": return "Settings";
-      case "mentions": return "Search Demand";
       case "competitors": return "Competitors";
+      case "teams": return "Teams";
       default: return "Overview";
     }
   };

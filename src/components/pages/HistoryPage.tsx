@@ -36,7 +36,11 @@ import {
 } from "@/components/ui/sheet";
 import { supabase } from "@/app/lib/supabaseClient";
 
-export default function HistoryPage() {
+interface HistoryPageProps {
+  teamId?: string;
+}
+
+export default function HistoryPage({ teamId }: HistoryPageProps = {}) {
   const [records, setRecords] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +59,7 @@ export default function HistoryPage() {
     }, 30000); // 30 seconds
 
     return () => clearInterval(refreshInterval);
-  }, []);
+  }, [teamId]);
 
   const fetchMentions = async (isSilentRefresh = false) => {
     try {
@@ -76,12 +80,21 @@ export default function HistoryPage() {
       const userEmail = session.user.email;
       console.log("🔍 Fetching mention history for:", userEmail);
       
-      // Fetch mentions filtered by user
-      const { data, error } = await supabase
+      // Fetch mentions
+      // Team workspace: Show all team members' mentions (RLS handles access)
+      // Personal workspace: Show only current user's mentions
+      let mentionsQuery = supabase
         .from("brand_mentions")
         .select("*")
-        .eq("user_email", userEmail)
         .order("created_at", { ascending: false });
+      
+      if (teamId) {
+        mentionsQuery = mentionsQuery.eq("team_id", teamId);
+      } else {
+        mentionsQuery = mentionsQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { data, error } = await mentionsQuery;
       
       if (!error && data) {
         console.log("✅ History fetched:", data.length, "mentions");

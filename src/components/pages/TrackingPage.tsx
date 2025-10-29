@@ -29,7 +29,6 @@ import {
   Play, 
   Pause, 
   Trash2,
-  Clock,
   Activity,
   CheckCircle,
   XCircle,
@@ -40,7 +39,11 @@ import {
 import { IconDotsVertical } from "@tabler/icons-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
-export default function TrackingPage() {
+interface TrackingPageProps {
+  teamId?: string;
+}
+
+export default function TrackingPage({ teamId }: TrackingPageProps = {}) {
   const [brand, setBrand] = useState("");
   const [query, setQuery] = useState("");
   const [interval, setInterval] = useState(5);
@@ -80,7 +83,8 @@ export default function TrackingPage() {
           query, 
           interval,
           user_email: session.user.email,
-          user_id: session.user.id
+          user_id: session.user.id,
+          team_id: teamId || null
         }),
       });
       
@@ -123,13 +127,22 @@ export default function TrackingPage() {
         return;
       }
       
-      // Filter by user_email (RLS will also enforce this)
-      console.log("🔍 Fetching trackers for:", session.user.email);
-      const { data, error } = await supabase
+      // Fetch trackers
+      // Team workspace: Show all team members' trackers (RLS handles access)
+      // Personal workspace: Show only current user's trackers
+      console.log("🔍 Fetching trackers for:", session.user.email, teamId ? `team: ${teamId}` : "");
+      let trackersQuery = supabase
         .from("tracked_brands")
         .select("*")
-        .eq("user_email", session.user.email)
         .order("created_at", { ascending: false });
+      
+      if (teamId) {
+        trackersQuery = trackersQuery.eq("team_id", teamId);
+      } else {
+        trackersQuery = trackersQuery.eq("user_email", session.user.email).is("team_id", null);
+      }
+      
+      const { data, error } = await trackersQuery;
       
       if (error) {
         console.error("❌ Error fetching trackers:", error);
@@ -195,7 +208,8 @@ export default function TrackingPage() {
         body: JSON.stringify({ 
           brand, 
           query,
-          user_email: session.user.email  // Explicitly pass user_email
+          user_email: session.user.email,  // Explicitly pass user_email
+          team_id: teamId || null  // Pass team_id if in team workspace
         }),
       });
       
@@ -403,7 +417,8 @@ export default function TrackingPage() {
                           query: testSearchResult.query,
                           interval,
                           user_email: session.user.email,
-                          user_id: session.user.id
+                          user_id: session.user.id,
+                          team_id: teamId || null
                         }),
                       });
                       
@@ -487,7 +502,6 @@ export default function TrackingPage() {
                   <TableHead>Brand</TableHead>
                   <TableHead>Query</TableHead>
                   <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-40">Schedule</TableHead>
                   <TableHead className="w-40">Created</TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
@@ -536,12 +550,6 @@ export default function TrackingPage() {
                           </>
                         )}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Daily at 9:00 AM
-                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {new Date(tracker.created_at).toLocaleDateString()}

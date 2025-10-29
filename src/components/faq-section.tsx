@@ -28,7 +28,7 @@ export default function FAQSection() {
     },
     {
       question: "Can I track multiple brands?",
-      answer: "Yes! Depending on your plan, you can track multiple brands and queries simultaneously. Our Professional plan supports up to 50 trackers, while Enterprise offers unlimited tracking."
+      answer: "Yes! Depending on your plan, you can track multiple brands and queries simultaneously. Our Free plan includes 5 trackers, Pro plan supports 10 trackers, while Enterprise offers custom limits based on your needs."
     },
     {
       question: "How often are searches performed?",

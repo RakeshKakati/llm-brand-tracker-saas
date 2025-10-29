@@ -163,12 +163,11 @@ export default function SettingsPage() {
     switch (plan) {
       case "pro":
         return [
-          "Unlimited brand trackers",
+          "10 brand trackers",
           "Hourly monitoring checks",
           "Advanced analytics dashboard",
           "Competitor tracking",
           "Email notifications",
-          "API access",
           "Priority support",
         ];
       case "enterprise":

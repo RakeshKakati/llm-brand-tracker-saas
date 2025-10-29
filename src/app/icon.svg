@@ -1,0 +1,36 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="kommiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background circle with subtle gradient -->
+  <circle cx="60" cy="60" r="54" fill="url(#kommiGradient)" opacity="0.08"/>
+  
+  <!-- Main K letter - modern, bold -->
+  <path d="M 28 25 L 28 95 L 42 95 L 42 58 L 68 95 L 88 95 L 55 50 L 85 25 L 65 25 L 42 50 L 42 25 Z" 
+        fill="url(#kommiGradient)" 
+        filter="url(#shadow)"/>
+  
+  <!-- Tracking/Radar circles - representing monitoring -->
+  <circle cx="75" cy="75" r="18" fill="none" stroke="url(#kommiGradient)" stroke-width="2" opacity="0.6"/>
+  <circle cx="75" cy="75" r="10" fill="none" stroke="url(#kommiGradient)" stroke-width="2" opacity="0.8"/>
+  <circle cx="75" cy="75" r="3" fill="url(#kommiGradient)"/>
+  
+  <!-- Connecting line from K to target -->
+  <line x1="68" y1="70" x2="73" y2="71" stroke="url(#kommiGradient)" stroke-width="2" opacity="0.4" stroke-linecap="round"/>
+</svg>

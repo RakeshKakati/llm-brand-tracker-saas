@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, ChevronRight, FileText, LogOut, Search, Settings, Target, Users, ChevronDown, Crown, Zap } from "lucide-react";
+import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2 } from "lucide-react";
+import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
@@ -95,11 +96,6 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       page: "dashboard",
     },
     {
-      title: "Search Demand",
-      icon: Search,
-      page: "mentions",
-    },
-    {
       title: "Competitors",
       icon: Users,
       page: "competitors",
@@ -115,6 +111,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       page: "active",
     },
     {
+      title: "Teams",
+      icon: Building2,
+      page: "teams",
+    },
+    {
       title: "Settings",
       icon: Settings,
       page: "settings",
@@ -127,12 +128,17 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <Target className="size-4" />
+              <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
+                <Image 
+                  src="/logo.svg" 
+                  alt="kommi logo" 
+                  width={32} 
+                  height={32}
+                  className="object-contain"
+                />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-semibold">kommi</span>
-                <span className="truncate text-xs">SaaS Platform</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

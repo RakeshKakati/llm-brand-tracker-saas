@@ -5,7 +5,12 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = { 
   title: "kommi",
-  description: "Monitor real-time brand mentions via OpenAI"
+  description: "Monitor real-time brand mentions via OpenAI",
+  icons: {
+    icon: '/logo.svg',
+    shortcut: '/logo.svg',
+    apple: '/logo.svg',
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -20,6 +20,7 @@ import {
   Zap,
   Globe
 } from "lucide-react";
+import Image from "next/image";
 
 export default function AuthPage() {
   const router = useRouter();
@@ -136,7 +137,13 @@ export default function AuthPage() {
       <nav className="border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between px-4">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Image 
+              src="/logo.svg" 
+              alt="kommi logo" 
+              width={24} 
+              height={24}
+              className="object-contain"
+            />
             <span className="font-semibold text-xl">kommi</span>
           </div>
           <div className="flex items-center gap-4">
@@ -317,7 +324,7 @@ export default function AuthPage() {
             <div className="flex items-center justify-center space-x-8 text-sm text-muted-foreground flex-wrap gap-4">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-4 h-4 text-green-500" />
-                <span>Free 14-day trial</span>
+                <span>Free forever</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-4 h-4 text-primary" />

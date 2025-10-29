@@ -76,7 +76,11 @@ interface CompetitorData {
   bestPosition: number | null; // Best (lowest) position achieved (1 = first, 2 = second, etc.)
 }
 
-export default function DashboardPage() {
+interface DashboardPageProps {
+  teamId?: string;
+}
+
+export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   const [stats, setStats] = useState({
     totalTrackers: 0,
     activeTrackers: 0,
@@ -125,52 +129,106 @@ export default function DashboardPage() {
       const userEmail = session.user.email;
       console.log("🔍 Fetching dashboard data for:", userEmail);
       
-      // Fetch tracked brands count (filtered by user)
-      const { count: trackersCount } = await supabase
+      // Fetch tracked brands count
+      // Team workspace: Show all team members' trackers (RLS handles access)
+      // Personal workspace: Show only current user's trackers
+      let trackersQuery = supabase
         .from("tracked_brands")
-        .select("*", { count: "exact", head: true })
-        .eq("user_email", userEmail);
+        .select("*", { count: "exact", head: true });
+      
+      if (teamId) {
+        trackersQuery = trackersQuery.eq("team_id", teamId);
+      } else {
+        trackersQuery = trackersQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { count: trackersCount } = await trackersQuery;
 
-      // Fetch active trackers count (filtered by user)
-      const { count: activeCount } = await supabase
+      // Fetch active trackers count
+      // Team workspace: Show all team members' active trackers (RLS handles access)
+      // Personal workspace: Show only current user's active trackers
+      let activeTrackersQuery = supabase
         .from("tracked_brands")
         .select("*", { count: "exact", head: true })
-        .eq("user_email", userEmail)
         .eq("active", true);
+      
+      if (teamId) {
+        activeTrackersQuery = activeTrackersQuery.eq("team_id", teamId);
+      } else {
+        activeTrackersQuery = activeTrackersQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { count: activeCount } = await activeTrackersQuery;
 
-      // Fetch total mentions count (filtered by user)
-      const { count: mentionsCount } = await supabase
+      // Fetch total mentions count
+      // Team workspace: Show all team members' mentions (RLS handles access)
+      // Personal workspace: Show only current user's mentions
+      let mentionsCountQuery = supabase
         .from("brand_mentions")
-        .select("*", { count: "exact", head: true })
-        .eq("user_email", userEmail);
+        .select("*", { count: "exact", head: true });
+      
+      if (teamId) {
+        mentionsCountQuery = mentionsCountQuery.eq("team_id", teamId);
+      } else {
+        mentionsCountQuery = mentionsCountQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { count: mentionsCount } = await mentionsCountQuery;
 
-      // Fetch recent mentions (last 24 hours, filtered by user)
+      // Fetch recent mentions (last 24 hours)
+      // Team workspace: Show all team members' recent mentions (RLS handles access)
+      // Personal workspace: Show only current user's recent mentions
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
       
-      const { count: recentCount } = await supabase
+      let recentCountQuery = supabase
         .from("brand_mentions")
         .select("*", { count: "exact", head: true })
-        .eq("user_email", userEmail)
         .gte("created_at", yesterday.toISOString());
+      
+      if (teamId) {
+        recentCountQuery = recentCountQuery.eq("team_id", teamId);
+      } else {
+        recentCountQuery = recentCountQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { count: recentCount } = await recentCountQuery;
 
-      // Fetch recent mentions for display (filtered by user, all data)
-      const { data: recentData } = await supabase
+      // Fetch recent mentions for display
+      // Team workspace: Show all team members' recent mentions (RLS handles access)
+      // Personal workspace: Show only current user's recent mentions
+      let recentDataQuery = supabase
         .from("brand_mentions")
         .select("*")
-        .eq("user_email", userEmail)
         .order("created_at", { ascending: false });
+      
+      if (teamId) {
+        recentDataQuery = recentDataQuery.eq("team_id", teamId);
+      } else {
+        recentDataQuery = recentDataQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { data: recentData } = await recentDataQuery;
 
-      // Fetch mentions for chart (last 7 days, filtered by user)
+      // Fetch mentions for chart (last 7 days)
+      // Team workspace: Show all team members' mentions (RLS handles access)
+      // Personal workspace: Show only current user's mentions
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
       
-      const { data: mentionsData } = await supabase
+      let mentionsDataQuery = supabase
         .from("brand_mentions")
         .select("*")
-        .eq("user_email", userEmail)
         .gte("created_at", sevenDaysAgo.toISOString())
         .order("created_at", { ascending: true });
+      
+      if (teamId) {
+        mentionsDataQuery = mentionsDataQuery.eq("team_id", teamId);
+      } else {
+        mentionsDataQuery = mentionsDataQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { data: mentionsData } = await mentionsDataQuery;
 
       console.log("✅ Dashboard data fetched:", {
         trackers: trackersCount,
@@ -207,11 +265,20 @@ export default function DashboardPage() {
       }
 
       // Fetch ALL mentions for analysis (no time limit)
-      const { data: allMentions, error: mentionsError } = await supabase
+      // Team workspace: Show all team members' mentions (RLS handles access)
+      // Personal workspace: Show only current user's mentions
+      let allMentionsQuery = supabase
         .from("brand_mentions")
         .select("*")
-        .eq("user_email", userEmail)
         .order("created_at", { ascending: false });
+      
+      if (teamId) {
+        allMentionsQuery = allMentionsQuery.eq("team_id", teamId);
+      } else {
+        allMentionsQuery = allMentionsQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+      
+      const { data: allMentions, error: mentionsError } = await allMentionsQuery;
 
       if (mentionsError) {
         console.error("❌ Error fetching mentions:", mentionsError);
@@ -252,15 +319,24 @@ export default function DashboardPage() {
       setTrackedCompetitors((tc || []).map((r: any) => ({ name: r.name, domain: (r.domain || '').toLowerCase() })));
 
       // Fetch mentions for chart (last 90 days) - include source_urls and raw_output for domain extraction
+      // Filtered by user and team_id if provided
       const ninetyDaysAgo = new Date();
       ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
       
-      const { data: chartMentions } = await supabase
+      let chartMentionsQuery = supabase
         .from("brand_mentions")
         .select("created_at, mentioned, query, brand, source_urls, raw_output")
         .eq("user_email", userEmail)
         .gte("created_at", ninetyDaysAgo.toISOString())
         .order("created_at", { ascending: true });
+      
+      if (teamId) {
+        chartMentionsQuery = chartMentionsQuery.eq("team_id", teamId);
+      } else {
+        chartMentionsQuery = chartMentionsQuery.is("team_id", null);
+      }
+      
+      const { data: chartMentions } = await chartMentionsQuery;
 
       console.log("📈 Fetched chart mentions:", chartMentions?.length, "records");
 
@@ -278,7 +354,7 @@ export default function DashboardPage() {
       console.log("✅ Dashboard fetch complete");
       hasFetchedRef.current = true;
     }
-  }, []);
+  }, [teamId]);
 
   // Helper function to extract URLs from a mention (shared by processTopSources and newDomains)
   const extractUrlsFromMention = (mention: any): string[] => {

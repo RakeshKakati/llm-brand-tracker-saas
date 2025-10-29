@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Activity, BarChart3, ChevronRight, Clock, FileText, LogOut, Search, Settings, Target, Users, ChevronDown } from "lucide-react";
+import { BarChart3, ChevronRight, FileText, LogOut, Search, Settings, Target, Users, ChevronDown } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -64,29 +64,29 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
 
   const navMain = [
     {
-      title: "Dashboard",
+      title: "Overview",
       icon: BarChart3,
       page: "dashboard",
     },
     {
-      title: "Brand Mentions",
-      icon: FileText,
+      title: "Search Demand",
+      icon: Search,
       page: "mentions",
-    },
-    {
-      title: "Active Trackers",
-      icon: Target,
-      page: "active",
-    },
-    {
-      title: "Mention History",
-      icon: Clock,
-      page: "history",
     },
     {
       title: "Competitors",
       icon: Users,
       page: "competitors",
+    },
+    {
+      title: "Web Visibility",
+      icon: FileText,
+      page: "history",
+    },
+    {
+      title: "Active Trackers",
+      icon: Target,
+      page: "active",
     },
     {
       title: "Settings",

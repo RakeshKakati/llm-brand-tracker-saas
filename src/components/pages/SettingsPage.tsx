@@ -1,36 +1,38 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Settings, 
-  User, 
-  Bell, 
-  Shield, 
-  Database,
-  Key,
-  Globe,
-  Clock,
+import {
+  User,
+  Mail,
+  CreditCard,
   Crown,
   TrendingUp,
-  CreditCard,
+  Loader2,
   CheckCircle,
-  Target,
+  Calendar,
+  Clock,
   AlertCircle,
-  Loader2
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
-import { getStripe, STRIPE_PLANS } from "@/lib/stripe";
+
+interface UserProfile {
+  full_name?: string;
+  avatar_url?: string;
+}
 
 export default function SettingsPage() {
   const [subscription, setSubscription] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile>({
+    full_name: "",
+  });
   const [upgrading, setUpgrading] = useState(false);
   const [managingSubscription, setManagingSubscription] = useState(false);
 
@@ -65,7 +67,16 @@ export default function SettingsPage() {
       const { data: { session } } = await supabase.auth.getSession();
       console.log("📧 SettingsPage - Session:", session?.user?.email);
       
-      setUser(session?.user);
+      if (session?.user) {
+        setUser(session.user);
+        
+        // Load user metadata if available
+        if (session.user.user_metadata?.full_name) {
+          setProfile({
+            full_name: session.user.user_metadata.full_name,
+          });
+        }
+      }
 
       if (session?.user?.email) {
         // Fetch subscription
@@ -99,6 +110,39 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSaveProfile = async () => {
+    try {
+      setSaving(true);
+      
+      if (!user?.email) {
+        alert("Please sign in to update your profile");
+        return;
+      }
+
+      console.log("💾 Updating profile for:", user.email);
+
+      // Update user metadata in Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: profile.full_name,
+        }
+      });
+
+      if (error) throw error;
+
+      console.log("✅ Profile updated successfully");
+      alert("✅ Profile updated successfully!");
+      
+      // Refresh user data
+      fetchUserData();
+    } catch (error: any) {
+      console.error("❌ Error updating profile:", error);
+      alert(error.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "pro": return "bg-purple-600";
@@ -112,6 +156,36 @@ export default function SettingsPage() {
       case "pro": return "Pro";
       case "enterprise": return "Enterprise";
       default: return "Free";
+    }
+  };
+
+  const getPlanFeatures = (plan: string) => {
+    switch (plan) {
+      case "pro":
+        return [
+          "Unlimited brand trackers",
+          "Hourly monitoring checks",
+          "Advanced analytics dashboard",
+          "Competitor tracking",
+          "Email notifications",
+          "API access",
+          "Priority support",
+        ];
+      case "enterprise":
+        return [
+          "Everything in Pro",
+          "Custom integrations",
+          "Dedicated account manager",
+          "SLA guarantees",
+          "Custom features",
+        ];
+      default:
+        return [
+          "5 active brand trackers",
+          "Daily monitoring checks",
+          "Basic analytics",
+          "Email notifications",
+        ];
     }
   };
 
@@ -196,310 +270,242 @@ export default function SettingsPage() {
       setManagingSubscription(false);
     }
   };
+
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-6">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account and application preferences</p>
+        <p className="text-gray-600">Manage your account, profile, and subscription</p>
       </div>
 
-      {/* Subscription Status */}
-      {loading ? (
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="p-6 mb-8 bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className={`p-3 rounded-lg ${getPlanColor(subscription?.plan_type || 'free')}`}>
-                <Crown className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">Current Plan</h2>
-                <Badge variant="outline" className="mt-1">
-                  {getPlanLabel(subscription?.plan_type || 'free')}
-                </Badge>
-              </div>
+      <div className="grid gap-6">
+        {/* User Profile Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <User className="w-5 h-5 text-gray-600" />
+              <CardTitle>Profile Information</CardTitle>
             </div>
-            {subscription?.plan_type === 'free' || !subscription?.plan_type ? (
-              <Button 
-                onClick={handleUpgrade} 
-                disabled={upgrading}
-                className="gap-2"
-              >
-                {upgrading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <TrendingUp className="w-4 h-4" />
-                    Upgrade to Pro - $29/month
-                  </>
-                )}
-              </Button>
-            ) : subscription.stripe_subscription_id ? (
-              <Button 
-                onClick={handleManageSubscription}
-                disabled={managingSubscription}
-                variant="outline" 
-                className="gap-2"
-              >
-                {managingSubscription ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4" />
-                    Manage Subscription
-                  </>
-                )}
-              </Button>
-            ) : null}
-          </div>
-          
-          <div className="p-4 bg-background rounded-lg border mt-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-gray-900 mb-1">
-                  {subscription?.plan_type === 'pro' ? '💎 Pro Plan Features' : '🆓 Free Plan'}
-                </h3>
-                <p className="text-sm text-gray-600">
-                  {subscription?.plan_type === 'pro' 
-                    ? 'Unlimited trackers, hourly checks, advanced analytics' 
-                    : '5 trackers, daily checks, basic analytics'}
-                </p>
+            <CardDescription>
+              Update your personal information
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-              <div className="text-right">
-                <p className="text-2xl font-bold text-gray-900">
-                  {subscription?.plan_type === 'pro' ? '$29' : '$0'}
-                </p>
-                <p className="text-sm text-gray-600">per month</p>
-              </div>
-            </div>
-          </div>
-
-          {subscription?.current_period_end && (
-            <div className="p-4 bg-background rounded-lg border mt-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Clock className="w-5 h-5 text-gray-600" />
-                <h3 className="font-medium text-gray-900">Billing Period</h3>
-              </div>
-              <p className="text-sm text-gray-600">
-                Renews on {new Date(subscription.current_period_end).toLocaleDateString()}
-              </p>
-            </div>
-          )}
-        </Card>
-      )}
-
-      <div className="space-y-8">
-        {/* Account Settings */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <User className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Account</h2>
-          </div>
-          
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">Email</Label>
-                  <Input 
-                    value={user?.email || ""}
-                    placeholder="your@email.com" 
-                    className="mt-1"
+            ) : (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name" className="text-sm font-medium">
+                      Full Name
+                    </Label>
+                    <Input
+                      id="full_name"
+                      value={profile.full_name || ""}
+                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                      placeholder="Enter your full name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email Address
+                    </Label>
+                    <Input
+                      id="email"
+                      value={user?.email || ""}
+                      disabled
+                      className="bg-gray-50"
+                    />
+                    {user?.email && (
+                      <p className="text-xs text-green-600 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Verified
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="user_id" className="text-sm font-medium">
+                    User ID
+                  </Label>
+                  <Input
+                    id="user_id"
+                    value={user?.id || ""}
                     disabled
+                    className="bg-gray-50"
                   />
-                  {user?.email && (
-                    <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" />
-                      Verified
+                  <p className="text-xs text-gray-500">
+                    Your unique identifier (cannot be changed)
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Account Created</p>
+                    <p className="text-sm text-gray-600">
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                     </p>
+                  </div>
+                  <Button 
+                    onClick={handleSaveProfile}
+                    disabled={saving}
+                    className="min-w-[120px]"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Save Changes
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Subscription Section */}
+        {loading ? (
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-gray-600" />
+                <CardTitle>Billing & Subscription</CardTitle>
+              </div>
+              <CardDescription>
+                Manage your subscription and billing information
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Current Plan */}
+                <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="flex items-center gap-4">
+                      <div className={`p-3 rounded-lg ${getPlanColor(subscription?.plan_type || 'free')}`}>
+                        <Crown className="w-6 h-6 text-white" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="text-2xl font-bold text-gray-900">Current Plan</h3>
+                          <Badge variant="outline" className="text-sm">
+                            {getPlanLabel(subscription?.plan_type || 'free')}
+                          </Badge>
+                        </div>
+                        <p className="text-lg font-semibold text-gray-700">
+                          ${subscription?.plan_type === 'pro' ? '29' : '0'} <span className="text-sm font-normal text-gray-600">/month</span>
+                        </p>
+                      </div>
+                    </div>
+                    {subscription?.plan_type === 'free' || !subscription?.plan_type ? (
+                      <Button 
+                        onClick={handleUpgrade} 
+                        disabled={upgrading}
+                        size="lg"
+                        className="gap-2"
+                      >
+                        {upgrading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <TrendingUp className="w-4 h-4" />
+                            Upgrade to Pro
+                          </>
+                        )}
+                      </Button>
+                    ) : subscription.stripe_subscription_id ? (
+                      <Button 
+                        onClick={handleManageSubscription}
+                        disabled={managingSubscription}
+                        variant="outline"
+                        size="lg"
+                        className="gap-2"
+                      >
+                        {managingSubscription ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Loading...
+                          </>
+                        ) : (
+                          <>
+                            <CreditCard className="w-4 h-4" />
+                            Manage Billing
+                          </>
+                        )}
+                      </Button>
+                    ) : null}
+                  </div>
+                  
+                  {/* Plan Features */}
+                  <div className="space-y-2 mb-6">
+                    {getPlanFeatures(subscription?.plan_type || 'free').map((feature, idx) => (
+                      <div key={idx} className="flex items-start gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
+                        <p className="text-gray-700">{feature}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Billing Period */}
+                  {subscription?.current_period_end && (
+                    <div className="flex items-center gap-2 p-4 bg-white rounded-lg border">
+                      <Calendar className="w-5 h-5 text-gray-600" />
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">Current Billing Period</p>
+                        <p className="text-sm text-gray-600">
+                          {subscription.current_period_start && (
+                            <span>{new Date(subscription.current_period_start).toLocaleDateString()}</span>
+                          )}
+                          {subscription.current_period_end && (
+                            <span> - {new Date(subscription.current_period_end).toLocaleDateString()}</span>
+                          )}
+                        </p>
+                        {subscription.status === 'active' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Renews on {new Date(subscription.current_period_end).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {subscription?.status === 'cancelled' && (
+                    <div className="flex items-center gap-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                      <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      <div>
+                        <p className="text-sm font-medium text-yellow-900">Subscription Cancelled</p>
+                        <p className="text-sm text-yellow-700">
+                          Your subscription will remain active until {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : 'the end of your billing period'}.
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">User ID</Label>
-                  <Input 
-                    value={user?.id || ""}
-                    placeholder="User ID" 
-                    className="mt-1"
-                    disabled
-                  />
-                </div>
               </div>
-              
-              {user && (
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 mb-2">
-                    <User className="w-4 h-4 text-blue-600" />
-                    <h3 className="font-medium text-blue-900">Account Information</h3>
-                  </div>
-                  <div className="space-y-1 text-sm text-blue-800">
-                    <p><strong>Email:</strong> {user.email}</p>
-                    {user.user_metadata?.full_name && (
-                      <p><strong>Name:</strong> {user.user_metadata.full_name}</p>
-                    )}
-                    <p><strong>Created:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}</p>
-                  </div>
-                </div>
-              )}
-              
-              <div className="mt-6">
-                <Button variant="outline" disabled>
-                  Update Account
-                </Button>
-              </div>
-            </>
-          )}
-        </Card>
-
-        {/* API Settings */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Key className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">API Configuration</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-gray-900">OpenAI API Key</h3>
-                <Badge variant="secondary">Configured</Badge>
-              </div>
-              <p className="text-sm text-gray-600">Used for brand mention detection and web search</p>
-            </div>
-            
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-medium text-gray-900">Supabase Configuration</h3>
-                <Badge variant="secondary">Connected</Badge>
-              </div>
-              <p className="text-sm text-gray-600">Database and authentication services</p>
-            </div>
-          </div>
-        </Card>
-
-        {/* Notification Settings */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Bell className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Notifications</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-gray-900">Email Notifications</h3>
-                <p className="text-sm text-gray-600">Get notified when mentions are found</p>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                Configure
-              </Button>
-            </div>
-            
-            <Separator />
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-gray-900">Real-time Alerts</h3>
-                <p className="text-sm text-gray-600">Instant notifications for important mentions</p>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                Configure
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Application Settings */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Settings className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Application</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Default Check Interval</Label>
-                <Input 
-                  type="number" 
-                  placeholder="5" 
-                  className="mt-1"
-                  disabled
-                />
-                <p className="text-xs text-gray-500 mt-1">Minutes between automatic checks</p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium text-gray-700">Max Trackers</Label>
-                <Input 
-                  type="number" 
-                  placeholder="10" 
-                  className="mt-1"
-                  disabled
-                />
-                <p className="text-xs text-gray-500 mt-1">Maximum active trackers</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-gray-900">Dark Mode</h3>
-                <p className="text-sm text-gray-600">Switch between light and dark themes</p>
-              </div>
-              <Button variant="outline" size="sm" disabled>
-                Coming Soon
-              </Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* System Status */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <Shield className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">System Status</h2>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h3 className="font-medium text-green-900">OpenAI API</h3>
-              </div>
-              <p className="text-sm text-green-700">Operational</p>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h3 className="font-medium text-green-900">Database</h3>
-              </div>
-              <p className="text-sm text-green-700">Connected</p>
-            </div>
-            
-            <div className="p-4 bg-green-50 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <h3 className="font-medium text-green-900">Web Search</h3>
-              </div>
-              <p className="text-sm text-green-700">Active</p>
-            </div>
-          </div>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

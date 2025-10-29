@@ -38,10 +38,12 @@ export async function POST(req: Request) {
       subscription.stripe_subscription_id
     );
 
-    // Create portal session
+    // Create portal session with configuration
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: stripeSubscription.customer as string,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?page=settings`,
+      // Add configuration to handle first-time setup
+      configuration: undefined, // Will use default test mode configuration
     });
 
     console.log("✅ Portal session created");

@@ -71,14 +71,15 @@ export default function NotionLayout() {
 
   const getPageTitle = () => {
     switch (currentPage) {
-      case "dashboard": return "Dashboard";
+      case "dashboard": return "Overview";
       case "tracking": return "Active Trackers";
       case "active": return "Active Trackers";
-      case "history": return "Mention History";
+      case "history": return "Web Visibility";
       case "analytics": return "Analytics";
       case "settings": return "Settings";
-      case "mentions": return "Brand Mentions";
-      default: return "Dashboard";
+      case "mentions": return "Search Demand";
+      case "competitors": return "Competitors";
+      default: return "Overview";
     }
   };
 

@@ -21,12 +21,15 @@ export async function POST(req: Request) {
     // Check subscription limits
     const { data: subscription } = await supabaseAdmin
       .from("subscriptions")
-      .select("max_trackers")
+      .select("max_trackers, plan_type")
       .eq("user_email", user_email)
       .eq("status", "active")
       .single();
 
     console.log(`📊 Subscription:`, subscription);
+
+    // Determine limits based on plan type
+    const limit = subscription?.max_trackers || (subscription?.plan_type === 'pro' ? 10 : 3);
 
     // Count current trackers
     const { count } = await supabaseAdmin
@@ -35,12 +38,13 @@ export async function POST(req: Request) {
       .eq("user_email", user_email)
       .eq("active", true);
 
-    console.log(`📈 Current trackers: ${count} / ${subscription?.max_trackers || 0}`);
+    console.log(`📈 Current trackers: ${count} / ${limit}`);
 
-    if (count !== null && subscription?.max_trackers && count >= subscription.max_trackers) {
+    // Enforce limit
+    if (count !== null && count >= limit) {
       return NextResponse.json({ 
-        error: `Tracker limit reached. Your plan allows ${subscription.max_trackers} trackers.`,
-        limit: subscription.max_trackers,
+        error: `Tracker limit reached. Your ${subscription?.plan_type || 'free'} plan allows ${limit} trackers.`,
+        limit: limit,
         current: count
       }, { status: 403 });
     }

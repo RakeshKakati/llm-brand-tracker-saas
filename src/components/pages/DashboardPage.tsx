@@ -88,11 +88,9 @@ export default function DashboardPage() {
   const [mentionTrend, setMentionTrend] = useState<any[]>([]);
   const [topSources, setTopSources] = useState<SourceData[]>([]);
   const [competitors, setCompetitors] = useState<CompetitorData[]>([]);
-  const [chartData, setChartData] = useState<any[]>([]);
   const [chartMentionsRaw, setChartMentionsRaw] = useState<any[]>([]);
   const [timeRange, setTimeRange] = useState("30d");
   const [loading, setLoading] = useState(true);
-  const [activeChart, setActiveChart] = useState<"searches" | "mentions">("searches");
   const [selectedSource, setSelectedSource] = useState<SourceData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [currentSourcesPage, setCurrentSourcesPage] = useState(1);
@@ -248,31 +246,11 @@ export default function DashboardPage() {
 
       console.log("📈 Fetched chart mentions:", chartMentions?.length, "records");
 
-      // Process chart data
+      // Store chart mentions for other components
       if (chartMentions && chartMentions.length > 0) {
-        const grouped = chartMentions.reduce((acc: any, mention: any) => {
-          const date = new Date(mention.created_at).toISOString().split('T')[0];
-          if (!acc[date]) {
-            acc[date] = { date, searches: 0, mentions: 0 };
-          }
-          acc[date].searches += 1; // All records are searches
-          if (mention.mentioned === true) {
-            acc[date].mentions += 1; // Only count true mentions
-          }
-          return acc;
-        }, {});
-
-        const processed = Object.values(grouped).sort((a: any, b: any) => 
-          new Date(a.date).getTime() - new Date(b.date).getTime()
-        );
-        
-        console.log("📊 Processed chart data:", processed.length, "days");
-        console.log("📊 Sample data:", processed[0]);
-        setChartData(processed);
         setChartMentionsRaw(chartMentions);
       } else {
         console.log("⚠️ No chart data available");
-        setChartData([]);
       }
 
     } catch (error) {
@@ -489,49 +467,7 @@ export default function DashboardPage() {
     return results;
   };
 
-  const chartConfig = {
-    value: {
-      label: "Mentions",
-      color: "hsl(var(--chart-1))",
-    },
-  };
 
-  const interactiveChartConfig: ChartConfig = {
-    searches: {
-      label: "Total Searches",
-      color: "hsl(var(--chart-1))",
-    },
-    mentions: {
-      label: "Brand Found",
-      color: "hsl(var(--chart-2))",
-    },
-  };
-
-  const filteredChartData = React.useMemo(() => {
-    if (!chartData || chartData.length === 0) return [];
-    
-    const filtered = chartData.filter((item) => {
-      const date = new Date(item.date);
-      const referenceDate = new Date();
-      let daysToSubtract = 30;
-      if (timeRange === "90d") {
-        daysToSubtract = 90;
-      } else if (timeRange === "7d") {
-        daysToSubtract = 7;
-      }
-      const startDate = new Date(referenceDate);
-      startDate.setDate(startDate.getDate() - daysToSubtract);
-      return date >= startDate;
-    });
-    
-    console.log(`🔍 Filtered chart data for ${timeRange}:`, filtered.length, "days");
-    return filtered;
-  }, [chartData, timeRange]);
-
-  const chartTotals = React.useMemo(() => ({
-    searches: filteredChartData.reduce((acc, curr) => acc + curr.searches, 0),
-    mentions: filteredChartData.reduce((acc, curr) => acc + curr.mentions, 0),
-  }), [filteredChartData]);
 
   // New derived metrics: unique sources, unique competitors, mention rate, query coverage
   const derivedKPIs = React.useMemo(() => {
@@ -909,177 +845,6 @@ export default function DashboardPage() {
         />
           </div>
 
-      {/* Interactive Chart - Searches vs Mentions */}
-      <Card className="py-0">
-        <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
-          <div className="flex flex-1 flex-col justify-center gap-1 px-6 pt-4 pb-3 sm:!py-6">
-            <CardTitle>Searches vs Brand Mentions</CardTitle>
-            <CardDescription>
-              Total searches performed vs searches where your brand was found
-            </CardDescription>
-            <div className="mt-3">
-              <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="Last 30 days" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="90d">Last 90 days</SelectItem>
-                  <SelectItem value="30d">Last 30 days</SelectItem>
-                  <SelectItem value="7d">Last 7 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex">
-            {["searches", "mentions"].map((key) => {
-              const chart = key as "searches" | "mentions";
-              return (
-                <button
-                  key={chart}
-                  data-active={activeChart === chart}
-                  className="data-[active=true]:bg-muted/50 relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
-                  onClick={() => setActiveChart(chart)}
-                >
-                  <span className="text-muted-foreground text-xs">
-                    {chart === "searches" ? "Total Searches" : "Brand Found"}
-                  </span>
-                  <span className="text-lg leading-none font-bold sm:text-3xl">
-                    {chartTotals[chart].toLocaleString()}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </CardHeader>
-        <CardContent className="px-2 sm:p-6">
-          <ChartContainer
-            config={interactiveChartConfig}
-            className="aspect-auto h-[250px] w-full"
-          >
-            <AreaChart
-              accessibilityLayer
-              data={filteredChartData}
-              margin={{
-                left: 12,
-                right: 12,
-              }}
-            >
-              <CartesianGrid vertical={false} />
-              <XAxis
-                dataKey="date"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={8}
-                minTickGap={32}
-                tickFormatter={(value) => {
-                  const date = new Date(value);
-                  return date.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  });
-                }}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent indicator="dot" />}
-              />
-              <Area
-                dataKey={activeChart}
-                type="natural"
-                fill={`var(--color-${activeChart})`}
-                fillOpacity={0.4}
-                stroke={`var(--color-${activeChart})`}
-              />
-            </AreaChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      {/* Charts and Data */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Mention Rate Trend */}
-        <Card className="lg:col-span-1">
-          <div className="flex flex-row items-center justify-between border-b p-6">
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold">Mention Rate Trend</h3>
-              <p className="text-sm text-muted-foreground">Daily mentions / searches (%)</p>
-            </div>
-          </div>
-          <div className="p-6 pt-4">
-            {mentionRateTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={mentionRateTrend} margin={{ left: 12, right: 12 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Line type="monotone" dataKey="rate" stroke="#7c3aed" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="h-[300px] flex items-center justify-center text-muted-foreground">No data</div>
-            )}
-                  </div>
-        </Card>
-        {/* Mention Trend Chart */}
-        <Card className="lg:col-span-1">
-          <div className="flex flex-row items-center justify-between border-b p-6">
-            <div className="space-y-1">
-              <h3 className="text-base font-semibold">Mention Trends</h3>
-              <p className="text-sm text-muted-foreground">Activity over the last 7 days</p>
-                </div>
-            <Badge variant="secondary" className="gap-1.5">
-              <TrendingUp className="h-3 w-3" />
-              +12%
-                  </Badge>
-          </div>
-          <div className="p-6 pt-4">
-          
-          {mentionTrend.length > 0 ? (
-            <ChartContainer
-              config={{
-                value: {
-                  label: "Mentions",
-                  color: "hsl(var(--chart-1))",
-                },
-              }}
-              className="h-[300px] w-full"
-            >
-              <AreaChart
-                accessibilityLayer
-                data={mentionTrend}
-                margin={{
-                  left: 12,
-                  right: 12,
-                }}
-              >
-                <CartesianGrid vertical={false} />
-                <XAxis 
-                  dataKey="name" 
-                  tickLine={false} 
-                  axisLine={false}
-                  tickMargin={8}
-                />
-                <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                <Area 
-                  dataKey="value" 
-                  type="natural"
-                  fill="var(--color-value)"
-                  fillOpacity={0.4}
-                  stroke="var(--color-value)"
-                />
-              </AreaChart>
-            </ChartContainer>
-          ) : (
-            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <AlertCircle className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No data available yet</p>
-            </div>
-          </div>
-        )}
-          </div>
-        </Card>
 
         {/* Recent Mentions */}
         <Card>
@@ -1088,8 +853,7 @@ export default function DashboardPage() {
             <p className="text-sm text-muted-foreground">Latest brand mentions</p>
           </div>
           <div className="p-6 pt-4">
-          
-          <div className="space-y-3">
+            <div className="space-y-3">
             {recentMentions.length > 0 ? (
               recentMentions.map((mention) => (
                 <div key={mention.id} className="p-4 bg-muted/50 rounded-lg border border-border hover:bg-muted transition-colors">
@@ -1120,10 +884,9 @@ export default function DashboardPage() {
                 <p className="text-sm">No recent activity</p>
               </div>
             )}
-          </div>
+            </div>
           </div>
         </Card>
-      </div>
 
       {/* Top Sources - Full Width */}
       {/* Top Sources - Full Width Data Table */}
@@ -1281,61 +1044,6 @@ export default function DashboardPage() {
         </CardContent>
         </Card>
 
-      {/* Share of Voice + Diagnostics */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Competitor Share of Voice */}
-        <Card>
-          <div className="border-b p-6 pb-4">
-            <h3 className="text-base font-semibold">Competitor Share of Voice</h3>
-            <p className="text-sm text-muted-foreground">Top competitors’ daily share (%)</p>
-          </div>
-          <div className="p-6 pt-4">
-            {shareOfVoice.data.length > 0 ? (
-              <ResponsiveContainer width="100%" height={320}>
-                <BarChart data={shareOfVoice.data} margin={{ left: 12, right: 12 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Legend />
-                  {shareOfVoice.fields.map((f, idx) => (
-                    <Bar key={f} dataKey={f} stackId="a" fill={`hsl(var(--chart-${(idx%5)+1}))`} />
-                  ))}
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-sm text-muted-foreground">No competitor data</div>
-            )}
-          </div>
-        </Card>
-
-        {/* Diagnostics */}
-        <Card>
-          <div className="border-b p-6 pb-4">
-            <h3 className="text-base font-semibold">Diagnostics</h3>
-            <p className="text-sm text-muted-foreground">Error rate and throughput</p>
-          </div>
-          <div className="p-6 pt-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">Error Rate</div>
-              <div className="text-sm font-medium">{diagnostics.errorRate.toFixed(1)}%</div>
-            </div>
-            {diagnostics.throughput.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={diagnostics.throughput} margin={{ left: 12, right: 12 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Bar dataKey="searches" fill="#0ea5e9" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="text-sm text-muted-foreground">No throughput data</div>
-            )}
-          </div>
-        </Card>
-      </div>
 
       {/* Competitor Analysis */}
       <Card>

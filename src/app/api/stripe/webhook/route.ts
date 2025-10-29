@@ -98,6 +98,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     status: "active",
     stripe_subscription_id: subscriptionId,
     stripe_customer_id: subscription.customer as string,
+    max_trackers: 10, // Pro plan: 10 trackers
+    max_brand_mentions: 100, // Pro plan: 100 brand mentions
     updated_at: new Date().toISOString(),
   };
 

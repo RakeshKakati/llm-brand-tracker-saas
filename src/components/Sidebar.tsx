@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, ChevronRight, FileText, LogOut, Search, Settings, Target, Users, ChevronDown } from "lucide-react";
+import { BarChart3, ChevronRight, FileText, LogOut, Search, Settings, Target, Users, ChevronDown, Crown, Zap } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/app/lib/supabaseClient";
 
 interface AppSidebarProps {
@@ -31,6 +33,30 @@ interface AppSidebarProps {
 export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [usage, setUsage] = useState({ trackers: { used: 0, limit: 3 }, mentions: { used: 0, limit: 50 }, plan: "free" });
+
+  const fetchUsage = async () => {
+    if (!userEmail) return;
+    
+    try {
+      const res = await fetch(`/api/usage?user_email=${encodeURIComponent(userEmail)}`);
+      const data = await res.json();
+      if (res.ok) {
+        setUsage(data);
+      }
+    } catch (error) {
+      console.error("❌ Error fetching usage:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (userEmail) {
+      fetchUsage();
+      // Refresh usage every 30 seconds
+      const interval = setInterval(fetchUsage, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [userEmail]);
 
   const handleSignOut = async () => {
     if (!confirm("Are you sure you want to sign out?")) {
@@ -134,6 +160,59 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       </SidebarContent>
 
       <SidebarFooter>
+        {/* Usage Tracking Section */}
+        <div className="px-4 py-2 mb-2 border-t border-sidebar-border">
+          <div className="space-y-3">
+            {/* Trackers Usage */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Target className="w-3 h-3" />
+                  <span className="font-medium">Trackers</span>
+                </div>
+                <span className="text-sidebar-muted-foreground">
+                  {usage.trackers.used} / {usage.trackers.limit}
+                </span>
+              </div>
+              <Progress 
+                value={(usage.trackers.used / usage.trackers.limit) * 100} 
+                className="h-1.5"
+              />
+            </div>
+
+            {/* Mentions Usage */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5">
+                  <Zap className="w-3 h-3" />
+                  <span className="font-medium">Mentions</span>
+                </div>
+                <span className="text-sidebar-muted-foreground">
+                  {usage.mentions.used} / {usage.mentions.limit}
+                </span>
+              </div>
+              <Progress 
+                value={(usage.mentions.used / usage.mentions.limit) * 100} 
+                className="h-1.5"
+              />
+            </div>
+
+            {/* Plan Badge */}
+            <div className="flex items-center justify-center">
+              {usage.plan === 'pro' ? (
+                <Badge className="gap-1.5 text-[10px] px-2 py-0.5">
+                  <Crown className="w-3 h-3" />
+                  Pro Plan
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] px-2 py-0.5">
+                  Free Plan
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

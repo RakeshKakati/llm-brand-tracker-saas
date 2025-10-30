@@ -1,12 +1,31 @@
-# AI Optimisation
+/*
+  Generate detailed, comparison-style long-form content for public/blogs/*.md
+  - Replaces existing content with a rich article structure modeled after the comparison blogs
+  - Keeps the same slug and builds a consistent, SEO-friendly outline
+  - Safe to re-run; it overwrites files each time. Commit before running if you want history.
+*/
 
-AI Optimisation is becoming essential for teams that want faster research, clearer decisions, and measurable ROI. This guide gives you a practical, comparison-style breakdown: what it is, who it's for, the best tools, pros/cons, pricing snapshots, alternatives, and step-by-step implementation.
+const fs = require('fs');
+const path = require('path');
 
-> TL;DR: AI Optimisation — adopt it where it directly moves a KPI. Pilot against a baseline, measure lift (accuracy, time saved, ROAS/CPA/LTV), standardize prompts/playbooks, and scale only proven wins.
+const blogsDir = path.join(process.cwd(), 'public', 'blogs');
+
+function toTitleCase(str) {
+  return str
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+function buildDetailedArticle(title, slug) {
+  return `# ${title}
+
+${title} is becoming essential for teams that want faster research, clearer decisions, and measurable ROI. This guide gives you a practical, comparison-style breakdown: what it is, who it's for, the best tools, pros/cons, pricing snapshots, alternatives, and step-by-step implementation.
+
+> TL;DR: ${title} — adopt it where it directly moves a KPI. Pilot against a baseline, measure lift (accuracy, time saved, ROAS/CPA/LTV), standardize prompts/playbooks, and scale only proven wins.
 
 ## Table of contents
-- What is AI Optimisation?
-- Who is AI Optimisation for?
+- What is ${title}?
+- Who is ${title} for?
 - Key capabilities and benefits
 - Top tools and when to choose them
 - Pros and cons
@@ -20,10 +39,10 @@ AI Optimisation is becoming essential for teams that want faster research, clear
 - Internal links
 - Conclusion
 
-## What is AI Optimisation?
-In plain terms: ai optimisation helps teams compress time-to-insight and improve output quality by combining automation, guidance, and evidence-backed reasoning. It should integrate with your data, content, or activation stack and provide verifiable outputs.
+## What is ${title}?
+In plain terms: ${title.toLowerCase()} helps teams compress time-to-insight and improve output quality by combining automation, guidance, and evidence-backed reasoning. It should integrate with your data, content, or activation stack and provide verifiable outputs.
 
-## Who is AI Optimisation for?
+## Who is ${title} for?
 - Teams with repeated workflows that are slow or error-prone
 - Orgs that need consistent, on-brand outputs
 - Operators who value speed but still need governance
@@ -84,12 +103,12 @@ Pricing changes quickly; check vendor pages. Budget for: seats, usage (tokens/qu
 
 ## Mini case study template
 - Context: channel, audience, baseline metrics
-- Action: what changed using ai optimisation
+- Action: what changed using ${title.toLowerCase()}
 - Result: lift in KPI, time saved, confidence interval
 - Learning: what to templatize next
 
 ## FAQs
-**Does ai optimisation replace humans?** No—use it to augment; humans handle strategy and QA.
+**Does ${title.toLowerCase()} replace humans?** No—use it to augment; humans handle strategy and QA.
 
 **How do we keep quality high?** Style guides, examples, and approval steps; measure against ground truth.
 
@@ -101,4 +120,28 @@ Pricing changes quickly; check vendor pages. Budget for: seats, usage (tokens/qu
 - [AI Analytics](/blogs/ai-analytics)
 
 ## Conclusion
-Adopt ai optimisation where it clearly advances your KPI. Pilot quickly, measure rigorously, then standardize and scale.
+Adopt ${title.toLowerCase()} where it clearly advances your KPI. Pilot quickly, measure rigorously, then standardize and scale.
+`;
+}
+
+function main() {
+  if (!fs.existsSync(blogsDir)) {
+    console.error('No public/blogs directory found');
+    process.exit(1);
+  }
+  const files = fs.readdirSync(blogsDir).filter((f) => f.endsWith('.md'));
+  files.forEach((file) => {
+    const filePath = path.join(blogsDir, file);
+    const slug = file.replace(/\.md$/, '');
+    const content = fs.readFileSync(filePath, 'utf-8');
+    // Title from H1 if present, otherwise from slug
+    const title = (content.match(/^#\s+(.+)/m) || [null, toTitleCase(slug)])[1];
+    const next = buildDetailedArticle(title, slug);
+    fs.writeFileSync(filePath, next, 'utf-8');
+  });
+  console.log(`Generated detailed content for ${files.length} posts.`);
+}
+
+main();
+
+

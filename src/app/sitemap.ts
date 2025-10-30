@@ -1,4 +1,6 @@
 import type { MetadataRoute } from "next";
+import fs from "fs";
+import path from "path";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.kommi.in";
@@ -24,6 +26,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.5,
     });
   });
+
+  // Add generic blog posts from public/blogs/*.md served via app/blogs/[slug]
+  try {
+    const blogsDir = path.join(process.cwd(), "public", "blogs");
+    if (fs.existsSync(blogsDir)) {
+      const files = fs.readdirSync(blogsDir).filter((f) => f.endsWith(".md"));
+      files.forEach((file) => {
+        const slug = file.replace(/\.md$/, "");
+        urls.push({
+          url: `${baseUrl}/blogs/${slug}`,
+          lastModified: now,
+          changeFrequency: "monthly",
+          priority: 0.5,
+        });
+      });
+    }
+  } catch (e) {
+    // no-op: sitemap should not fail build on fs errors
+  }
 
   return urls;
 }

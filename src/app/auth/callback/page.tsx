@@ -17,35 +17,75 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the code from URL
+        // Check if we have tokens in the hash (implicit flow - Supabase redirects with hash)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        
+        // Check if we have a code in query params (PKCE flow)
         const code = searchParams.get("code");
-        const redirectParam = searchParams.get("redirect") || "/dashboard";
+        
+        // Get redirect param from either source
+        const redirectParam = searchParams.get("redirect") || hashParams.get("redirect") || "/dashboard";
 
-        if (!code) {
-          setError("No authorization code found");
+        let sessionData: any = null;
+
+        // Handle implicit flow (tokens in hash - this is what Supabase is sending)
+        if (accessToken && refreshToken) {
+          console.log("🔐 Processing OAuth callback with tokens (hash-based flow)");
+          
+          // Set session directly using tokens from hash
+          const { data, error: setSessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+
+          if (setSessionError) {
+            console.error("❌ Error setting session:", setSessionError);
+            setError(setSessionError.message);
+            setStatus("error");
+            return;
+          }
+
+          if (!data.session || !data.user) {
+            setError("Failed to create session from tokens");
+            setStatus("error");
+            return;
+          }
+
+          sessionData = data;
+          
+          // Clear the hash from URL after extracting tokens
+          window.history.replaceState(null, "", window.location.pathname + (window.location.search || ""));
+        }
+        // Handle PKCE flow (code in query params)
+        else if (code) {
+          console.log("🔐 Processing OAuth callback with code:", code.substring(0, 10) + "...");
+
+          // Exchange the code for a session
+          const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+
+          if (exchangeError) {
+            console.error("❌ Error exchanging code:", exchangeError);
+            setError(exchangeError.message);
+            setStatus("error");
+            return;
+          }
+
+          if (!data.session || !data.user) {
+            setError("Failed to create session");
+            setStatus("error");
+            return;
+          }
+
+          sessionData = data;
+        } else {
+          setError("No authorization code or tokens found in URL");
           setStatus("error");
           return;
         }
 
-        console.log("🔐 Processing OAuth callback with code:", code.substring(0, 10) + "...");
-
-        // Exchange the code for a session
-        const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-
-        if (exchangeError) {
-          console.error("❌ Error exchanging code:", exchangeError);
-          setError(exchangeError.message);
-          setStatus("error");
-          return;
-        }
-
-        if (!data.session || !data.user) {
-          setError("Failed to create session");
-          setStatus("error");
-          return;
-        }
-
-        console.log("✅ Session created for user:", data.user.email);
+        console.log("✅ Session created for user:", sessionData.user.email);
 
         // Create user profile and subscription if they don't exist (using admin client via API)
         try {
@@ -53,11 +93,11 @@ function AuthCallbackContent() {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              user_id: data.user.id,
-              email: data.user.email,
-              full_name: data.user.user_metadata?.full_name || 
-                        data.user.user_metadata?.name || 
-                        data.user.email?.split("@")[0] || 
+              user_id: sessionData.user.id,
+              email: sessionData.user.email,
+              full_name: sessionData.user.user_metadata?.full_name || 
+                        sessionData.user.user_metadata?.name || 
+                        sessionData.user.email?.split("@")[0] || 
                         "User",
             }),
           });
@@ -144,4 +184,3 @@ export default function AuthCallbackPage() {
     </Suspense>
   );
 }
-

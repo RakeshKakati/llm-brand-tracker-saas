@@ -108,7 +108,7 @@ export async function POST(req: Request) {
     };
 
     // Process URLs and extract contacts
-    const allExtractedContacts: Array<ExtractedContact & { url: string; mention_id?: string; domain: string }> = [];
+    const allExtractedContacts: Array<ExtractedContact & { url: string; mention_id?: string; domain: string; brand?: string; query?: string }> = [];
     let processed = 0;
 
     for (let i = 0; i < urlsToProcess.length; i++) {

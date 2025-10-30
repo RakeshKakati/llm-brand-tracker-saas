@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<可以被>"loading" | "error" | "success">("loading");
+  const [status, setStatus] = useState<"loading" | "error" | "success">("loading");
   const [error, setError] = useState<string>("");
 
   useEffect(() => {

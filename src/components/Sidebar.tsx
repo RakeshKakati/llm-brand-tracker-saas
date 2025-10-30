@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2 } from "lucide-react";
+import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2, Mail } from "lucide-react";
 import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import {
@@ -109,6 +109,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       title: "Active Trackers",
       icon: Target,
       page: "active",
+    },
+    {
+      title: "Contacts",
+      icon: Mail,
+      page: "contacts",
     },
     {
       title: "Teams",

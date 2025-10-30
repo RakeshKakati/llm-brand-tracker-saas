@@ -14,6 +14,7 @@ import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import CompetitorsPage from "@/components/pages/CompetitorsPage";
 import TeamsPage from "@/components/pages/TeamsPage";
+import ContactsPage from "@/components/pages/ContactsPage";
 
 export default function NotionLayout() {
   const router = useRouter();
@@ -64,6 +65,8 @@ export default function NotionLayout() {
         return <CompetitorsPage />;
       case "teams":
         return <TeamsPage />;
+      case "contacts":
+        return <ContactsPage />;
       default:
         return <DashboardPage />;
     }
@@ -79,6 +82,7 @@ export default function NotionLayout() {
       case "settings": return "Settings";
       case "competitors": return "Competitors";
       case "teams": return "Teams";
+      case "contacts": return "Contacts";
       default: return "Overview";
     }
   };

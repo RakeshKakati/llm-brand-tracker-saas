@@ -40,11 +40,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if subscription exists
-    const { data: existingSubscription } = await supabaseAdmin
+    const { data: existingSubscription, error: checkError } = await supabaseAdmin
       .from("subscriptions")
       .select("user_email")
       .eq("user_email", email)
-      .single();
+      .maybeSingle();
 
     // Create free subscription if it doesn't exist
     if (!existingSubscription) {
@@ -59,10 +59,17 @@ export async function POST(req: NextRequest) {
         }]);
 
       if (subError) {
-        console.error("⚠️ Subscription creation error:", subError);
+        // Handle duplicate key error gracefully (user already has subscription)
+        if (subError.code === '23505') {
+          console.log("ℹ️ Subscription already exists for user:", email);
+        } else {
+          console.error("⚠️ Subscription creation error:", subError);
+        }
       } else {
         console.log("✅ Free subscription created for OAuth user:", email);
       }
+    } else {
+      console.log("ℹ️ Subscription already exists for user:", email);
     }
 
     return NextResponse.json({ success: true });

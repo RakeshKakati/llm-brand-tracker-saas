@@ -142,10 +142,17 @@ export default function AuthPage() {
         ? `/dashboard?page=${redirectPage}&brand=${encodeURIComponent(brandName)}&query=${encodeURIComponent(query)}`
         : `/dashboard?page=${redirectPage}`;
       
+      // Use current origin (will be https://www.kommi.in in prod, localhost:3000 in dev)
+      const callbackUrl = `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectUrl)}`;
+      
+      console.log("🔐 Starting Google OAuth with redirect:", callbackUrl);
+      console.log("📍 Current origin:", window.location.origin);
+      console.log("📍 Current hostname:", window.location.hostname);
+      
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback?redirect=${encodeURIComponent(redirectUrl)}`,
+          redirectTo: callbackUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'consent',

@@ -625,9 +625,6 @@ export default function LandingPageSaaS() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
-              Start for free
-            </Button>
           </div>
         </Card>
       </section>

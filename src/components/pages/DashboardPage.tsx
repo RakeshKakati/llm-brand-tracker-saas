@@ -43,7 +43,11 @@ import {
   Globe,
   ExternalLink,
   Calendar,
-  RefreshCw
+  RefreshCw,
+  Zap,
+  TrendingDown,
+  Flame,
+  AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { 
@@ -1131,6 +1135,96 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     return newDomainsList.slice(0, 8);
   }, [chartMentionsRaw, timeRange]);
 
+  // Top Movers: Brands/Competitors with fastest growth (week-over-week comparison)
+  const topMovers = React.useMemo(() => {
+    if (!chartMentionsRaw || chartMentionsRaw.length === 0) return [] as { name: string; currentWeek: number; previousWeek: number; growth: number; trend: 'up' | 'down' }[];
+    
+    const ref = new Date();
+    const currentWeekStart = new Date(ref);
+    currentWeekStart.setDate(ref.getDate() - 7);
+    const previousWeekStart = new Date(ref);
+    previousWeekStart.setDate(ref.getDate() - 14);
+    
+    // Track mentions by brand name in current week and previous week
+    const brandMentions = new Map<string, { current: number; previous: number }>();
+    
+    chartMentionsRaw.forEach((mention: any) => {
+      const mentionDate = new Date(mention.created_at);
+      const brand = (mention.brand || '').toLowerCase().trim();
+      if (!brand) return;
+      
+      if (mentionDate >= currentWeekStart) {
+        const entry = brandMentions.get(brand) || { current: 0, previous: 0 };
+        entry.current += 1;
+        brandMentions.set(brand, entry);
+      } else if (mentionDate >= previousWeekStart && mentionDate < currentWeekStart) {
+        const entry = brandMentions.get(brand) || { current: 0, previous: 0 };
+        entry.previous += 1;
+        brandMentions.set(brand, entry);
+      }
+    });
+    
+    // Calculate growth percentage and sort
+    const movers = Array.from(brandMentions.entries())
+      .filter(([_, counts]) => counts.current > 0 || counts.previous > 0)
+      .map(([name, counts]) => {
+        const growth = counts.previous > 0 
+          ? ((counts.current - counts.previous) / counts.previous) * 100
+          : counts.current > 0 ? 1000 : 0; // Infinite growth if no previous mentions
+        
+        return {
+          name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
+          currentWeek: counts.current,
+          previousWeek: counts.previous,
+          growth: growth,
+          trend: counts.current >= counts.previous ? 'up' as const : 'down' as const
+        };
+      })
+      .sort((a, b) => Math.abs(b.growth) - Math.abs(a.growth)) // Sort by absolute growth
+      .slice(0, 10); // Top 10 movers
+    
+    return movers;
+  }, [chartMentionsRaw]);
+
+  // Spikes Detection: Days with unusual mention activity (detect significant increases)
+  const mentionSpikes = React.useMemo(() => {
+    if (!chartMentionsRaw || chartMentionsRaw.length === 0) return [] as { date: string; mentions: number; avgMentions: number; spikeRatio: number }[];
+    
+    // Calculate average mentions per day
+    const ref = new Date();
+    const days = timeRange === "90d" ? 90 : timeRange === "7d" ? 7 : 30;
+    const since = new Date(ref);
+    since.setDate(ref.getDate() - days);
+    
+    const dayMap = new Map<string, number>();
+    let totalMentions = 0;
+    
+    chartMentionsRaw.forEach((mention: any) => {
+      const d = new Date(mention.created_at);
+      if (d < since) return;
+      const key = d.toISOString().split('T')[0];
+      const count = dayMap.get(key) || 0;
+      dayMap.set(key, count + 1);
+      totalMentions += 1;
+    });
+    
+    const avgMentionsPerDay = totalMentions / Math.max(1, dayMap.size);
+    const threshold = avgMentionsPerDay * 2; // Spike = 2x average
+    
+    const spikes = Array.from(dayMap.entries())
+      .filter(([_, count]) => count >= threshold)
+      .map(([date, mentions]) => ({
+        date,
+        mentions,
+        avgMentions: avgMentionsPerDay,
+        spikeRatio: mentions / avgMentionsPerDay
+      }))
+      .sort((a, b) => b.spikeRatio - a.spikeRatio) // Highest spike ratio first
+      .slice(0, 5); // Top 5 spikes
+    
+    return spikes;
+  }, [chartMentionsRaw, timeRange]);
+
   // Share of Voice (stacked) for top competitors by visibility
   const shareOfVoice = React.useMemo(() => {
     if (!chartMentionsRaw || chartMentionsRaw.length === 0 || !trackedCompetitors || trackedCompetitors.length === 0) return { data: [], fields: [] as string[] };
@@ -1305,6 +1399,128 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
         />
           </div>
 
+      {/* New Features Row: Top Movers & Spikes Detection */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Movers Widget */}
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-500" />
+                <CardTitle>Top Movers</CardTitle>
+              </div>
+              <Badge variant="secondary" className="ml-auto">
+                Week-over-week growth
+              </Badge>
+            </div>
+            <CardDescription>
+              Brands with fastest growth in mentions
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {topMovers.length > 0 ? (
+              <div className="divide-y">
+                {topMovers.slice(0, 5).map((mover, index) => (
+                  <div key={index} className="p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold ${
+                          mover.trend === 'up' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{mover.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {mover.currentWeek} this week vs {mover.previousWeek} last week
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {mover.trend === 'up' ? (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        )}
+                        <span className={`text-sm font-bold ${
+                          mover.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          {mover.growth > 1000 ? '∞' : mover.growth > 0 ? `+${mover.growth.toFixed(0)}%` : `${mover.growth.toFixed(0)}%`}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Zap className="w-12 h-12 mb-4 opacity-50" />
+                <p className="font-medium">No growth data yet</p>
+                <p className="text-sm mt-1">Data will appear after tracking for 2+ weeks</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Spikes Detection Card */}
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Flame className="w-5 h-5 text-orange-500" />
+                <CardTitle>Mention Spikes</CardTitle>
+              </div>
+              <Badge variant="secondary" className="ml-auto">
+                Unusual activity
+              </Badge>
+            </div>
+            <CardDescription>
+              Days with significantly higher mention activity
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0">
+            {mentionSpikes.length > 0 ? (
+              <div className="divide-y">
+                {mentionSpikes.map((spike, index) => (
+                  <div key={index} className="p-4 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100 text-orange-700 text-xs font-bold">
+                          <Flame className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm">
+                            {new Date(spike.date).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {spike.mentions} mentions ({spike.spikeRatio.toFixed(1)}x average)
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="w-4 h-4 text-orange-600" />
+                        <Badge variant="outline" className="border-orange-300 text-orange-700">
+                          {spike.spikeRatio.toFixed(1)}x
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Activity className="w-12 h-12 mb-4 opacity-50" />
+                <p className="font-medium">No spikes detected</p>
+                <p className="text-sm mt-1">Activity is within normal range</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
         {/* Recent Activity - Source Links Table */}
         <Card>

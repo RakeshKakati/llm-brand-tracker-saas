@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "competitor analysis",
     "OpenAI citations",
     "contacts extraction",
-    "SaaS marketing",
+    "SaaS AI marketing tools",
   ],
   alternates: {
     canonical: "/",

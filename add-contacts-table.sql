@@ -26,11 +26,17 @@ CREATE TABLE IF NOT EXISTS extracted_contacts (
   -- Metadata
   extraction_method TEXT, -- 'direct', 'contact_page', 'author_page'
   confidence_score INTEGER DEFAULT 50, -- 0-100 (how likely this is a real contact)
-  extracted_at TIMESTAMP DEFAULT NOW(),
-  
-  -- Prevent exact duplicates (same user, URL, email/phone combination)
-  CONSTRAINT unique_contact UNIQUE(user_email, source_url, COALESCE(email, ''), COALESCE(phone, ''))
+  extracted_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Create unique index to prevent duplicates (same user, URL, email/phone combination)
+-- Using NULLIF to handle NULL values in unique constraint
+CREATE UNIQUE INDEX IF NOT EXISTS unique_contact_idx ON extracted_contacts(
+  user_email,
+  source_url,
+  COALESCE(email, ''),
+  COALESCE(phone, '')
+) WHERE email IS NOT NULL OR phone IS NOT NULL;
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_contacts_user_email ON extracted_contacts(user_email);

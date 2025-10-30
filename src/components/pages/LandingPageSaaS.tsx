@@ -580,14 +580,17 @@ export default function LandingPageSaaS() {
               </div>
               <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
                 <div className="space-y-3">
-                  {[{company:'Archiz Solutions', email:'dheeraj@archizsolutions.com', phone:'+91 97179 63903', domain:'archizsolutions.com'}, {company:'Arobit Business Solutions', email:'careers@arobit.com', phone:'+91 91633 67905', domain:'arobit.com'}].map((c, idx) => (
+                  {[{company:'Acme CRM', email:'contact@acmecrm.com', phone:'+1 415 555 0133', domain:'acmecrm.com'}, {company:'Nimbus Suite', email:'hello@nimbussuite.com', phone:'+44 20 7946 0958', domain:'nimbussuite.com'}].map((c, idx) => (
                     <div key={idx} className="p-4 rounded-lg border bg-background">
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="font-medium">{c.company}</p>
                           <p className="text-sm text-muted-foreground">{c.domain}</p>
                         </div>
-                        <Badge variant="secondary">95%</Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="secondary">95%</Badge>
+                          <Badge variant="outline">Sample</Badge>
+                        </div>
                       </div>
                       <div className="mt-3 text-sm space-y-1">
                         <div className="flex items-center gap-2"><Mail className="w-3 h-3" /> {c.email}</div>

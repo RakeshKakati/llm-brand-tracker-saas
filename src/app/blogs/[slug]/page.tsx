@@ -13,15 +13,38 @@ interface PageProps {
   }>;
 }
 
+// Allowlist of blog slugs, mirroring the comparisons pattern
+const posts = [
+  'best-ai-tools', 'ai-search', 'ai-searches', 'ai-in-search-engines', 'top-ai-tools', 'top-ai-tool',
+  'ai-for-marketing', 'ai-data-analytics', 'ai-and-marketing', 'ai-for-data-analytics', 'data-analysis-ai',
+  'ai-for-data-analysis', 'new-ai-tools', 'ai-and-data-analytics', 'data-analytics-and-ai', 'newest-ai-tools',
+  'digital-marketing-ai', 'digital-marketing-and-ai', 'analytics-marketing', 'tools-marketing', 'ai-optimization',
+  'ai-reviews', 'ai-optimisation', 'ai-tools-for-marketing', 'ai-marketing-tools', 'ai-advertising', 'latest-ai-tools',
+  'ai-reporting', 'conversions-ai', 'manage-ai', 'ai-for-sales', 'ai-and-sales', 'content-ai', 'ai-tools-for-data-analysis',
+  'ai-analysis', 'ai-analyse', 'contents-ai', 'ai-analytical', 'ai-tools-for-digital-marketing', 'ai-data', 'ai-data-analyst',
+  'ai-tool-for-digital-marketing', 'powerful-ai-tools', 'top-5-ai-tools', 'marketing-ai', 'ai-analytics', 'ai-tools-for-business',
+  'best-ai-platforms', 'ai-and-data', 'trending-ai-tools', 'best-ai-software', 'peak-ai', 'marketing-analysis-tools',
+  'ai-tools-websites', 'analytics-tools-marketing', 'ai-for-analytics', 'data-analyst-ai', 'ai-and-analytics', 'analysis-ai',
+  'marketing-ai-tools', 'digital-marketing-ai-tools', 'marketing-ai-tool', 'use-of-ai-in-marketing', 'customer-insights-ai',
+  'most-popular-ai-tools', 'get-answer', 'booster-ai', 'ai-setting', 'ai-sales-tools', 'free-ai-tools-for-marketing',
+  'sales-ai-tools', 'best-ai-tools-for-business', 'ai-marketing-automation', 'ai-for-sales-and-marketing', 'ai-in-sales-and-marketing',
+  'ai-in-marketing-automation', 'al-search', 'ai-email-marketing', 'ai-for-email-marketing', 'insider-ai', 'data-analytics-with-ai',
+  'data-analysis-site', 'most-powerful-ai-tools', 'most-powerful-ai-tool', 'best-ai-tools-for-marketing', 'ai-analytics-tools',
+  'best-ai-tools-for-digital-marketing', 'marketing-tools-for-business', 'business-ai-tools', 'ai-driven-marketing',
+  'best-ai-seo-tools', 'top-ai-platforms', 'best-ai-tool-for-digital-marketing', 'ai-best-tools', 'different-ai-platforms',
+  'tools-for-ai',
+];
+
 export async function generateStaticParams() {
-  const blogsDir = path.join(process.cwd(), 'public', 'blogs');
-  if (!fs.existsSync(blogsDir)) return [];
-  const files = fs.readdirSync(blogsDir).filter((f) => f.endsWith('.md'));
-  return files.map((file) => ({ slug: file.replace(/\.md$/, '') }));
+  return posts.map((slug) => ({ slug }));
 }
 
 export default async function BlogPage({ params }: PageProps) {
   const { slug } = await params;
+
+  if (!posts.includes(slug)) {
+    notFound();
+  }
 
   const filePath = path.join(process.cwd(), 'public', 'blogs', `${slug}.md`);
   if (!fs.existsSync(filePath)) {

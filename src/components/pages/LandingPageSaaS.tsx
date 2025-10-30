@@ -114,11 +114,10 @@ export default function LandingPageSaaS() {
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              Monitor and improve your{" "}
-              <span className="text-primary">brand visibility in AI</span>
+              Make your brand <span className="text-primary">AI‑compatible</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Track how often AI assistants like ChatGPT mention your brand and dominate AI search results
+              Get cited, discovered, and preferred by AI. Track mentions, fix sources, and win AI search.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
               <Link href="/auth">

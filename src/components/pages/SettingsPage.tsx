@@ -180,7 +180,7 @@ export default function SettingsPage() {
         ];
       default:
         return [
-          "5 active brand trackers",
+          "3 active brand trackers",
           "Daily monitoring checks",
           "Basic analytics",
           "Email notifications",

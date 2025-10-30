@@ -67,6 +67,7 @@ interface MentionDetail {
 
 interface SourceData {
   domain: string;
+  category: string; // News, Blog, Forum, Social, E-commerce, Educational, Other
   count: number;
   queries: string[];
   lastSeen: string; // Timestamp of most recent mention
@@ -107,7 +108,98 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   const mentionsPerPage = 10;
   const [currentCompetitorsPage, setCurrentCompetitorsPage] = useState(1);
   const competitorsPerPage = 10;
+  const [selectedCategory, setSelectedCategory] = useState<string>("all"); // Filter by category
   const hasFetchedRef = useRef(false);
+
+  // Source categorization utility function
+  const categorizeDomain = (domain: string): string => {
+    const domainLower = domain.toLowerCase();
+    
+    // Known platform mappings
+    const platformMap: Record<string, string> = {
+      // Social
+      'twitter.com': 'Social',
+      'x.com': 'Social',
+      'linkedin.com': 'Social',
+      'facebook.com': 'Social',
+      'instagram.com': 'Social',
+      'tiktok.com': 'Social',
+      'youtube.com': 'Social',
+      'reddit.com': 'Forum',
+      'quora.com': 'Forum',
+      'stackoverflow.com': 'Forum',
+      'stackexchange.com': 'Forum',
+      'medium.com': 'Blog',
+      'substack.com': 'Blog',
+      'wordpress.com': 'Blog',
+      'blogger.com': 'Blog',
+      'amazon.com': 'E-commerce',
+      'amazon.in': 'E-commerce',
+      'flipkart.com': 'E-commerce',
+      'ebay.com': 'E-commerce',
+      'etsy.com': 'E-commerce',
+      'github.com': 'Tech',
+      'techcrunch.com': 'News',
+      'bbc.com': 'News',
+      'cnn.com': 'News',
+      'nytimes.com': 'News',
+      'theguardian.com': 'News',
+      'forbes.com': 'News',
+      'reuters.com': 'News',
+      'bloomberg.com': 'News',
+      'wsj.com': 'News',
+    };
+
+    // Check known platforms first
+    if (platformMap[domainLower]) {
+      return platformMap[domainLower];
+    }
+
+    // Check subdomain patterns
+    if (domainLower.includes('blog.') || domainLower.includes('.blog')) {
+      return 'Blog';
+    }
+    if (domainLower.includes('news.') || domainLower.includes('.news')) {
+      return 'News';
+    }
+    if (domainLower.includes('forum.') || domainLower.includes('.forum')) {
+      return 'Forum';
+    }
+    if (domainLower.includes('shop.') || domainLower.includes('store.') || domainLower.includes('.shop')) {
+      return 'E-commerce';
+    }
+
+    // Check domain keywords
+    if (/news|press|media|journal|times|post|gazette|herald|tribune|chronicle|observer/i.test(domainLower)) {
+      return 'News';
+    }
+    if (/blog|article|post|write|author|journal/i.test(domainLower)) {
+      return 'Blog';
+    }
+    if (/forum|discussion|community|board|qa|question|answer|discuss/i.test(domainLower)) {
+      return 'Forum';
+    }
+    if (/shop|store|cart|buy|purchase|marketplace|merchant|retail|commerce/i.test(domainLower)) {
+      return 'E-commerce';
+    }
+    if (/social|share|connect|network|profile|feed/i.test(domainLower)) {
+      return 'Social';
+    }
+    if (/tech|software|app|digital|innovation|startup|gadget/i.test(domainLower)) {
+      return 'Tech';
+    }
+
+    // Check domain extensions
+    if (domainLower.endsWith('.edu')) {
+      return 'Educational';
+    }
+    if (domainLower.endsWith('.gov') || domainLower.endsWith('.gov.in')) {
+      return 'Government';
+    }
+
+    // Default fallback
+    return 'Other';
+  };
 
   useEffect(() => {
     console.log("🚀 Dashboard mount - initializing fetch...");
@@ -506,6 +598,7 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     const results = Array.from(sourcesMap.entries())
       .map(([domain, data]) => ({
         domain,
+        category: categorizeDomain(domain), // Add category
         count: data.count,
         queries: Array.from(data.queries),
         lastSeen: data.lastSeen,
@@ -517,6 +610,42 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     console.log("📊 Top sources found:", results.length);
     return results;
   };
+
+  // Category breakdown statistics
+  const categoryBreakdown = React.useMemo(() => {
+    const breakdown = new Map<string, { count: number; domains: number }>();
+    
+    topSources.forEach(source => {
+      const current = breakdown.get(source.category) || { count: 0, domains: 0 };
+      breakdown.set(source.category, {
+        count: current.count + source.count,
+        domains: current.domains + 1
+      });
+    });
+
+    return Array.from(breakdown.entries())
+      .map(([category, data]) => ({
+        category,
+        mentions: data.count,
+        domains: data.domains
+      }))
+      .sort((a, b) => b.mentions - a.mentions);
+  }, [topSources]);
+
+  // Filtered sources based on selected category
+  const filteredTopSources = React.useMemo(() => {
+    if (selectedCategory === "all") {
+      return topSources;
+    }
+    return topSources.filter(source => source.category === selectedCategory);
+  }, [topSources, selectedCategory]);
+
+  // Update pagination to use filtered sources
+  const totalSourcesPages = Math.ceil(filteredTopSources.length / sourcesPerPage);
+  const paginatedSources = filteredTopSources.slice(
+    (currentSourcesPage - 1) * sourcesPerPage,
+    currentSourcesPage * sourcesPerPage
+  );
 
   // Extract competitors from **brand name** patterns and track citation links
   const processCompetitors = (mentions: any[]): CompetitorData[] => {
@@ -1287,12 +1416,10 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     return { errorRate, throughput };
   }, [chartMentionsRaw, timeRange]);
 
-  // Pagination for sources
-  const totalSourcesPages = Math.ceil(topSources.length / sourcesPerPage);
-  const paginatedSources = topSources.slice(
-    (currentSourcesPage - 1) * sourcesPerPage,
-    currentSourcesPage * sourcesPerPage
-  );
+  // Reset page when category filter changes
+  React.useEffect(() => {
+    setCurrentSourcesPage(1);
+  }, [selectedCategory]);
 
   // Pagination for recent mentions
   const totalMentionsPages = Math.ceil(recentMentions.length / mentionsPerPage);
@@ -1683,32 +1810,105 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           </CardContent>
         </Card>
 
+      {/* Source Categories Breakdown */}
+      {categoryBreakdown.length > 0 && (
+        <Card>
+          <CardHeader className="border-b">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5" />
+              <CardTitle>Source Categories</CardTitle>
+            </div>
+            <CardDescription>
+              Distribution of mentions by source type
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {categoryBreakdown.map((cat) => {
+                const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+                  'News': { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200' },
+                  'Blog': { bg: 'bg-purple-50', text: 'text-purple-700', border: 'border-purple-200' },
+                  'Forum': { bg: 'bg-orange-50', text: 'text-orange-700', border: 'border-orange-200' },
+                  'Social': { bg: 'bg-pink-50', text: 'text-pink-700', border: 'border-pink-200' },
+                  'E-commerce': { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' },
+                  'Tech': { bg: 'bg-indigo-50', text: 'text-indigo-700', border: 'border-indigo-200' },
+                  'Educational': { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200' },
+                  'Government': { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200' },
+                  'Other': { bg: 'bg-gray-50', text: 'text-gray-700', border: 'border-gray-200' },
+                };
+                const colors = categoryColors[cat.category] || categoryColors['Other'];
+                
+                return (
+                  <div 
+                    key={cat.category}
+                    className={`p-4 rounded-lg border-2 ${colors.border} ${colors.bg} cursor-pointer hover:scale-105 transition-transform ${
+                      selectedCategory === cat.category ? 'ring-2 ring-primary ring-offset-2' : ''
+                    }`}
+                    onClick={() => setSelectedCategory(cat.category === selectedCategory ? 'all' : cat.category)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={`font-semibold text-sm ${colors.text}`}>
+                        {cat.category}
+                      </span>
+                      <Badge variant="outline" className={`${colors.border} ${colors.text}`}>
+                        {cat.domains}
+                      </Badge>
+                    </div>
+                    <p className={`text-2xl font-bold ${colors.text}`}>
+                      {cat.mentions}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">mentions</p>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Top Sources - Full Width */}
       {/* Top Sources - Full Width Data Table */}
       <Card>
         <CardHeader className="border-b">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
             <div className="flex items-center gap-2">
               <Globe className="w-5 h-5" />
               <CardTitle>Top Sources</CardTitle>
             </div>
-            <Badge variant="secondary" className="ml-auto">
-              {topSources.length} {topSources.length === 1 ? 'domain' : 'domains'}
-            </Badge>
+            <div className="flex items-center gap-3">
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {categoryBreakdown.map((cat) => (
+                    <SelectItem key={cat.category} value={cat.category}>
+                      {cat.category} ({cat.domains})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Badge variant="secondary" className="ml-auto">
+                {filteredTopSources.length} {filteredTopSources.length === 1 ? 'domain' : 'domains'}
+                {selectedCategory !== "all" && ` (${topSources.length} total)`}
+              </Badge>
+            </div>
           </div>
           <CardDescription>
             Most referenced domains from brand mentions
+            {selectedCategory !== "all" && ` - Filtered by: ${selectedCategory}`}
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          {topSources.length > 0 ? (
+          {filteredTopSources.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[60px]">Rank</TableHead>
                     <TableHead className="w-[80px]"></TableHead>
-                    <TableHead className="min-w-[200px]">Domain</TableHead>
+                    <TableHead className="min-w-[250px]">Domain & Category</TableHead>
                     <TableHead className="w-[100px] text-center">Mentions</TableHead>
                     <TableHead className="hidden lg:table-cell">Related Queries</TableHead>
                     <TableHead className="w-[140px]">Last Seen</TableHead>
@@ -1742,9 +1942,29 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <Globe className="h-4 w-4 text-muted-foreground" />
                           <span>{source.domain}</span>
+                          <Badge 
+                            variant="outline" 
+                            className={`text-xs ${
+                              source.category === 'News' ? 'border-blue-300 text-blue-700 bg-blue-50' :
+                              source.category === 'Blog' ? 'border-purple-300 text-purple-700 bg-purple-50' :
+                              source.category === 'Forum' ? 'border-orange-300 text-orange-700 bg-orange-50' :
+                              source.category === 'Social' ? 'border-pink-300 text-pink-700 bg-pink-50' :
+                              source.category === 'E-commerce' ? 'border-green-300 text-green-700 bg-green-50' :
+                              source.category === 'Tech' ? 'border-indigo-300 text-indigo-700 bg-indigo-50' :
+                              source.category === 'Educational' ? 'border-amber-300 text-amber-700 bg-amber-50' :
+                              source.category === 'Government' ? 'border-slate-300 text-slate-700 bg-slate-50' :
+                              'border-gray-300 text-gray-700 bg-gray-50'
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCategory(source.category === selectedCategory ? 'all' : source.category);
+                            }}
+                          >
+                            {source.category}
+                          </Badge>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
@@ -1789,19 +2009,27 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                 </TableBody>
               </Table>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <Globe className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-medium">No source data available yet</p>
-              <p className="text-sm mt-1">Sources will appear after brand mentions are found</p>
-            </div>
-          )}
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Globe className="w-12 h-12 mb-4 opacity-50" />
+                <p className="font-medium">
+                  {selectedCategory !== "all" 
+                    ? `No ${selectedCategory} sources found` 
+                    : "No source data available yet"}
+                </p>
+                <p className="text-sm mt-1">
+                  {selectedCategory !== "all"
+                    ? `Try selecting a different category or view all sources`
+                    : "Sources will appear after brand mentions are found"}
+                </p>
+              </div>
+            )}
           
           {/* Pagination Controls */}
-          {topSources.length > sourcesPerPage && (
+          {filteredTopSources.length > sourcesPerPage && (
             <div className="flex items-center justify-between border-t px-6 py-4">
               <div className="text-sm text-muted-foreground">
-                Showing {((currentSourcesPage - 1) * sourcesPerPage) + 1} to {Math.min(currentSourcesPage * sourcesPerPage, topSources.length)} of {topSources.length} sources
+                Showing {((currentSourcesPage - 1) * sourcesPerPage) + 1} to {Math.min(currentSourcesPage * sourcesPerPage, filteredTopSources.length)} of {filteredTopSources.length} sources
               </div>
               <div className="flex items-center gap-2">
                 <Button

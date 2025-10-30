@@ -176,7 +176,7 @@ export async function POST(req: Request) {
       const { error: insertError } = await supabaseAdmin
         .from("extracted_contacts")
         .upsert(contactsToInsert, {
-          onConflict: "unique_contact_idx",
+          onConflict: "user_email,source_url,email,phone",
           ignoreDuplicates: false,
         });
 

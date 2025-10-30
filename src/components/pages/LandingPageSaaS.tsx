@@ -28,6 +28,7 @@ import {
   Layers,
   Sparkles
 } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -529,6 +530,80 @@ export default function LandingPageSaaS() {
       </section>
 
       {/* Social Proof Section */}
+      {/* Contacts Extraction (Beta) */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-12">
+            <Badge variant="outline" className="mb-3">Beta</Badge>
+            <h2 className="text-4xl font-bold mb-4">Turn citations into contacts</h2>
+            <p className="text-xl text-muted-foreground">
+              Automatically extract emails, phone numbers, and social profiles from sources cited by AI. Reach out and earn mentions.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <ul className="space-y-4">
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium">Contact extraction</p>
+                    <p className="text-muted-foreground text-sm">Find emails, phones, and social links from cited sources (footer-aware, WhatsApp aware).</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium">Smart filtering</p>
+                    <p className="text-muted-foreground text-sm">Removes telemetry/junk (sentry/wixpress) and asset-like emails automatically.</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-medium">No duplicates</p>
+                    <p className="text-muted-foreground text-sm">De-duplicated per domain with confidence scores and CSV export.</p>
+                  </div>
+                </li>
+              </ul>
+              <div className="mt-6">
+                <Link href="/auth">
+                  <Button size="lg">
+                    Try contacts (beta)
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden">
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">Contacts (Beta)</span>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <div className="space-y-3">
+                  {[{company:'Archiz Solutions', email:'dheeraj@archizsolutions.com', phone:'+91 97179 63903', domain:'archizsolutions.com'}, {company:'Arobit Business Solutions', email:'careers@arobit.com', phone:'+91 91633 67905', domain:'arobit.com'}].map((c, idx) => (
+                    <div key={idx} className="p-4 rounded-lg border bg-background">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">{c.company}</p>
+                          <p className="text-sm text-muted-foreground">{c.domain}</p>
+                        </div>
+                        <Badge variant="secondary">95%</Badge>
+                      </div>
+                      <div className="mt-3 text-sm space-y-1">
+                        <div className="flex items-center gap-2"><Mail className="w-3 h-3" /> {c.email}</div>
+                        <div className="flex items-center gap-2"><Phone className="w-3 h-3" /> {c.phone}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Section */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-muted/20">
         <div className="mx-auto max-w-4xl text-center">
           <h2 className="text-3xl font-bold mb-8">Trusted by marketing teams worldwide</h2>
@@ -625,6 +700,9 @@ export default function LandingPageSaaS() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
+            <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+              Start for free
+            </Button>
           </div>
         </Card>
       </section>

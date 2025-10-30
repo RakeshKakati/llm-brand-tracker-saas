@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS extracted_contacts (
   -- Source information
   source_url TEXT NOT NULL,
   domain TEXT NOT NULL,
-  mention_id UUID REFERENCES brand_mentions(id) ON DELETE SET NULL,
+  mention_id BIGINT REFERENCES brand_mentions(id) ON DELETE SET NULL,
   brand TEXT,
   query TEXT,
   
@@ -29,14 +29,25 @@ CREATE TABLE IF NOT EXISTS extracted_contacts (
   extracted_at TIMESTAMP DEFAULT NOW()
 );
 
--- Create unique index to prevent duplicates (same user, URL, email/phone combination)
--- Using NULLIF to handle NULL values in unique constraint
+-- Ensure any prior version of the index is replaced with a compatible one
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_indexes 
+    WHERE schemaname = 'public' AND indexname = 'unique_contact_idx'
+  ) THEN
+    DROP INDEX IF EXISTS unique_contact_idx;
+  END IF;
+END $$;
+
+-- Create a standard unique index usable by PostgREST upsert
+-- Note: rows with both email and phone NULL will not conflict (acceptable)
 CREATE UNIQUE INDEX IF NOT EXISTS unique_contact_idx ON extracted_contacts(
   user_email,
   source_url,
-  COALESCE(email, ''),
-  COALESCE(phone, '')
-) WHERE email IS NOT NULL OR phone IS NOT NULL;
+  email,
+  phone
+);
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_contacts_user_email ON extracted_contacts(user_email);

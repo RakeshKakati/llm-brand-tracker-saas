@@ -112,6 +112,12 @@ async function fetchHTML(url: string): Promise<string | null> {
 function extractDirectContacts(html: string, baseUrl: string): ExtractedContact[] {
   const contacts: ExtractedContact[] = [];
   
+  // Prepare helper views
+  const visibleText = getVisibleText(html);
+  const footerHtml = extractSection(html, 'footer');
+  const footerText = footerHtml ? getVisibleText(footerHtml) : '';
+  const sourceDomain = getDomainSafe(baseUrl);
+  
   // 1. Extract emails - multiple patterns
   const emailPatterns = [
     /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g,
@@ -131,24 +137,42 @@ function extractDirectContacts(html: string, baseUrl: string): ExtractedContact[
     }
   });
   
-  // 2. Extract phone numbers
-  const phonePatterns = [
-    /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
-    /tel:([+\d\s\-()]+)/gi,
-    /(\+?\d{1,4}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/g,
-  ];
-  
+  // 2. Extract phone numbers - comprehensive
+  // - tel: links
+  // - visible text (including footer)
+  // - international formats (+91, +1 etc), separators, spaces, parentheses
   const allPhones = new Set<string>();
-  phonePatterns.forEach(pattern => {
-    const matches = html.match(pattern);
-    if (matches) {
-      matches.forEach(match => {
-        const phone = match.replace(/^tel:/i, '').trim();
-        if (isValidPhone(phone)) {
-          allPhones.add(phone);
-        }
+  const telLinkRegex = /tel:([+\d\s\-().]+)/gi;
+  const intlPhoneRegex = /(?:(?:\+|00)\d{1,3}[\s\-().]*)?(?:\(\d{2,4}\)[\s\-().]*)?\d{2,4}[\s\-().]*\d{2,4}[\s\-().]*\d{2,6}/g;
+  const indianPhoneRegex = /(?:\+91[\s\-().]*)?\d{5}[\s\-().]*\d{5}/g; // common India format
+
+  const harvestPhones = (source: string) => {
+    // tel: links
+    Array.from(source.matchAll(telLinkRegex)).forEach(m => {
+      const raw = m[1] || '';
+      const normalized = normalizePhone(raw);
+      if (isValidPhone(normalized)) allPhones.add(normalized);
+    });
+    // international patterns
+    [intlPhoneRegex, indianPhoneRegex].forEach(rx => {
+      Array.from(source.matchAll(rx)).forEach(m => {
+        const normalized = normalizePhone(m[0] || '');
+        if (isValidPhone(normalized)) allPhones.add(normalized);
       });
-    }
+    });
+  };
+
+  // Run on raw HTML (for tel links), visible text, and footer text
+  harvestPhones(html);
+  harvestPhones(visibleText);
+  if (footerText) harvestPhones(footerText);
+
+  // WhatsApp links often carry phone numbers
+  const waRegex = /(?:wa\.me\/(\d+)|api\.whatsapp\.com\/send\?phone=(\d+))/gi;
+  Array.from(html.matchAll(waRegex)).forEach(m => {
+    const raw = (m[1] || m[2] || '').trim();
+    const normalized = normalizePhone(raw);
+    if (isValidPhone(normalized)) allPhones.add(normalized);
   });
   
   // 3. Extract social media links
@@ -177,6 +201,7 @@ function extractDirectContacts(html: string, baseUrl: string): ExtractedContact[
   if (allEmails.size > 0) {
     // Create one contact per email
     allEmails.forEach(email => {
+      if (isJunkEmail(email)) return;
       contacts.push({
         email,
         phone: allPhones.size > 0 ? Array.from(allPhones)[0] : undefined,
@@ -201,7 +226,7 @@ function extractDirectContacts(html: string, baseUrl: string): ExtractedContact[
       authorName,
       companyName,
       extractionMethod: 'direct',
-      confidence: 40, // Lower confidence without email
+      confidence: 55, // Better confidence if phone is present
     });
   } else if (authorName || linkedin || twitter) {
     // At least some contact info
@@ -258,10 +283,10 @@ function findAuthorPageURL(html: string, baseUrl: string): string | null {
   const authorPatterns = [
     /<a[^>]+href=["']([^"']*author[^"']*)["'][^>]*>/gi,
     /<a[^>]+href=["']([^"']*writer[^"']*)["'][^>]*>/gi,
-    /<a[^>]+rel=["']author["'][^>]+href=["']([ّ^"']+)["']/gi,
+    /<a[^>]+rel=["']author["'][^>]+href=["']([^"']+)["']/gi,
   ];
   
-  for (const pattern of authorPatterns)量为 {
+  for (const pattern of authorPatterns) {
     const matches = Array.from(html.matchAll(pattern));
     for (const match of matches) {
       if (match[1]) {
@@ -359,6 +384,37 @@ function extractCompanyName(html: string): string | undefined {
 }
 
 /**
+ * Convert HTML to visible text (basic stripper)
+ */
+function getVisibleText(html: string): string {
+  try {
+    let text = html
+      .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&lt;/gi, '<')
+      .replace(/&gt;/gi, '>');
+    // Normalize whitespace
+    text = text.replace(/[\u00A0\u2000-\u200B]/g, ' ');
+    text = text.replace(/\s+/g, ' ').trim();
+    return text;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Extract a specific HTML section by tag (e.g., footer)
+ */
+function extractSection(html: string, tag: string): string | null {
+  const rx = new RegExp(`<${tag}[^>]*>[\\s\\S]*?<\/${tag}>`, 'i');
+  const m = html.match(rx);
+  return m ? m[0] : null;
+}
+
+/**
  * Calculate confidence score for a contact
  */
 function calculateConfidence(
@@ -416,7 +472,7 @@ function isValidEmail(email: string): boolean {
  * Validate phone number
  */
 function isValidPhone(phone: string): boolean {
-  // Remove common non-phone patterns
+  // Remove common separators
   const cleaned = phone.replace(/[\s\-().+]/g, '');
   
   // Should have at least 7 digits
@@ -429,6 +485,38 @@ function isValidPhone(phone: string): boolean {
   if (!/^\d+$/.test(cleaned)) return false;
   
   return true;
+}
+
+/**
+ * Normalize phone by removing extra separators and keeping leading + if present
+ */
+function normalizePhone(raw: string): string {
+  const trimmed = (raw || '').trim();
+  const hasPlus = trimmed.startsWith('+');
+  const digits = trimmed.replace(/[^\d]/g, '');
+  if (!digits) return '';
+  return hasPlus ? `+${digits}` : digits;
+}
+
+/**
+ * Helpers: domain + junk filters
+ */
+function getDomainSafe(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, '').toLowerCase(); } catch { return ''; }
+}
+
+function isJunkEmail(email: string): boolean {
+  const e = email.toLowerCase();
+  // Placeholder/junk patterns
+  if (e === 'xxx@xxx.xxx') return true;
+  if (/\.(png|jpg|jpeg|svg|gif)@/i.test(e) || /@.*\.(png|jpg|jpeg|svg|gif)$/i.test(e)) return true;
+  // Tracking/telemetry providers seen in results
+  const blockedDomains = [
+    'sentry.io', 'sentry.wixpress.com', 'sentry-next.wixpress.com', 'wixpress.com'
+  ];
+  const domain = e.split('@')[1] || '';
+  if (blockedDomains.some(d => domain.endsWith(d))) return true;
+  return false;
 }
 
 /**

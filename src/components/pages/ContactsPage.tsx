@@ -40,7 +40,7 @@ import {
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
-import { supabaseClient } from "@/app/lib/supabaseClient";
+import { supabase } from "@/app/lib/supabaseClient";
 import { toast } from "sonner";
 
 interface Contact {
@@ -73,7 +73,7 @@ export default function ContactsPage() {
   // Fetch user session
   useEffect(() => {
     const fetchUser = async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       if (session?.user?.email) {
         setUserEmail(session.user.email);
       }
@@ -93,7 +93,7 @@ export default function ContactsPage() {
 
     setLoading(true);
     try {
-      const { data, error } = await supabaseClient
+      const { data, error } = await supabase
         .from("extracted_contacts")
         .select("*")
         .eq("user_email", userEmail)
@@ -164,33 +164,50 @@ export default function ContactsPage() {
     return Array.from(domainSet).sort();
   }, [contacts]);
 
-  // Filter contacts
+  // Filter + de-duplicate contacts (by email|phone|domain)
   const filteredContacts = React.useMemo(() => {
-    return contacts.filter(contact => {
+    const seen = new Set<string>();
+    const out: Contact[] = [];
+
+    const isJunkEmail = (email?: string) => {
+      if (!email) return false;
+      const e = email.toLowerCase();
+      if (e === 'xxx@xxx.xxx') return true;
+      if (/\.(png|jpg|jpeg|svg|gif)@/i.test(e) || /@.*\.(png|jpg|jpeg|svg|gif)$/i.test(e)) return true;
+      const blocked = ['sentry.io','sentry.wixpress.com','sentry-next.wixpress.com','wixpress.com'];
+      const domain = e.split('@')[1] || '';
+      if (blocked.some(d => domain.endsWith(d))) return true;
+      return false;
+    };
+
+    contacts.forEach(contact => {
       // Search filter
       if (searchQuery) {
-        const query = searchQuery.toLowerCase();
+        const q = searchQuery.toLowerCase();
         const matches =
-          contact.email?.toLowerCase().includes(query) ||
-          contact.phone?.includes(query) ||
-          contact.author_name?.toLowerCase().includes(query) ||
-          contact.company_name?.toLowerCase().includes(query) ||
-          contact.domain?.toLowerCase().includes(query);
-        if (!matches) return false;
+          contact.email?.toLowerCase().includes(q) ||
+          contact.phone?.includes(q) ||
+          contact.company_name?.toLowerCase().includes(q) ||
+          contact.domain?.toLowerCase().includes(q);
+        if (!matches) return;
       }
 
       // Brand filter
-      if (selectedBrand !== "all" && contact.brand !== selectedBrand) {
-        return false;
-      }
+      if (selectedBrand !== "all" && contact.brand !== selectedBrand) return;
 
       // Domain filter
-      if (selectedDomain !== "all" && contact.domain !== selectedDomain) {
-        return false;
-      }
+      if (selectedDomain !== "all" && contact.domain !== selectedDomain) return;
 
-      return true;
+      // Drop obvious junk emails
+      if (isJunkEmail(contact.email)) return;
+
+      const key = `${contact.email || ''}|${contact.phone || ''}|${contact.domain || ''}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push(contact);
     });
+
+    return out;
   }, [contacts, searchQuery, selectedBrand, selectedDomain]);
 
   // Statistics
@@ -208,11 +225,10 @@ export default function ContactsPage() {
 
   // Export to CSV
   const handleExportCSV = () => {
-    const headers = ["Email", "Phone", "Author Name", "Company", "LinkedIn", "Twitter", "Facebook", "Instagram", "Source URL", "Domain", "Brand", "Confidence", "Extracted At"];
+    const headers = ["Email", "Phone", "Company", "LinkedIn", "Twitter", "Facebook", "Instagram", "Source URL", "Domain", "Brand", "Confidence", "Extracted At"];
     const rows = filteredContacts.map(contact => [
       contact.email || "",
       contact.phone || "",
-      contact.author_name || "",
       contact.company_name || "",
       contact.linkedin_url || "",
       contact.twitter_url || "",
@@ -281,6 +297,16 @@ export default function ContactsPage() {
           </Button>
         </div>
       </div>
+
+      {/* Disclaimer - Beta phase */}
+      <Card className="border-amber-200 bg-amber-50">
+        <CardContent className="py-3 text-amber-900 flex items-start gap-3">
+          <AlertCircle className="w-4 h-4 mt-0.5" />
+          <div className="text-sm">
+            Contacts extraction is currently in <span className="font-medium">beta</span>. Results may include occasional false positives; please verify before outreach.
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
@@ -464,7 +490,7 @@ export default function ContactsPage() {
                               </a>
                             </div>
                           )}
-                          {!contact.email && !contact.phone && !contact.author_name && (
+                          {!contact.email && !contact.phone && !contact.company_name && (
                             <span className="text-sm text-muted-foreground">No contact info</span>
                           )}
                         </div>

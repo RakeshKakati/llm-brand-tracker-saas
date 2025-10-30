@@ -46,6 +46,7 @@ interface TrackingPageProps {
 export default function TrackingPage({ teamId }: TrackingPageProps = {}) {
   const [brand, setBrand] = useState("");
   const [query, setQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [interval, setInterval] = useState(5);
   const [loading, setLoading] = useState(false);
   const [trackers, setTrackers] = useState<any[]>([]);
@@ -184,6 +185,24 @@ export default function TrackingPage({ teamId }: TrackingPageProps = {}) {
     }
   };
 
+  // Lightweight query suggestions (client-side)
+  const baseSuggestions: string[] = [
+    "best {brand} alternatives",
+    "{brand} pricing",
+    "is {brand} good",
+    "top {brand} competitors",
+    "{brand} reviews",
+    "best crm for startups",
+    "best project management tools",
+    "enterprise software solutions",
+    "small business crm software"
+  ];
+
+  const suggestions = baseSuggestions
+    .map(s => brand ? s.replaceAll("{brand}", brand) : s)
+    .filter(s => !query || s.toLowerCase().includes(query.toLowerCase()))
+    .slice(0, 6);
+
   const runCheck = async (brand: string, query: string) => {
     try {
       setTestSearchLoading(true);
@@ -290,8 +309,26 @@ export default function TrackingPage({ teamId }: TrackingPageProps = {}) {
               placeholder="e.g. best dog treats bangalore"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               className="mt-1"
             />
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="relative">
+                <div className="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-md">
+                  {suggestions.map((s, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
+                      onMouseDown={(e) => { e.preventDefault(); setQuery(s); setShowSuggestions(false); }}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

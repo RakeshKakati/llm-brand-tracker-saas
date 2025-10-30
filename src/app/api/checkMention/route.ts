@@ -61,6 +61,41 @@ export async function POST(req: Request) {
 
     console.log(`🔍 Checking mention: brand="${brand}", query="${query}" for user=${user_email}`);
 
+    // ---- STEP 0: Check subscription limits for brand mentions ----
+    const { data: subscription } = await supabaseAdmin
+      .from("subscriptions")
+      .select("max_brand_mentions, plan_type")
+      .eq("user_email", user_email)
+      .eq("status", "active")
+      .maybeSingle();
+
+    console.log(`📊 Subscription for mention limit:`, subscription);
+
+    // Determine limits based on plan type (fallback if max_brand_mentions is NULL)
+    const mentionLimit = subscription?.max_brand_mentions ?? 
+      (subscription?.plan_type === 'pro' ? 100 : 50);
+
+    // Count current brand mentions for this user
+    const { count: mentionCount } = await supabaseAdmin
+      .from("brand_mentions")
+      .select("*", { count: "exact", head: true })
+      .eq("user_email", user_email);
+
+    console.log(`📈 Current mentions: ${mentionCount || 0} / ${mentionLimit}`);
+
+    // Enforce mention limit
+    if (mentionCount !== null && mentionCount >= mentionLimit) {
+      console.log(`❌ Mention limit reached for ${user_email}: ${mentionCount} >= ${mentionLimit}`);
+      return NextResponse.json({ 
+        error: `Brand mention limit reached. Your ${subscription?.plan_type || 'free'} plan allows ${mentionLimit} mentions.`,
+        limit: mentionLimit,
+        current: mentionCount,
+        brand,
+        query,
+        mentioned: false
+      }, { status: 403 });
+    }
+
     // ---- STEP 1: Ask OpenAI to search for the query using Responses API with web_search tool ----
     const body = {
       model: "gpt-4o-mini",

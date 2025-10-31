@@ -126,10 +126,13 @@ export default function LandingPageSaaS() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
+              <Link href="/auth">
               <Button size="lg" variant="outline" className="text-lg px-8 py-6">
                 Try live demo
               </Button>
+                 </Link>
             </div>
+              
             <p className="text-sm text-muted-foreground">
               Free forever • No credit card required
             </p>

@@ -376,30 +376,30 @@ export default function LandingPageSaaS() {
                   </div>
                   <div className="space-y-3">
                     <div className="flex items-center justify-between p-4 rounded-lg border bg-primary/5 border-primary/20 transition-all duration-300 hover:bg-primary/10 hover:scale-[1.02]">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
                           <Badge className="bg-green-600 animate-pulse">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Mentioned
-                          </Badge>
+                            </Badge>
                           <span className="font-medium">{EXAMPLE_BRAND}</span>
                           <span className="text-sm text-muted-foreground">• {EXAMPLE_QUERY}</span>
-                        </div>
-                        <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
                           <span className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
-                            <Link2 className="w-3 h-3" />
+                                    <Link2 className="w-3 h-3" />
                             techcrunch.com
-                          </span>
+                                  </span>
                           <span className="flex items-center gap-1 hover:text-primary transition-colors cursor-pointer">
                             <Link2 className="w-3 h-3" />
                             forbes.com
                           </span>
-                          <span>•</span>
+                            <span>•</span>
                           <span>2h ago</span>
+                          </div>
                         </div>
-                      </div>
                       <Badge variant="outline" className="ml-2">Position #2</Badge>
-                    </div>
+                      </div>
                   </div>
                 </div>
               </Card>
@@ -551,8 +551,8 @@ export default function LandingPageSaaS() {
                     <strong className="text-primary">Insight:</strong> You're #2, just behind Salesforce. 
                     Focus on the sources they cite to close the gap.
                   </p>
-                </div>
               </div>
+            </div>
             </div>
             <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
               <h3 className="text-3xl font-bold mb-4">Know your competitive position</h3>
@@ -569,7 +569,7 @@ export default function LandingPageSaaS() {
                     <p className="text-sm text-muted-foreground">
                       You're missing from 4 searches. Check which sources Salesforce cites that you don't. 
                       Export contacts from those sources to pitch for mentions.
-                    </p>
+              </p>
                   </div>
                 </div>
               </div>
@@ -658,7 +658,7 @@ export default function LandingPageSaaS() {
                                 No mention
                               </Badge>
                             )}
-                          </div>
+                      </div>
                           <a 
                             href={source.url} 
                             target="_blank" 
@@ -668,9 +668,9 @@ export default function LandingPageSaaS() {
                             View article
                             <ExternalLink className="w-3 h-3" />
                           </a>
-                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                    </div>
+                        <div className="flex items-center gap-2">
                         <Badge variant={source.status === "mentioned" ? "default" : "outline"}>
                           {source.mentions} cites
                         </Badge>
@@ -680,8 +680,8 @@ export default function LandingPageSaaS() {
                 </div>
               </div>
             </div>
+            </div>
           </div>
-        </div>
       </section>
 
       {/* Journey Section 4: Export Contacts & CSV */}
@@ -693,7 +693,7 @@ export default function LandingPageSaaS() {
             <p className="text-xl text-muted-foreground">
               Extract contact info from sources and export to CSV to increase your presence
             </p>
-          </div>
+            </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
             <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
@@ -709,27 +709,27 @@ export default function LandingPageSaaS() {
                       className="p-4 rounded-lg border bg-background transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:border-primary/30"
                     >
                       <div className="flex items-center justify-between mb-3">
-                        <div>
+                      <div>
                           <p className="font-medium">{c.company}</p>
                           <p className="text-sm text-muted-foreground">{c.domain}</p>
-                        </div>
+                      </div>
                         <Badge variant="secondary" className="animate-pulse">
                           {c.confidence}% match
                         </Badge>
-                      </div>
+                    </div>
                       <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                           <Mail className="w-4 h-4" />
                           {c.email}
-                        </div>
+                  </div>
                         <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
                           <Phone className="w-4 h-4" />
                           {c.phone}
-                        </div>
+                  </div>
                       </div>
                     </div>
                   ))}
-                </div>
+                  </div>
                 <Button 
                   onClick={handleExportCSV}
                   disabled={isExporting || exported}
@@ -758,8 +758,8 @@ export default function LandingPageSaaS() {
                     ✓ CSV downloaded! Ready to import into your CRM.
                   </p>
                 )}
+                </div>
               </div>
-            </div>
             <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
               <h3 className="text-3xl font-bold mb-4">Turn sources into outreach opportunities</h3>
               <p className="text-lg text-muted-foreground mb-6">
@@ -772,28 +772,28 @@ export default function LandingPageSaaS() {
                   <div>
                     <p className="font-medium">Smart extraction</p>
                     <p className="text-sm text-muted-foreground">Finds editorial emails, filters out junk (like Sentry telemetry).</p>
-                  </div>
+            </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">One-click CSV export</p>
                     <p className="text-sm text-muted-foreground">Includes domain, email, phone, confidence score—ready for your CRM.</p>
-                  </div>
+          </div>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
                     <p className="font-medium">Increase your presence</p>
                     <p className="text-sm text-muted-foreground">Reach out to sources that don't mention you. Pitch for mentions and move up in rankings.</p>
-                  </div>
+              </div>
                 </li>
               </ul>
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm">
                   <strong className="text-primary">Pro Tip:</strong> Export contacts from sources that don't mention you. 
                   These are your highest-value outreach targets.
-                </p>
+              </p>
               </div>
             </div>
           </div>
@@ -844,13 +844,13 @@ export default function LandingPageSaaS() {
                   Monitoring active for &quot;{EXAMPLE_QUERY}&quot;. You'll receive email alerts for significant changes.
                 </p>
               </div>
-              <Link href="/auth">
+                <Link href="/auth">
                 <Button size="lg" className="group transition-all duration-300 hover:scale-105">
                   Start monitoring
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            </div>
+                  </Button>
+                </Link>
+              </div>
             <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
               <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
                 <span className="text-sm font-medium">kommi Monitoring Dashboard</span>
@@ -866,15 +866,15 @@ export default function LandingPageSaaS() {
                       <span className="font-semibold">Query: &quot;{EXAMPLE_QUERY}&quot;</span>
                       <Badge variant="outline">Last 7 days</Badge>
                     </div>
-                    <div className="space-y-3">
+                <div className="space-y-3">
                       <div className="flex justify-between text-sm">
                         <span>Mentions</span>
                         <span className="font-semibold">8</span>
-                      </div>
+                        </div>
                       <div className="flex justify-between text-sm">
                         <span>Best Position</span>
                         <Badge>#2</Badge>
-                      </div>
+                        </div>
                       <div className="flex justify-between text-sm">
                         <span>Status</span>
                         <Badge className="bg-green-600">
@@ -882,7 +882,7 @@ export default function LandingPageSaaS() {
                           Improved
                         </Badge>
                       </div>
-                    </div>
+                      </div>
                   </Card>
                   <Card className="p-6 border-2 border-primary/20">
                     <div className="flex items-center justify-between mb-4">
@@ -893,11 +893,11 @@ export default function LandingPageSaaS() {
                       <div className="flex items-center justify-between p-2 rounded bg-muted/50">
                         <span className="text-muted-foreground">Position changed</span>
                         <span className="font-medium">#3 → #2</span>
-                      </div>
+                </div>
                       <div className="flex items-center justify-between p-2 rounded bg-muted/50">
                         <span className="text-muted-foreground">New source added</span>
                         <span className="font-medium">forbes.com</span>
-                      </div>
+              </div>
                       <div className="flex items-center justify-between p-2 rounded bg-muted/50">
                         <span className="text-muted-foreground">Last check</span>
                         <span className="font-medium">23m ago</span>

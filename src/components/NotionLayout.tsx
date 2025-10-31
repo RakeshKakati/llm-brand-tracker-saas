@@ -15,11 +15,15 @@ import SettingsPage from "@/components/pages/SettingsPage";
 import CompetitorsPage from "@/components/pages/CompetitorsPage";
 import TeamsPage from "@/components/pages/TeamsPage";
 import ContactsPage from "@/components/pages/ContactsPage";
+import OnboardingPage from "@/components/pages/OnboardingPage";
+import { supabase } from "@/app/lib/supabaseClient";
 
 export default function NotionLayout() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [currentPage, setCurrentPage] = useState("dashboard");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
 
   // Redirect to auth if not logged in
   useEffect(() => {
@@ -28,11 +32,39 @@ export default function NotionLayout() {
       router.push("/auth");
     } else if (user) {
       console.log("✅ User authenticated:", user.email);
+      checkFirstTimeUser();
     }
   }, [user, loading, router]);
 
-  // Show loading spinner while checking auth
-  if (loading) {
+  // Check if user is first-time (no trackers)
+  const checkFirstTimeUser = async () => {
+    if (!user?.email) return;
+    
+    try {
+      setCheckingOnboarding(true);
+      const { data, error } = await supabase
+        .from("tracked_brands")
+        .select("id")
+        .eq("user_email", user.email)
+        .limit(1);
+      
+      if (error) {
+        console.error("Error checking trackers:", error);
+        setCheckingOnboarding(false);
+        return;
+      }
+
+      // Show onboarding if user has no trackers
+      setShowOnboarding(!data || data.length === 0);
+    } catch (err) {
+      console.error("Error in checkFirstTimeUser:", err);
+    } finally {
+      setCheckingOnboarding(false);
+    }
+  };
+
+  // Show loading spinner while checking auth or onboarding status
+  if (loading || checkingOnboarding) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -46,6 +78,20 @@ export default function NotionLayout() {
   // Don't render if no user
   if (!user) {
     return null;
+  }
+
+  // Show onboarding for first-time users
+  if (showOnboarding) {
+    return (
+      <SidebarProvider>
+        <AppSidebar onPageChange={setCurrentPage} currentPage={currentPage} userEmail={user?.email || ""} />
+        <SidebarInset>
+          <div className="flex flex-1 flex-col">
+            <OnboardingPage />
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    );
   }
 
   const renderPage = () => {

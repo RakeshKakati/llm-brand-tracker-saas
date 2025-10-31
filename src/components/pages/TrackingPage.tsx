@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,7 +36,6 @@ import {
   RefreshCw,
   MoreVertical
 } from "lucide-react";
-import { IconDotsVertical } from "@tabler/icons-react";
 import { supabase } from "@/app/lib/supabaseClient";
 
 interface TrackingPageProps {
@@ -287,361 +286,308 @@ export default function TrackingPage({ teamId }: TrackingPageProps = {}) {
       </div>
 
       {/* Create New Tracker */}
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Plus className="w-5 h-5 text-gray-600" />
-          <h2 className="text-lg font-semibold text-gray-900">Create New Tracker</h2>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <Label className="text-sm font-medium text-gray-700">Brand Name</Label>
-            <Input
-              placeholder="e.g. Muttleycrew"
-              value={brand}
-              onChange={(e) => setBrand(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-          <div>
-            <Label className="text-sm font-medium text-gray-700">Search Query</Label>
-            <Input
-              placeholder="e.g. best dog treats bangalore"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
-              className="mt-1"
-            />
-            {showSuggestions && suggestions.length > 0 && (
-              <div className="relative">
-                <div className="absolute z-10 mt-1 w-full rounded-md border bg-white shadow-md">
-                  {suggestions.map((s, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
-                      onMouseDown={(e) => { e.preventDefault(); setQuery(s); setShowSuggestions(false); }}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex gap-3">
-          <Button
-            onClick={() => runCheck(brand, query)}
-            disabled={loading || testSearchLoading || !brand || !query}
-            variant="outline"
-          >
-            {testSearchLoading ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Search className="w-4 h-4 mr-2" />
-            )}
-            {testSearchLoading ? "Searching..." : "Test Search"}
-          </Button>
-          <Button
-            onClick={handleTrack}
-            disabled={loading || !brand || !query}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {loading ? "Creating..." : "Create Tracker"}
-          </Button>
-        </div>
-      </Card>
-
-      {/* Test Search Results */}
-      {testSearchResult && (
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Search className="w-5 h-5 text-gray-600" />
-            <h2 className="text-lg font-semibold text-gray-900">Test Search Results</h2>
-          </div>
-          
-          {testSearchResult.error ? (
-            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <XCircle className="w-5 h-5 text-red-500" />
-                <h3 className="font-medium text-red-900">Search Failed</h3>
-              </div>
-              <p className="text-sm text-red-700">{testSearchResult.error}</p>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Plus className="w-5 h-5" />
+            Create New Tracker
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="brand-name">Brand Name</Label>
+              <Input
+                id="brand-name"
+                placeholder="e.g. Muttleycrew"
+                value={brand}
+                onChange={(e) => setBrand(e.target.value)}
+              />
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-gray-900">{testSearchResult.brand}</h3>
-                    <Badge variant={testSearchResult.mentioned ? "default" : "secondary"}>
-                      {testSearchResult.mentioned ? (
-                        <>
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Mentioned
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="w-3 h-3 mr-1" />
-                          Not Found
-                        </>
-                      )}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {new Date(testSearchResult.timestamp).toLocaleTimeString()}
-                  </div>
-                </div>
-                
-                <p className="text-sm text-gray-600 mb-3">
-                  <strong>Query:</strong> {testSearchResult.query}
-                </p>
-                
-                {testSearchResult.evidence && testSearchResult.evidence !== "No mention found" && (
-                  <div className="bg-white p-3 rounded-md border">
-                    <p className="text-sm text-gray-700">
-                      <strong>Evidence:</strong> {testSearchResult.evidence}
-                    </p>
+            <div className="space-y-2">
+              <Label htmlFor="search-query">Search Query</Label>
+              <div className="relative">
+                <Input
+                  id="search-query"
+                  placeholder="e.g. best dog treats bangalore"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                />
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md">
+                    {suggestions.map((s, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                        onMouseDown={(e) => { e.preventDefault(); setQuery(s); setShowSuggestions(false); }}
+                      >
+                        {s}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-              
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => setTestSearchResult(null)}
-                  variant="outline"
-                  size="sm"
-                >
-                  Close Results
-                </Button>
-                <Button
-                  onClick={() => {
-                    setBrand(testSearchResult.brand);
-                    setQuery(testSearchResult.query);
-                    setTestSearchResult(null);
-                  }}
-                  variant="outline"
-                  size="sm"
-                >
-                  Fill Form Only
-                </Button>
-                <Button
-                  onClick={async () => {
-                    try {
-                      setLoading(true);
-                      
-                      // Get user session
-                      const { data: { session } } = await supabase.auth.getSession();
-                      
-                      if (!session?.user?.email) {
-                        throw new Error("You must be logged in to create a tracker");
-                      }
-                      
-                      console.log("🔍 Creating tracker from test results for:", session.user.email);
-                      
-                      // Use the API endpoint instead of direct insert
-                      const response = await fetch("/api/trackBrand", {
-                        method: "POST",
-                        headers: { 
-                          "Content-Type": "application/json",
-                          "Authorization": `Bearer ${session.access_token}`
-                        },
-                        body: JSON.stringify({ 
-                          brand: testSearchResult.brand,
-                          query: testSearchResult.query,
-                          interval,
-                          user_email: session.user.email,
-                          user_id: session.user.id,
-                          team_id: teamId || null
-                        }),
-                      });
-                      
-                      const result = await response.json();
-                      
-                      if (!response.ok) {
-                        throw new Error(result.error || "Failed to create tracker");
-                      }
-                      
-                      console.log("✅ Tracker created successfully from test results");
-                      
-                      // Refresh trackers list
-                      await fetchTrackersData(false);
-                      
-                      // Clear form and results
-                      setBrand("");
-                      setQuery("");
-                      setInterval(5);
-                      setTestSearchResult(null);
-                      
-                      alert(`✅ Successfully created tracker for "${testSearchResult.brand}" searching "${testSearchResult.query}".`);
-                    } catch (err: any) {
-                      console.error("❌ Error creating tracker:", err);
-                      alert(`❌ Failed to create tracker: ${err.message || 'Unknown error'}`);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  disabled={loading}
-                  size="sm"
-                >
-                  {loading ? "Creating..." : "Create Tracker"}
-                </Button>
-              </div>
             </div>
-          )}
-        </Card>
-      )}
-
-      {/* Active Trackers */}
-      <Card>
-        <div className="flex items-center justify-between border-b p-6">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-muted-foreground" />
-            <h2 className="text-base font-semibold">Active Trackers</h2>
-            <Badge variant="secondary">{trackers.length}</Badge>
           </div>
-          {selectedRows.size > 0 && (
-            <div className="text-sm text-muted-foreground">
-              {selectedRows.size} of {trackers.length} row(s) selected
-            </div>
-          )}
-        </div>
 
-        {trackers.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground">
-            <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-sm font-medium">No trackers created yet</p>
-            <p className="text-xs mt-1">Create your first brand tracker above</p>
+          <div className="flex gap-3">
+            <Button
+              onClick={() => runCheck(brand, query)}
+              disabled={loading || testSearchLoading || !brand || !query}
+              variant="outline"
+            >
+              {testSearchLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Search className="w-4 h-4 mr-2" />
+              )}
+              {testSearchLoading ? "Searching..." : "Search"}
+            </Button>
+            <Button
+              onClick={handleTrack}
+              disabled={loading || !brand || !query}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              {loading ? "Creating..." : "Create Tracker"}
+            </Button>
           </div>
-        ) : (
-          <div className="overflow-hidden">
-            <Table>
-              <TableHeader className="bg-muted">
-                <TableRow>
-                  <TableHead className="w-12">
-                    <div className="flex items-center justify-center">
-                      <Checkbox
-                        checked={selectedRows.size === trackers.length}
-                        onCheckedChange={(checked) => {
-                          if (checked) {
-                            setSelectedRows(new Set(trackers.map(t => t.id)));
-                          } else {
-                            setSelectedRows(new Set());
-                          }
-                        }}
-                        aria-label="Select all"
-                      />
-                    </div>
-                  </TableHead>
-                  <TableHead>Brand</TableHead>
-                  <TableHead>Query</TableHead>
-                  <TableHead className="w-32">Status</TableHead>
-                  <TableHead className="w-40">Created</TableHead>
-                  <TableHead className="w-20"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {trackers.map((tracker) => (
-                  <TableRow
-                    key={tracker.id}
-                    data-state={selectedRows.has(tracker.id) && "selected"}
+
+          {/* Search Results - Inline */}
+          {testSearchResult && (
+            <div className={`p-4 rounded-lg border ${
+              testSearchResult.error 
+                ? 'bg-destructive/10 border-destructive/20' 
+                : testSearchResult.mentioned 
+                  ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900' 
+                  : 'bg-muted/50 border'
+            }`}>
+              {testSearchResult.error ? (
+                <div className="flex items-start gap-3">
+                  <XCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-destructive mb-1">Search Failed</h3>
+                    <p className="text-sm text-muted-foreground">{testSearchResult.error}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => setTestSearchResult(null)}
                   >
-                    <TableCell>
-                      <div className="flex items-center justify-center">
-                        <Checkbox
-                          checked={selectedRows.has(tracker.id)}
-                          onCheckedChange={(checked) => {
-                            const newSelected = new Set(selectedRows);
-                            if (checked) {
-                              newSelected.add(tracker.id);
-                            } else {
-                              newSelected.delete(tracker.id);
-                            }
-                            setSelectedRows(newSelected);
-                          }}
-                          aria-label="Select row"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{tracker.brand}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {tracker.query}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={tracker.active ? "default" : "secondary"}
-                        className="text-muted-foreground px-1.5"
-                      >
-                        {tracker.active ? (
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Badge variant={testSearchResult.mentioned ? "default" : "secondary"} className="text-sm">
+                        {testSearchResult.mentioned ? (
                           <>
-                            <Activity className="w-3 h-3 mr-1" />
-                            Active
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Mentioned
                           </>
                         ) : (
                           <>
-                            <Pause className="w-3 h-3 mr-1" />
-                            Paused
+                            <XCircle className="w-3 h-3 mr-1" />
+                            Not Found
                           </>
                         )}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {new Date(tracker.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            className="data-[state=open]:bg-muted text-muted-foreground flex size-8"
-                            size="icon"
-                          >
-                            <IconDotsVertical />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40">
-                          <DropdownMenuItem
-                            onClick={() => runCheck(tracker.brand, tracker.query)}
-                          >
-                            <Search className="w-4 h-4 mr-2" />
-                            Check Now
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => toggleTracker(tracker.id, tracker.active)}
-                          >
-                            {tracker.active ? (
-                              <>
-                                <Pause className="w-4 h-4 mr-2" />
-                                Pause
-                              </>
-                            ) : (
-                              <>
-                                <Play className="w-4 h-4 mr-2" />
-                                Resume
-                              </>
-                            )}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => deleteTracker(tracker.id)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                      <span className="font-medium">{testSearchResult.brand}</span>
+                      <span className="text-sm text-muted-foreground">• {testSearchResult.query}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setBrand(testSearchResult.brand);
+                          setQuery(testSearchResult.query);
+                          setTestSearchResult(null);
+                        }}
+                      >
+                        Use This
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setTestSearchResult(null)}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  {testSearchResult.evidence && testSearchResult.evidence !== "No mention found" && (
+                    <p className="text-sm text-muted-foreground pl-8">
+                      {testSearchResult.evidence}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Active Trackers */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="w-5 h-5" />
+              <CardTitle>Active Trackers</CardTitle>
+              <Badge variant="secondary">{trackers.length}</Badge>
+            </div>
+            {selectedRows.size > 0 && (
+              <div className="text-sm text-muted-foreground">
+                {selectedRows.size} selected
+              </div>
+            )}
           </div>
-        )}
+        </CardHeader>
+        <CardContent className="p-0">
+          {trackers.length === 0 ? (
+            <div className="p-12 text-center">
+              <Activity className="w-12 h-12 mx-auto mb-4 opacity-50 text-muted-foreground" />
+              <p className="text-sm font-medium text-muted-foreground">No trackers created yet</p>
+              <p className="text-xs mt-1 text-muted-foreground">Create your first brand tracker above</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={selectedRows.size === trackers.length && trackers.length > 0}
+                          onCheckedChange={(checked) => {
+                            if (checked) {
+                              setSelectedRows(new Set(trackers.map(t => t.id)));
+                            } else {
+                              setSelectedRows(new Set());
+                            }
+                          }}
+                          aria-label="Select all"
+                        />
+                      </div>
+                    </TableHead>
+                    <TableHead>Brand</TableHead>
+                    <TableHead>Query</TableHead>
+                    <TableHead className="w-32">Status</TableHead>
+                    <TableHead className="w-40">Created</TableHead>
+                    <TableHead className="w-16"></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {trackers.map((tracker) => (
+                    <TableRow
+                      key={tracker.id}
+                      className={selectedRows.has(tracker.id) ? "bg-muted/50" : ""}
+                    >
+                      <TableCell>
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={selectedRows.has(tracker.id)}
+                            onCheckedChange={(checked) => {
+                              const newSelected = new Set(selectedRows);
+                              if (checked) {
+                                newSelected.add(tracker.id);
+                              } else {
+                                newSelected.delete(tracker.id);
+                              }
+                              setSelectedRows(newSelected);
+                            }}
+                            aria-label="Select row"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{tracker.brand}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {tracker.query}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={tracker.active ? "default" : "secondary"}
+                          className="text-xs"
+                        >
+                          {tracker.active ? (
+                            <>
+                              <Activity className="w-3 h-3 mr-1" />
+                              Active
+                            </>
+                          ) : (
+                            <>
+                              <Pause className="w-3 h-3 mr-1" />
+                              Paused
+                            </>
+                          )}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(tracker.created_at).toLocaleDateString('en-GB', { 
+                          day: '2-digit', 
+                          month: '2-digit', 
+                          year: 'numeric' 
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              className="h-8 w-8 p-0"
+                              size="icon"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                              <span className="sr-only">Open menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48">
+                            <DropdownMenuItem
+                              onClick={() => runCheck(tracker.brand, tracker.query)}
+                            >
+                              <Search className="w-4 h-4 mr-2" />
+                              Check Now
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => toggleTracker(tracker.id, tracker.active)}
+                            >
+                              {tracker.active ? (
+                                <>
+                                  <Pause className="w-4 h-4 mr-2" />
+                                  Pause
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="w-4 h-4 mr-2" />
+                                  Resume
+                                </>
+                              )}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => deleteTracker(tracker.id)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

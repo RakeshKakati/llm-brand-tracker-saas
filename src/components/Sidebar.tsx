@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2, Mail } from "lucide-react";
-import Image from "next/image";
 import { Progress } from "@/components/ui/progress";
 import {
   Sidebar,
@@ -133,13 +132,24 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden">
-                <Image 
+              <div className="flex items-center justify-center">
+                <img 
                   src="/logo.svg" 
                   alt="kommi logo" 
-                  width={32} 
-                  height={32}
-                  className="object-contain"
+                  className="h-5 object-contain"
+                  style={{ display: 'block' }}
+                  onError={(e) => {
+                    // Fallback to text if SVG fails
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    const parent = target.parentElement;
+                    if (parent && !parent.querySelector('.logo-fallback')) {
+                      const fallback = document.createElement('span');
+                      fallback.className = 'logo-fallback font-semibold text-sm';
+                      fallback.textContent = 'kommi';
+                      parent.appendChild(fallback);
+                    }
+                  }}
                 />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">

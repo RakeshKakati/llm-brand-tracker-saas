@@ -47,7 +47,8 @@ import {
   Zap,
   TrendingDown,
   Flame,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabaseClient";
 import { 
@@ -110,6 +111,46 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   const competitorsPerPage = 10;
   const [selectedCategory, setSelectedCategory] = useState<string>("all"); // Filter by category
   const hasFetchedRef = useRef(false);
+  
+  // Track deleted competitors (persist in localStorage)
+  const [deletedCompetitors, setDeletedCompetitors] = useState<Set<string>>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('deletedCompetitors');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    }
+    return new Set();
+  });
+  
+  // Save deleted competitors to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('deletedCompetitors', JSON.stringify(Array.from(deletedCompetitors)));
+    }
+  }, [deletedCompetitors]);
+  
+  // Filter out deleted competitors
+  const visibleCompetitors = useMemo(() => {
+    return competitors.filter(c => !deletedCompetitors.has(c.competitorName.toLowerCase()));
+  }, [competitors, deletedCompetitors]);
+  
+  const handleDeleteCompetitor = (competitorName: string) => {
+    if (confirm(`Remove "${competitorName}" from competitor analysis?`)) {
+      setDeletedCompetitors(prev => {
+        const updated = new Set(prev);
+        updated.add(competitorName.toLowerCase());
+        return updated;
+      });
+      
+      // Reset to page 1 if current page becomes empty after deletion
+      const remainingAfterDeletion = visibleCompetitors.length - 1;
+      const maxPageAfterDeletion = Math.ceil(remainingAfterDeletion / competitorsPerPage);
+      if (currentCompetitorsPage > maxPageAfterDeletion && maxPageAfterDeletion > 0) {
+        setCurrentCompetitorsPage(maxPageAfterDeletion);
+      } else if (maxPageAfterDeletion === 0) {
+        setCurrentCompetitorsPage(1);
+      }
+    }
+  };
 
   // Source categorization utility function
   const categorizeDomain = (domain: string): string => {
@@ -395,8 +436,17 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
       console.log("📈 Top sources result:", sources.length, "domains");
       setTopSources(sources);
 
-      // Process competitors
-      const competitorData = processCompetitors(allMentions || []);
+      // Load tracked competitors for this user FIRST (needed for competitor validation)
+      const { data: tc } = await supabase
+        .from("tracked_competitors")
+        .select("name, domain")
+        .eq("user_email", userEmail)
+        .order("created_at", { ascending: false });
+      const trackedCompetitorsList = (tc || []).map((r: any) => ({ name: r.name, domain: (r.domain || '').toLowerCase() }));
+      setTrackedCompetitors(trackedCompetitorsList);
+
+      // Process competitors (pass tracked competitors for validation)
+      const competitorData = processCompetitors(allMentions || [], trackedCompetitorsList);
       setCompetitors(competitorData);
 
       // Store chart mentions for other components
@@ -405,14 +455,6 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
       } else {
         console.log("⚠️ No chart data available");
       }
-
-      // Load tracked competitors for this user
-      const { data: tc } = await supabase
-        .from("tracked_competitors")
-        .select("name, domain")
-        .eq("user_email", userEmail)
-        .order("created_at", { ascending: false });
-      setTrackedCompetitors((tc || []).map((r: any) => ({ name: r.name, domain: (r.domain || '').toLowerCase() })));
 
       // Fetch mentions for chart (last 90 days) - include source_urls and raw_output for domain extraction
       // Filtered by user and team_id if provided
@@ -648,7 +690,7 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   );
 
   // Extract competitors from **brand name** patterns and track citation links
-  const processCompetitors = (mentions: any[]): CompetitorData[] => {
+  const processCompetitors = (mentions: any[], trackedCompetitorsList: Array<{ name: string; domain: string }> = []): CompetitorData[] => {
     console.log("🔍 Processing competitors from", mentions.length, "mentions");
     const competitorsMap = new Map<string, {
       name: string;
@@ -947,6 +989,160 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
             continue;
           }
           
+          // NEW: Check if it matches tracked competitors (actual brand names)
+          const isTrackedCompetitor = trackedCompetitorsList.some(tc => {
+            const tcName = tc.name.toLowerCase();
+            const tcDomain = (tc.domain || '').toLowerCase();
+            return brandLower === tcName || 
+                   brandLower.includes(tcName) || 
+                   tcName.includes(brandLower) ||
+                   (tcDomain && brandLower === tcDomain.replace(/^www\./, '').split('.')[0]);
+          });
+          
+          // NEW: Additional validation - check if it looks like a real brand name
+          // Real brand names typically:
+          // 1. Start with a capital letter (proper noun)
+          // 2. Have mixed case or all caps (for known brands)
+          // 3. Don't start with common descriptive adjectives followed by nouns
+          const descriptiveStarters = [
+            /^(wide|narrow|broad|limited|extensive|comprehensive|vast|huge|small|large|big|tiny)\s+(range|variety|selection|collection|array|set|number|amount|quantity)\s+(of\s+)?/i,
+            /^(high|low|poor|good|excellent|bad|great|best|worst|better|best)\s+(quality|complexity|performance|design|customization|integration|interface|options?|features?|support|speed|reliability)\s*/i,
+            /^(uninspired|inspired|creative|innovative|unique|standard|basic|advanced|simple|complex|sophisticated)\s+(design|interface|ui|ux|style|approach|solution)\s*/i,
+            /^(quality|design|performance|features?|options?|customization|integration)\s+(concerns?|issues?|problems?|improvements?|enhancements?)\s*/i,
+            /^(the\s+)?(rise|fall|decline|growth|emergence|evolution|development|history)\s+(of|in)\s+/i,
+            /^(smartwatches?|headphones?|earbuds?|speakers?|devices?|products?|items?|tools?)\s*$/i, // Just product type
+            /^(cost-effective|cost effective|cost-efficient|budget-friendly|affordable|expensive|premium)\s*$/i, // Price descriptors
+            /^(comfort|discomfort|quality|performance|durability|reliability)\s+(issues?|problems?|concerns?)\s*$/i, // Issue descriptors
+            /^(customer|client|user)\s+(service|support|care|satisfaction|experience)\s+(issues?|problems?|concerns?)?\s*$/i, // Service descriptors
+            /^(customer|client|user)\s+(service|support|care|satisfaction|experience)\s*$/i, // Service descriptors without issues
+          ];
+          
+          const isDescriptivePhrase = descriptiveStarters.some(pattern => pattern.test(brandName));
+          if (isDescriptivePhrase && !isTrackedCompetitor) {
+            console.log(`🚫 Skipped descriptive phrase: "${brandName}"`);
+            continue;
+          }
+          
+          // NEW: Check if it ends with common non-brand suffixes
+          const nonBrandSuffixes = [
+            /\s+(issues?|problems?|concerns?|complaints?|reviews?|ratings?)\s*$/i,
+            /\s+(support|service|care|help|assistance)\s*$/i,
+            /\s+(effective|efficient|friendly|compatible|compatible)\s*$/i,
+            /\s+(series|pro|max|plus|mini|air|regular)\s*$/i, // Product model suffixes
+            /\s+(watch|phone|tablet|laptop|computer|device|product|item)\s*$/i,
+          ];
+          
+          if (nonBrandSuffixes.some(pattern => pattern.test(brandName)) && !isTrackedCompetitor) {
+            // Exception: Allow if it's a known brand pattern like "Apple Watch" (but "Apple Watch Series" should be filtered)
+            const knownBrandWithProduct = /^(apple|samsung|google|microsoft|sony|nike|adidas)\s+(watch|phone|tablet|laptop)\s*$/i.test(brandName);
+            if (!knownBrandWithProduct) {
+              console.log(`🚫 Skipped ends with non-brand suffix: "${brandName}"`);
+              continue;
+            }
+          }
+          
+          // NEW: Check capitalization - real brand names are usually Proper Case or ALL CAPS
+          // Skip if it's all lowercase or doesn't start with capital (unless it's a tracked competitor)
+          const hasProperCapitalization = /^[A-Z]/.test(brandName) || /^[A-Z]+$/.test(brandName);
+          if (!hasProperCapitalization && !isTrackedCompetitor) {
+            // For multi-word phrases, require proper capitalization
+            if (words.length > 1) {
+              console.log(`🚫 Skipped improper capitalization (multi-word): "${brandName}"`);
+              continue;
+            }
+            // For single words, require at least 4 characters and be a known brand pattern
+            if (words.length === 1 && brandName.length < 4) {
+              console.log(`🚫 Skipped too short and improper capitalization: "${brandName}"`);
+              continue;
+            }
+          }
+          
+          // NEW: Additional check - skip if it's title case with common descriptive words (like "Comfort Issues")
+          const titleCaseWithDescriptive = /^[A-Z][a-z]+\s+[A-Z][a-z]+$/.test(brandName);
+          if (titleCaseWithDescriptive && words.length === 2) {
+            const firstWord = words[0].toLowerCase();
+            const secondWord = words[1].toLowerCase();
+            const descriptiveFirstWords = new Set(['comfort', 'discomfort', 'quality', 'customer', 'client', 'user', 'cost', 'budget']);
+            const descriptiveSecondWords = new Set(['issues', 'problems', 'concerns', 'complaints', 'service', 'support', 'care', 'effective', 'efficient']);
+            
+            if ((descriptiveFirstWords.has(firstWord) || descriptiveSecondWords.has(firstWord)) &&
+                (descriptiveSecondWords.has(secondWord) || descriptiveFirstWords.has(secondWord))) {
+              if (!isTrackedCompetitor) {
+                console.log(`🚫 Skipped title case descriptive phrase: "${brandName}"`);
+                continue;
+              }
+            }
+          }
+          
+          // NEW: Skip if it contains too many generic descriptive words together
+          const descriptiveWords = new Set([
+            'wide', 'range', 'tools', 'uninspired', 'design', 'quality', 'concerns',
+            'high', 'low', 'complexity', 'smartwatches', 'offering', 'organic', 'healthy',
+            'natural', 'official', 'line', 'indian', 'shop', 'store', 'website', 'online',
+            'treats', 'food', 'headphones', 'wireless', 'lack', 'poor', 'limited', 'absence',
+            'missing', 'customization', 'integration', 'interface', 'options', 'user', 'men',
+            'women', 'shoes', 'sneakers', 'running', 'rise', 'sneaker', 'culture', 'streetwear',
+            'hype', 'becoming', 'luxury', 'cost', 'effective', 'efficient', 'comfort', 'issues',
+            'problems', 'customer', 'service', 'support', 'care', 'satisfaction', 'experience',
+            'series', 'watch', 'phone', 'tablet', 'laptop', 'device', 'product', 'item',
+            'friendly', 'affordable', 'premium', 'budget', 'discomfort', 'durability', 'reliability'
+          ]);
+          const descriptiveWordCount = words.filter(word => descriptiveWords.has(word.toLowerCase())).length;
+          if (words.length >= 2 && descriptiveWordCount >= words.length / 2 && !isTrackedCompetitor) {
+            console.log(`🚫 Skipped too many descriptive words: "${brandName}"`);
+            continue;
+          }
+          
+          // NEW: Strict check - if it contains hyphenated descriptive terms, it's likely not a brand
+          // Check for hyphenated descriptive terms (case-insensitive)
+          const hyphenatedDescriptiveTerms = [
+            'cost-effective', 'cost-efficient', 'budget-friendly', 'user-friendly', 
+            'eco-friendly', 'energy-efficient', 'time-efficient', 'space-efficient',
+            'cost-effective', 'cost efficient', 'budget friendly', 'user friendly', 'Functionality', 'budget', 'Learning Curve'
+          ];
+          const brandLowerHyphenated = brandName.toLowerCase().replace(/\s+/g, '-');
+          if (hyphenatedDescriptiveTerms.some(term => brandLowerHyphenated === term || brandName.toLowerCase() === term.replace(/-/g, ' '))) {
+            console.log(`🚫 Skipped hyphenated descriptive term: "${brandName}"`);
+            continue;
+          }
+          
+          // NEW: Check if it's a common issue/support phrase
+          const issuePhrases = [
+            /^(comfort|discomfort|quality|performance|durability|reliability|customer|client|user)\s+(issues?|problems?|concerns?|complaints?)\s*$/i,
+            /^(customer|client|user)\s+(service|support|care|satisfaction|experience)\s*$/i,
+          ];
+          if (issuePhrases.some(pattern => pattern.test(brandName)) && !isTrackedCompetitor) {
+            console.log(`🚫 Skipped issue/support phrase: "${brandName}"`);
+            continue;
+          }
+          
+          // NEW: Check if it contains product model identifiers (Series, Pro, Max, etc.) as standalone or with generic words
+          // Even known brands with product model suffixes should be filtered - we want brand names, not product models
+          if (/\s+(series|pro|max|plus|mini|air|regular|standard|premium|basic)\s*$/i.test(brandName)) {
+            // Only allow if it's a tracked competitor (user explicitly tracks this specific model)
+            if (!isTrackedCompetitor) {
+              console.log(`🚫 Skipped product model identifier: "${brandName}"`);
+              continue;
+            }
+          }
+          
+          // NEW: Only allow if it's a tracked competitor OR passes brand name validation
+          // Brand name validation: proper case, reasonable length, not all generic words
+          if (!isTrackedCompetitor) {
+            // Additional check: skip if it's clearly a descriptive phrase with article titles
+            if (/\s+(and|or|the|of|in|on|at|for|with|from|to|by)\s+/i.test(brandName) && words.length >= 3) {
+              // Allow if it's a known brand pattern (like "The New York Times")
+              const knownBrandPatterns = [
+                /^the\s+[a-z]+\s+[a-z]+$/i, // "The Something Something" - might be a brand
+              ];
+              const isKnownBrandPattern = knownBrandPatterns.some(p => p.test(brandName));
+              if (!isKnownBrandPattern) {
+                console.log(`🚫 Skipped article-like phrase: "${brandName}"`);
+                continue;
+              }
+            }
+          }
+          
           extractedBrands.push({ name: brandName, position, endPosition });
           console.log(`🏷️  Extracted brand from **: ${brandName} at position ${position}`);
         }
@@ -1098,7 +1294,8 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
       .map(s => s.domain)).size;
 
     // Count unique competitors (no time filtering since we don't track lastSeen per competitor)
-    const uniqueCompetitors = new Set((competitors || [])
+    // Use visibleCompetitors (excluding deleted ones)
+    const uniqueCompetitors = new Set((visibleCompetitors || [])
       .map(c => c.competitorName)).size;
 
     const searchesInRange = (chartMentionsRaw || [])
@@ -1120,7 +1317,7 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     const coverage = queriesWithSearch.size > 0 ? (queriesWithMention.size / queriesWithSearch.size) * 100 : 0;
 
     return { uniqueSources, uniqueCompetitors, mentionRate, coverage };
-  }, [timeRange, topSources, competitors, chartMentionsRaw]);
+  }, [timeRange, topSources, visibleCompetitors, chartMentionsRaw]);
 
   // Mention rate trend data (daily line)
   const mentionRateTrend = React.useMemo(() => {
@@ -2077,12 +2274,12 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
               <CardTitle>Competitor Analysis</CardTitle>
             </div>
             <Badge variant="secondary" className="ml-auto">
-              {competitors.length} {competitors.length === 1 ? 'competitor' : 'competitors'}
+              {visibleCompetitors.length} {visibleCompetitors.length === 1 ? 'competitor' : 'competitors'}
             </Badge>
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          {competitors.length > 0 ? (
+          {visibleCompetitors.length > 0 ? (
             <>
               <div className="overflow-x-auto">
                 <Table>
@@ -2092,10 +2289,11 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                       <TableHead>Citation Links</TableHead>
                       <TableHead className="w-[120px] text-center">Best Position</TableHead>
                       <TableHead className="w-[150px] text-center">Search Appearances</TableHead>
+                      <TableHead className="w-[60px]"></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {competitors
+                    {visibleCompetitors
                       .slice((currentCompetitorsPage - 1) * competitorsPerPage, currentCompetitorsPage * competitorsPerPage)
                       .map((competitor, index) => (
                     <TableRow key={index} className="group">
@@ -2168,6 +2366,17 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                           {competitor.searchAppearances}
                         </Badge>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDeleteCompetitor(competitor.competitorName)}
+                          title="Remove competitor"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -2175,10 +2384,10 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
               </div>
               
               {/* Pagination Controls */}
-              {competitors.length > competitorsPerPage && (
+              {visibleCompetitors.length > competitorsPerPage && (
                 <div className="flex items-center justify-between border-t px-6 py-4">
                   <div className="text-sm text-muted-foreground">
-                    Showing {((currentCompetitorsPage - 1) * competitorsPerPage) + 1} to {Math.min(currentCompetitorsPage * competitorsPerPage, competitors.length)} of {competitors.length} competitors
+                    Showing {((currentCompetitorsPage - 1) * competitorsPerPage) + 1} to {Math.min(currentCompetitorsPage * competitorsPerPage, visibleCompetitors.length)} of {visibleCompetitors.length} competitors
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
@@ -2190,8 +2399,8 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                       Previous
                     </Button>
                     <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.min(5, Math.ceil(competitors.length / competitorsPerPage)) }, (_, i) => {
-                        const totalCompetitorsPages = Math.ceil(competitors.length / competitorsPerPage);
+                      {Array.from({ length: Math.min(5, Math.ceil(visibleCompetitors.length / competitorsPerPage)) }, (_, i) => {
+                        const totalCompetitorsPages = Math.ceil(visibleCompetitors.length / competitorsPerPage);
                         let pageNum;
                         if (totalCompetitorsPages <= 5) {
                           pageNum = i + 1;
@@ -2218,8 +2427,8 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setCurrentCompetitorsPage(p => Math.min(Math.ceil(competitors.length / competitorsPerPage), p + 1))}
-                      disabled={currentCompetitorsPage === Math.ceil(competitors.length / competitorsPerPage)}
+                      onClick={() => setCurrentCompetitorsPage(p => Math.min(Math.ceil(visibleCompetitors.length / competitorsPerPage), p + 1))}
+                      disabled={currentCompetitorsPage === Math.ceil(visibleCompetitors.length / competitorsPerPage)}
                     >
                       Next
                     </Button>
@@ -2230,8 +2439,16 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <Target className="w-12 h-12 mb-4 opacity-50" />
-              <p className="font-medium">No competitor data available yet</p>
-              <p className="text-sm mt-1">Competitors will appear as searches are performed</p>
+              <p className="font-medium">
+                {competitors.length > 0 
+                  ? "All competitors have been removed" 
+                  : "No competitor data available yet"}
+              </p>
+              <p className="text-sm mt-1">
+                {competitors.length > 0 
+                  ? "Refresh the page to see all competitors again" 
+                  : "Competitors will appear as searches are performed"}
+              </p>
             </div>
           )}
         </CardContent>

@@ -274,8 +274,8 @@ export default function SettingsPage() {
     <div className="p-6">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Settings</h1>
-        <p className="text-gray-600">Manage your account, profile, and subscription</p>
+        <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
+        <p className="text-muted-foreground">Manage your account, profile, and subscription</p>
       </div>
 
       <div className="grid gap-6">
@@ -283,7 +283,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
-              <User className="w-5 h-5 text-gray-600" />
+              <User className="w-5 h-5 text-muted-foreground" />
               <CardTitle>Profile Information</CardTitle>
             </div>
             <CardDescription>
@@ -317,10 +317,10 @@ export default function SettingsPage() {
                       id="email"
                       value={user?.email || ""}
                       disabled
-                      className="bg-gray-50"
+                      className="bg-muted/50"
                     />
                     {user?.email && (
-                      <p className="text-xs text-green-600 flex items-center gap-1">
+                      <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                         <CheckCircle className="w-3 h-3" />
                         Verified
                       </p>
@@ -336,17 +336,17 @@ export default function SettingsPage() {
                     id="user_id"
                     value={user?.id || ""}
                     disabled
-                    className="bg-gray-50"
+                    className="bg-muted/50"
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground">
                     Your unique identifier (cannot be changed)
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t">
+                <div className="flex items-center justify-between pt-4 border-t border-border">
                   <div>
-                    <p className="text-sm font-medium text-gray-900">Account Created</p>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm font-medium text-foreground">Account Created</p>
+                    <p className="text-sm text-muted-foreground">
                       {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
-                <CreditCard className="w-5 h-5 text-gray-600" />
+                <CreditCard className="w-5 h-5 text-muted-foreground" />
                 <CardTitle>Billing & Subscription</CardTitle>
               </div>
               <CardDescription>
@@ -404,13 +404,13 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-2xl font-bold text-gray-900">Current Plan</h3>
+                          <h3 className="text-2xl font-bold text-foreground">Current Plan</h3>
                           <Badge variant="outline" className="text-sm">
                             {getPlanLabel(subscription?.plan_type || 'free')}
                           </Badge>
                         </div>
-                        <p className="text-lg font-semibold text-gray-700">
-                          ${subscription?.plan_type === 'pro' ? '19' : '0'} <span className="text-sm font-normal text-gray-600">/month</span>
+                        <p className="text-lg font-semibold text-foreground">
+                          ${subscription?.plan_type === 'pro' ? '19' : '0'} <span className="text-sm font-normal text-muted-foreground">/month</span>
                         </p>
                       </div>
                     </div>
@@ -460,19 +460,19 @@ export default function SettingsPage() {
                   <div className="space-y-2 mb-6">
                     {getPlanFeatures(subscription?.plan_type || 'free').map((feature, idx) => (
                       <div key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5" />
-                        <p className="text-gray-700">{feature}</p>
+                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
+                        <p className="text-foreground">{feature}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* Billing Period */}
                   {subscription?.current_period_end && (
-                    <div className="flex items-center gap-2 p-4 bg-white rounded-lg border">
-                      <Calendar className="w-5 h-5 text-gray-600" />
+                    <div className="flex items-center gap-2 p-4 bg-card rounded-lg border border-border">
+                      <Calendar className="w-5 h-5 text-muted-foreground" />
                       <div>
-                        <p className="text-sm font-medium text-gray-900">Current Billing Period</p>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm font-medium text-foreground">Current Billing Period</p>
+                        <p className="text-sm text-muted-foreground">
                           {subscription.current_period_start && (
                             <span>{new Date(subscription.current_period_start).toLocaleDateString()}</span>
                           )}
@@ -481,7 +481,7 @@ export default function SettingsPage() {
                           )}
                         </p>
                         {subscription.status === 'active' && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Renews on {new Date(subscription.current_period_end).toLocaleDateString()}
                           </p>
                         )}
@@ -490,11 +490,11 @@ export default function SettingsPage() {
                   )}
 
                   {subscription?.status === 'cancelled' && (
-                    <div className="flex items-center gap-2 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
-                      <AlertCircle className="w-5 h-5 text-yellow-600" />
+                    <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
                       <div>
-                        <p className="text-sm font-medium text-yellow-900">Subscription Cancelled</p>
-                        <p className="text-sm text-yellow-700">
+                        <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Subscription Cancelled</p>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
                           Your subscription will remain active until {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : 'the end of your billing period'}.
                         </p>
                       </div>

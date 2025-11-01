@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2, Mail } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Sidebar,
   SidebarContent,
@@ -181,6 +182,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       </SidebarContent>
 
       <SidebarFooter>
+        {/* Theme Toggle */}
+        <div className="px-4 py-2 mb-2 border-t border-sidebar-border flex items-center justify-center">
+          <ThemeToggle />
+        </div>
+        
         {/* Usage Tracking Section */}
         <div className="px-4 py-2 mb-2 border-t border-sidebar-border">
           <div className="space-y-3">

@@ -17,68 +17,68 @@ export default function FooterSection() {
                 height={24}
                 className="object-contain"
               />
-              <div className="text-[#37322F] text-lg font-semibold">kommi</div>
+              <div className="text-foreground text-lg font-semibold">kommi</div>
             </div>
-            <div className="text-[#605A57] text-sm">
+            <div className="text-muted-foreground text-sm">
               Monitor your brand's AI visibility and stay ahead of the competition with real-time tracking and analytics.
             </div>
           </div>
 
           {/* Product */}
           <div className="flex flex-col gap-4">
-            <div className="text-[#37322F] text-sm font-semibold">Product</div>
+            <div className="text-foreground text-sm font-semibold">Product</div>
             <div className="flex flex-col gap-2">
-              <a href="#features" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Features</a>
-              <a href="#pricing" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Pricing</a>
-              <a href="/auth" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Sign Up</a>
-              <a href="/auth" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Sign In</a>
+              <a href="#features" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Features</a>
+              <a href="#pricing" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Pricing</a>
+              <a href="/auth" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Sign Up</a>
+              <a href="/auth" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Sign In</a>
             </div>
           </div>
 
           {/* Resources */}
           <div className="flex flex-col gap-4">
-            <div className="text-[#37322F] text-sm font-semibold">Resources</div>
+            <div className="text-foreground text-sm font-semibold">Resources</div>
             <div className="flex flex-col gap-2">
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Documentation</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">API Reference</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Help Center</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Community</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Documentation</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">API Reference</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Help Center</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Community</a>
             </div>
           </div>
 
           {/* Comparisons */}
           <div className="flex flex-col gap-4">
-            <div className="text-[#37322F] text-sm font-semibold">Comparisons</div>
+            <div className="text-foreground text-sm font-semibold">Comparisons</div>
             <div className="flex flex-col gap-2">
-              <a href="/blogs/comparisons/kommi-vs-peec-ai" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">vs Peec AI</a>
-              <a href="/blogs/comparisons/kommi-vs-otterly-ai" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">vs Otterly AI</a>
-              <a href="/blogs/comparisons/kommi-vs-knowatoa-ai" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">vs Knowatoa AI</a>
-              <a href="/blogs/comparisons/kommi-vs-profound-ai" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">vs Profound AI</a>
-              <a href="/blogs/comparisons/kommi-vs-rankshift" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">vs Rankshift</a>
+              <a href="/blogs/comparisons/kommi-vs-peec-ai" className="text-muted-foreground text-sm hover:text-foreground transition-colors">vs Peec AI</a>
+              <a href="/blogs/comparisons/kommi-vs-otterly-ai" className="text-muted-foreground text-sm hover:text-foreground transition-colors">vs Otterly AI</a>
+              <a href="/blogs/comparisons/kommi-vs-knowatoa-ai" className="text-muted-foreground text-sm hover:text-foreground transition-colors">vs Knowatoa AI</a>
+              <a href="/blogs/comparisons/kommi-vs-profound-ai" className="text-muted-foreground text-sm hover:text-foreground transition-colors">vs Profound AI</a>
+              <a href="/blogs/comparisons/kommi-vs-rankshift" className="text-muted-foreground text-sm hover:text-foreground transition-colors">vs Rankshift</a>
             </div>
           </div>
 
           {/* Company */}
           <div className="flex flex-col gap-4">
-            <div className="text-[#37322F] text-sm font-semibold">Company</div>
+            <div className="text-foreground text-sm font-semibold">Company</div>
             <div className="flex flex-col gap-2">
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">About</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Blog</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Careers</a>
-              <a href="#" className="text-[#605A57] text-sm hover:text-[#37322F] transition-colors">Contact</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">About</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Blog</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Careers</a>
+              <a href="#" className="text-muted-foreground text-sm hover:text-foreground transition-colors">Contact</a>
             </div>
           </div>
         </div>
 
         {/* Bottom */}
-        <div className="mt-8 pt-8 border-t border-[rgba(55,50,47,0.12)] flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-[#605A57] text-xs">
+        <div className="mt-8 pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="text-muted-foreground text-xs">
             © 2024 kommi. All rights reserved.
           </div>
           <div className="flex items-center gap-6">
-            <a href="#" className="text-[#605A57] text-xs hover:text-[#37322F] transition-colors">Privacy Policy</a>
-            <a href="#" className="text-[#605A57] text-xs hover:text-[#37322F] transition-colors">Terms of Service</a>
-            <a href="#" className="text-[#605A57] text-xs hover:text-[#37322F] transition-colors">Cookie Policy</a>
+            <a href="#" className="text-muted-foreground text-xs hover:text-foreground transition-colors">Privacy Policy</a>
+            <a href="#" className="text-muted-foreground text-xs hover:text-foreground transition-colors">Terms of Service</a>
+            <a href="#" className="text-muted-foreground text-xs hover:text-foreground transition-colors">Cookie Policy</a>
           </div>
         </div>
       </div>

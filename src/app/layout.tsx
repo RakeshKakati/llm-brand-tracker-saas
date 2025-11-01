@@ -78,7 +78,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             gtag('config', 'AW-17691304936');
           `}
         </Script>
-        <!-- Meta Pixel Code -->
+        <!-- Meta Pixel -->
 <script>
 !function(f,b,e,v,n,t,s)
 {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

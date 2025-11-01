@@ -393,24 +393,28 @@ export default function SettingsPage() {
                 Manage your subscription and billing information
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Current Plan */}
-                <div className="p-6 bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg border-2 border-primary/20">
-                  <div className="flex items-start justify-between mb-6">
+            <CardContent className="space-y-6">
+              {/* Current Plan Card */}
+              <Card className="border-2">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
                       <div className={`p-3 rounded-lg ${getPlanColor(subscription?.plan_type || 'free')}`}>
                         <Crown className="w-6 h-6 text-white" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <h3 className="text-2xl font-bold text-foreground">Current Plan</h3>
-                          <Badge variant="outline" className="text-sm">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CardTitle className="text-xl">Current Plan</CardTitle>
+                          <Badge 
+                            variant={subscription?.plan_type === 'pro' ? 'default' : 'outline'} 
+                            className="text-sm"
+                          >
                             {getPlanLabel(subscription?.plan_type || 'free')}
                           </Badge>
                         </div>
-                        <p className="text-lg font-semibold text-foreground">
-                          ${subscription?.plan_type === 'pro' ? '19' : '0'} <span className="text-sm font-normal text-muted-foreground">/month</span>
+                        <p className="text-2xl font-bold text-foreground">
+                          ${subscription?.plan_type === 'pro' ? '19' : '0'}
+                          <span className="text-base font-normal text-muted-foreground ml-1">/month</span>
                         </p>
                       </div>
                     </div>
@@ -418,7 +422,6 @@ export default function SettingsPage() {
                       <Button 
                         onClick={handleUpgrade} 
                         disabled={upgrading}
-                        size="lg"
                         className="gap-2"
                       >
                         {upgrading ? (
@@ -438,7 +441,6 @@ export default function SettingsPage() {
                         onClick={handleManageSubscription}
                         disabled={managingSubscription}
                         variant="outline"
-                        size="lg"
                         className="gap-2"
                       >
                         {managingSubscription ? (
@@ -455,53 +457,66 @@ export default function SettingsPage() {
                       </Button>
                     ) : null}
                   </div>
-                  
+                </CardHeader>
+                <CardContent>
                   {/* Plan Features */}
-                  <div className="space-y-2 mb-6">
-                    {getPlanFeatures(subscription?.plan_type || 'free').map((feature, idx) => (
-                      <div key={idx} className="flex items-start gap-2">
-                        <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5" />
-                        <p className="text-foreground">{feature}</p>
-                      </div>
-                    ))}
+                  <div className="space-y-3 mb-6">
+                    <p className="text-sm font-medium text-foreground mb-3">Plan Features</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {getPlanFeatures(subscription?.plan_type || 'free').map((feature, idx) => (
+                        <div key={idx} className="flex items-start gap-2">
+                          <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                          <p className="text-sm text-foreground">{feature}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+                </CardContent>
+              </Card>
 
-                  {/* Billing Period */}
-                  {subscription?.current_period_end && (
-                    <div className="flex items-center gap-2 p-4 bg-card rounded-lg border border-border">
+              {/* Billing Information */}
+              {subscription?.current_period_end && (
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
                       <Calendar className="w-5 h-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Current Billing Period</p>
-                        <p className="text-sm text-muted-foreground">
-                          {subscription.current_period_start && (
-                            <span>{new Date(subscription.current_period_start).toLocaleDateString()}</span>
-                          )}
-                          {subscription.current_period_end && (
-                            <span> - {new Date(subscription.current_period_end).toLocaleDateString()}</span>
-                          )}
-                        </p>
-                        {subscription.status === 'active' && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Renews on {new Date(subscription.current_period_end).toLocaleDateString()}
-                          </p>
+                      <CardTitle className="text-base">Billing Information</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <p className="text-sm font-medium text-muted-foreground">Current Period</p>
+                      <p className="text-sm text-foreground">
+                        {subscription.current_period_start && (
+                          <span>{new Date(subscription.current_period_start).toLocaleDateString()}</span>
                         )}
-                      </div>
+                        {subscription.current_period_end && (
+                          <span> - {new Date(subscription.current_period_end).toLocaleDateString()}</span>
+                        )}
+                      </p>
                     </div>
-                  )}
-
-                  {subscription?.status === 'cancelled' && (
-                    <div className="flex items-center gap-2 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-500" />
-                      <div>
-                        <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Subscription Cancelled</p>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                          Your subscription will remain active until {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : 'the end of your billing period'}.
+                    {subscription.status === 'active' && (
+                      <div className="flex items-center justify-between py-2">
+                        <p className="text-sm font-medium text-muted-foreground">Next Billing Date</p>
+                        <p className="text-sm text-foreground">
+                          {new Date(subscription.current_period_end).toLocaleDateString()}
                         </p>
                       </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                    )}
+                    {subscription.status === 'cancelled' && (
+                      <div className="flex items-start gap-2 p-4 bg-yellow-50 dark:bg-yellow-950/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                        <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-500 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-900 dark:text-yellow-100">Subscription Cancelled</p>
+                          <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-1">
+                            Your subscription will remain active until {subscription.current_period_end ? new Date(subscription.current_period_end).toLocaleDateString() : 'the end of your billing period'}.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
             </CardContent>
           </Card>
         )}

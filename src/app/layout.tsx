@@ -1,7 +1,7 @@
+import React from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/theme-provider";
 

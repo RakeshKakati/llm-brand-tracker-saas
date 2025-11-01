@@ -15,7 +15,7 @@ Software / Technology / Marketing
 
 ---
 
-**Press Release Text:**
+
 
 kommi, a new AI brand visibility tracking platform, has launched to help marketing agencies and businesses monitor their brand mentions across AI platforms like ChatGPT, Claude, and Gemini. The platform combines real-time brand tracking with team collaboration features and contact extraction capabilities.
 

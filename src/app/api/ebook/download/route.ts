@@ -1,42 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from '@supabase/supabase-js';
+import { supabaseAdmin } from "@/app/lib/supabaseServer";
 import fs from 'fs';
 import path from 'path';
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-
-export async function GET(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
-    // Get authorization header
-    const authHeader = req.headers.get('authorization');
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const body = await req.json();
+    const { email } = body;
+
+    // Validate email
+    if (!email || !email.includes('@')) {
       return NextResponse.json(
-        { error: "Authentication required. Please sign in to download the ebook." },
-        { status: 401 }
+        { error: "Valid email address is required." },
+        { status: 400 }
       );
     }
 
-    const token = authHeader.replace('Bearer ', '');
+    // Get client IP and user agent for analytics
+    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                      req.headers.get('x-real-ip') || 
+                      'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
 
-    // Verify the token and get user
-    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    // Store the email in database
+    const { error: dbError } = await supabaseAdmin
+      .from('ebook_downloads')
+      .insert([
+        {
+          email: email.toLowerCase().trim(),
+          ip_address: ipAddress,
+          user_agent: userAgent,
         },
-      },
-    });
+      ]);
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: "Invalid or expired session. Please sign in again." },
-        { status: 401 }
-      );
+    if (dbError) {
+      console.error('Error saving ebook download:', dbError);
+      // Don't fail the download if database insert fails - still allow download
     }
 
     // Read the markdown file
@@ -76,7 +75,7 @@ export async function GET(req: NextRequest) {
 ============================================================
 
 Generated from: https://www.kommi.in
-Downloaded by: ${user.email}
+Downloaded by: ${email}
 Date: ${new Date().toLocaleDateString()}
 
 ============================================================

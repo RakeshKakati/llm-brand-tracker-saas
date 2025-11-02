@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { 
   TrendingUp, 
   Eye, 
@@ -38,8 +39,6 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
-import { supabase } from "@/app/lib/supabaseClient";
-import { useRouter } from "next/navigation";
 
 // Clock flip animation component with 3D flip effect
 function FlipText({ words, className = "" }: { words: string[]; className?: string }) {
@@ -148,31 +147,43 @@ const EXAMPLE_CONTACTS = [
 // Ebook Download Section Component
 const EbookDownloadSection: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
-  const router = useRouter();
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
 
-  const handleDownloadEbook = async () => {
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleDownloadEbook = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    
+    // Validate email
+    if (!email || !email.trim()) {
+      setEmailError('Please enter your email address');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setEmailError('');
+    setIsDownloading(true);
+
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !session) {
-        router.push('/auth?redirect=ebook');
-        return;
-      }
-
-      setIsDownloading(true);
       const response = await fetch('/api/ebook/download', {
-        method: 'GET',
+        method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ email: email.trim() }),
       });
 
       if (!response.ok) {
-        if (response.status === 401) {
-          router.push('/auth?redirect=ebook');
-          return;
-        }
-        throw new Error('Failed to download ebook');
+        const errorData = await response.json().catch(() => ({ error: 'Failed to download ebook' }));
+        throw new Error(errorData.error || 'Failed to download ebook');
       }
 
       const blob = await response.blob();
@@ -184,9 +195,12 @@ const EbookDownloadSection: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (error) {
+      
+      // Show success message
+      setEmail('');
+    } catch (error: any) {
       console.error('Download error:', error);
-      alert('Failed to download ebook. Please try again or sign up to access.');
+      setEmailError(error.message || 'Failed to download ebook. Please try again.');
     } finally {
       setIsDownloading(false);
     }
@@ -228,26 +242,45 @@ const EbookDownloadSection: React.FC = () => {
                   <span>Monitoring & measurement strategies</span>
                 </li>
               </ul>
-              <Button
-                onClick={handleDownloadEbook}
-                disabled={isDownloading}
-                size="lg"
-                className="group w-full md:w-auto transition-all duration-300 hover:scale-105 hover:shadow-lg"
-              >
-                {isDownloading ? (
-                  <>
-                    <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
-                    Downloading...
-                  </>
-                ) : (
-                  <>
-                    <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
-                    Download Free Ebook
-                  </>
-                )}
-              </Button>
+              <form onSubmit={handleDownloadEbook} className="space-y-4">
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setEmailError('');
+                    }}
+                    disabled={isDownloading}
+                    className="w-full md:w-auto min-w-[280px]"
+                    required
+                  />
+                  {emailError && (
+                    <p className="text-sm text-red-600 dark:text-red-400 mt-2">{emailError}</p>
+                  )}
+                </div>
+                <Button
+                  type="submit"
+                  disabled={isDownloading || !email}
+                  size="lg"
+                  className="group w-full md:w-auto transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                >
+                  {isDownloading ? (
+                    <>
+                      <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
+                      Download Free Ebook
+                    </>
+                  )}
+                </Button>
+              </form>
               <p className="text-sm text-muted-foreground mt-4">
-                * Sign up required to download. Free account gives you instant access.
+                * Enter your email to download. We&apos;ll never spam you.
               </p>
             </div>
             <div className="relative">

@@ -93,6 +93,28 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             fbq('track', 'PageView');
           `}
         </Script>
+        {/* Structured Data - Organization Schema for AI Discoverability */}
+        <Script
+          id="organization-schema"
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "name": "kommi",
+              "url": process.env.NEXT_PUBLIC_SITE_URL || "https://www.kommi.in",
+              "logo": `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.kommi.in"}/logo.svg`,
+              "description": "Track and improve your brand's visibility in AI answers. Monitor competitors, sources, positions, teams and contacts.",
+              "foundingDate": "2024",
+              "sameAs": [],
+              "contactPoint": {
+                "@type": "ContactPoint",
+                "contactType": "Customer Support",
+                "email": "support@kommi.in"
+              }
+            })
+          }}
+        />
       </head>
       <body className={inter.className}>
         {/* Google Tag Manager (noscript) */}

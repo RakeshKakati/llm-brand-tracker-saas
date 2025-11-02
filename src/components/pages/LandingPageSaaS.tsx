@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -145,24 +146,20 @@ const EXAMPLE_CONTACTS = [
 ];
 
 // Ebook Download Section Component
-function EbookDownloadSection() {
+const EbookDownloadSection: React.FC = () => {
   const [isDownloading, setIsDownloading] = useState(false);
   const router = useRouter();
 
   const handleDownloadEbook = async () => {
     try {
-      // Check if user is authenticated
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !session) {
-        // Redirect to signup page with return URL
         router.push('/auth?redirect=ebook');
         return;
       }
 
       setIsDownloading(true);
-
-      // Download the ebook with authentication
       const response = await fetch('/api/ebook/download', {
         method: 'GET',
         headers: {
@@ -172,14 +169,12 @@ function EbookDownloadSection() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Session expired, redirect to signup
           router.push('/auth?redirect=ebook');
           return;
         }
         throw new Error('Failed to download ebook');
       }
 
-      // Get the blob and create download link
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -243,7 +238,8 @@ function EbookDownloadSection() {
                   <>
                     <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
                     Downloading...
-                  ) : (
+                  </>
+                ) : (
                   <>
                     <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
                     Download Free Ebook
@@ -265,12 +261,12 @@ function EbookDownloadSection() {
                     </div>
                   </div>
                   <div className="border-t border-border/40 pt-4">
-                    <p className="text-sm font-medium mb-2">What you'll learn:</p>
+                    <p className="text-sm font-medium mb-2">What you&apos;ll learn:</p>
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li>✓ Configure OAI-SearchBot for discoverability</li>
-                      <li>✓ Optimize for Bing (ChatGPT's search source)</li>
+                      <li>✓ Optimize for Bing (ChatGPT&apos;s search source)</li>
                       <li>✓ Implement GEO strategies for AI search</li>
-                      <li>✓ Build brand authority & credibility</li>
+                      <li>✓ Build brand authority &amp; credibility</li>
                       <li>✓ Track and measure your performance</li>
                     </ul>
                   </div>
@@ -289,7 +285,7 @@ function EbookDownloadSection() {
       </div>
     </section>
   );
-}
+};
 
 export default function LandingPageSaaS() {
   const [scrollY, setScrollY] = useState(0);

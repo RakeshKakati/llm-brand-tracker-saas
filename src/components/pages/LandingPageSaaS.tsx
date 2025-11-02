@@ -37,6 +37,8 @@ import {
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState, useRef } from "react";
+import { supabase } from "@/app/lib/supabaseClient";
+import { useRouter } from "next/navigation";
 
 // Clock flip animation component with 3D flip effect
 function FlipText({ words, className = "" }: { words: string[]; className?: string }) {
@@ -141,6 +143,153 @@ const EXAMPLE_CONTACTS = [
   { company: "Forbes", email: "contributors@forbes.com", phone: "+1 212 555 0198", domain: "forbes.com", confidence: 92 },
   { company: "The Verge", email: "tips@theverge.com", phone: "+1 212 555 0142", domain: "theverge.com", confidence: 88 }
 ];
+
+// Ebook Download Section Component
+function EbookDownloadSection() {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const router = useRouter();
+
+  const handleDownloadEbook = async () => {
+    try {
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !session) {
+        // Redirect to signup page with return URL
+        router.push('/auth?redirect=ebook');
+        return;
+      }
+
+      setIsDownloading(true);
+
+      // Download the ebook with authentication
+      const response = await fetch('/api/ebook/download', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Session expired, redirect to signup
+          router.push('/auth?redirect=ebook');
+          return;
+        }
+        throw new Error('Failed to download ebook');
+      }
+
+      // Get the blob and create download link
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'how-to-rank-on-chatgpt-ebook.txt';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Download error:', error);
+      alert('Failed to download ebook. Please try again or sign up to access.');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-br from-primary/5 via-background to-muted/30">
+      <div className="mx-auto max-w-5xl">
+        <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20 p-8 md:p-12 shadow-xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.01]">
+          <div className="grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <Badge variant="outline" className="mb-4">Free Resource</Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Complete Guide: How to Rank on ChatGPT
+              </h2>
+              <p className="text-lg text-muted-foreground mb-6">
+                Discover the proven strategies to get your website featured in ChatGPT search results. 
+                Learn how to configure OAI-SearchBot, optimize for Bing, and implement Generative Engine Optimization (GEO).
+              </p>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>Step-by-step OAI-SearchBot setup guide</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>Bing optimization strategies (critical for ChatGPT)</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>Generative Engine Optimization (GEO) techniques</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>Structured data & schema markup implementation</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                  <span>Monitoring & measurement strategies</span>
+                </li>
+              </ul>
+              <Button
+                onClick={handleDownloadEbook}
+                disabled={isDownloading}
+                size="lg"
+                className="group w-full md:w-auto transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              >
+                {isDownloading ? (
+                  <>
+                    <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
+                    Downloading...
+                  ) : (
+                  <>
+                    <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
+                    Download Free Ebook
+                  </>
+                )}
+              </Button>
+              <p className="text-sm text-muted-foreground mt-4">
+                * Sign up required to download. Free account gives you instant access.
+              </p>
+            </div>
+            <div className="relative">
+              <Card className="p-6 bg-gradient-to-br from-primary/10 to-background border-2 border-primary/20">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <FileText className="w-8 h-8 text-primary" />
+                    <div>
+                      <p className="font-semibold">Complete Guide</p>
+                      <p className="text-sm text-muted-foreground">15,000+ words</p>
+                    </div>
+                  </div>
+                  <div className="border-t border-border/40 pt-4">
+                    <p className="text-sm font-medium mb-2">What you'll learn:</p>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li>✓ Configure OAI-SearchBot for discoverability</li>
+                      <li>✓ Optimize for Bing (ChatGPT's search source)</li>
+                      <li>✓ Implement GEO strategies for AI search</li>
+                      <li>✓ Build brand authority & credibility</li>
+                      <li>✓ Track and measure your performance</li>
+                    </ul>
+                  </div>
+                  <Link 
+                    href="/blogs/how-to-rank-on-chatgpt-openai-seo-guide" 
+                    className="flex items-center gap-2 text-sm text-primary hover:underline"
+                  >
+                    Read online version
+                    <ExternalLink className="w-4 h-4" />
+                  </Link>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </section>
+  );
+}
 
 export default function LandingPageSaaS() {
   const [scrollY, setScrollY] = useState(0);
@@ -931,6 +1080,9 @@ export default function LandingPageSaaS() {
           </div>
         </div>
       </section>
+
+      {/* Free Ebook Section */}
+      <EbookDownloadSection />
 
       {/* Pricing Section */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">

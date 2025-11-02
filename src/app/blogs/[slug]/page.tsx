@@ -15,6 +15,7 @@ interface PageProps {
 
 // Allowlist of blog slugs, mirroring the comparisons pattern
 const posts = [
+  'how-to-rank-on-chatgpt-openai-seo-guide',
   'best-ai-tools', 'ai-search', 'ai-searches', 'ai-in-search-engines', 'top-ai-tools', 'top-ai-tool',
   'ai-for-marketing', 'ai-data-analytics', 'ai-and-marketing', 'ai-for-data-analytics', 'data-analysis-ai',
   'ai-for-data-analysis', 'new-ai-tools', 'ai-and-data-analytics', 'data-analytics-and-ai', 'newest-ai-tools',

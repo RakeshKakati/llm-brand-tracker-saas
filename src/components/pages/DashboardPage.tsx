@@ -361,7 +361,7 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   }, [teamId, supabase]);
 
   // Store fetchDashboardData in a ref to avoid dependency issues
-  const fetchDashboardDataRef = useRef<() => Promise<void>>();
+  const fetchDashboardDataRef = useRef<(() => Promise<void>) | undefined>(undefined);
 
   const fetchDashboardData = useCallback(async () => {
     try {

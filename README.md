@@ -65,6 +65,10 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 # OpenAI Configuration
 OPENAI_API_KEY=your_openai_api_key
 
+# RAG (Retrieval-Augmented Generation) - Optional Feature
+# Set to 'true' to enable real-time RAG tracking (defaults to false)
+ENABLE_RAG_TRACKING=false
+
 # Next.js Configuration
 NEXTAUTH_SECRET=your_nextauth_secret
 NEXTAUTH_URL=http://localhost:3000

@@ -4,6 +4,22 @@ export const runtime = 'nodejs';
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabaseServer";
 
+// Optional RAG enhancement - dynamically imported to avoid breaking if module has issues
+async function tryRAGCheck(brand: string, query: string) {
+  if (process.env.ENABLE_RAG_TRACKING !== 'true') {
+    return null;
+  }
+  
+  try {
+    const { checkBrandMentionWithRAG } = await import("@/lib/rag-service");
+    return await checkBrandMentionWithRAG(brand, query);
+  } catch (error) {
+    // RAG service not available - continue without it
+    console.log("⚠️ RAG enhancement not available, continuing with existing flow");
+    return null;
+  }
+}
+
 // --- helper: safely escape brand in regex ---
 function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -60,6 +76,19 @@ export async function POST(req: Request) {
     }
 
     console.log(`🔍 Checking mention: brand="${brand}", query="${query}" for user=${user_email}`);
+
+    // ---- OPTIONAL STEP 0.5: Try RAG enhancement (optional, won't break if it fails) ----
+    let ragEnhancement: { mentioned: boolean; evidence: string; sources?: Array<any> } | null = null;
+    try {
+      ragEnhancement = await tryRAGCheck(brand, query);
+      if (ragEnhancement) {
+        console.log(`✨ RAG enhancement available: mentioned=${ragEnhancement.mentioned}`);
+      }
+    } catch (error) {
+      // CRITICAL: Never break existing flow - silently continue if RAG fails
+      console.log('⚠️ RAG enhancement failed, continuing with existing flow');
+      ragEnhancement = null;
+    }
 
     // ---- STEP 0: Check subscription limits for brand mentions ----
     const { data: subscription } = await supabaseAdmin

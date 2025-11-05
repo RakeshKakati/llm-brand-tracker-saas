@@ -102,6 +102,8 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
   const [loading, setLoading] = useState(true);
   const [selectedSource, setSelectedSource] = useState<SourceData | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [realtimeChecking, setRealtimeChecking] = useState(false);
+  const [realtimeResults, setRealtimeResults] = useState<any[]>([]);
   const [currentSourcesPage, setCurrentSourcesPage] = useState(1);
   const sourcesPerPage = 10;
   const [trackedCompetitors, setTrackedCompetitors] = useState<{ name: string; domain: string }[]>([]);
@@ -242,11 +244,124 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
     return 'Other';
   };
 
-  useEffect(() => {
-    console.log("🚀 Dashboard mount - initializing fetch...");
-    fetchDashboardData();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Real-time check function using RAG endpoint
+  const handleRealtimeCheck = useCallback(async () => {
+    try {
+      setRealtimeChecking(true);
+      setRealtimeResults([]);
+
+      // Get current user
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user?.email || !session?.user?.id) {
+        alert('Please sign in to check real-time mentions');
+        return;
+      }
+
+      const userEmail = session.user.email;
+      const userId = session.user.id;
+
+      console.log('🔍 Starting real-time check for:', userEmail);
+
+      // Fetch active trackers
+      let trackersQuery = supabase
+        .from("tracked_brands")
+        .select("*")
+        .eq("active", true);
+      
+      if (teamId) {
+        trackersQuery = trackersQuery.eq("team_id", teamId);
+      } else {
+        trackersQuery = trackersQuery.eq("user_email", userEmail).is("team_id", null);
+      }
+
+      const { data: trackers, error: trackersError } = await trackersQuery;
+
+      if (trackersError) {
+        throw trackersError;
+      }
+
+      if (!trackers || trackers.length === 0) {
+        alert('No active trackers found. Add a tracker first!');
+        return;
+      }
+
+      console.log(`📊 Found ${trackers.length} active trackers, checking in real-time...`);
+
+      // Check each tracker using realtime endpoint
+      const results = [];
+      for (const tracker of trackers) {
+        try {
+          const response = await fetch('/api/trackBrand/realtime', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              brand: tracker.brand,
+              query: tracker.query,
+              user_email: userEmail,
+              user_id: userId,
+              team_id: teamId || null,
+            }),
+          });
+
+          const result = await response.json();
+          
+          if (response.ok) {
+            results.push({
+              ...result,
+              brand: tracker.brand,
+              query: tracker.query,
+              timestamp: new Date().toISOString(),
+            });
+            console.log(`✅ ${tracker.brand}: ${result.mentioned ? 'MENTIONED' : 'NOT FOUND'}`);
+          } else {
+            console.error(`❌ Error checking ${tracker.brand}:`, result.error);
+            results.push({
+              brand: tracker.brand,
+              query: tracker.query,
+              mentioned: false,
+              error: result.error || 'Check failed',
+              timestamp: new Date().toISOString(),
+            });
+          }
+
+          // Small delay between checks
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error: any) {
+          console.error(`❌ Error checking ${tracker.brand}:`, error);
+          results.push({
+            brand: tracker.brand,
+            query: tracker.query,
+            mentioned: false,
+            error: error.message || 'Check failed',
+            timestamp: new Date().toISOString(),
+          });
+        }
+      }
+
+      setRealtimeResults(results);
+      
+      // Refresh dashboard to show new data
+      setTimeout(() => {
+        if (fetchDashboardDataRef.current) {
+          fetchDashboardDataRef.current();
+        }
+      }, 500);
+
+      // Show summary
+      const mentioned = results.filter(r => r.mentioned).length;
+      alert(`Real-time check complete!\n\n${mentioned} of ${results.length} brands mentioned\n\nResults refreshed in dashboard.`);
+    } catch (error: any) {
+      console.error('❌ Real-time check error:', error);
+      alert(`Error: ${error.message || 'Failed to check real-time mentions'}`);
+    } finally {
+      setRealtimeChecking(false);
+    }
+  }, [teamId, supabase]);
+
+  // Store fetchDashboardData in a ref to avoid dependency issues
+  const fetchDashboardDataRef = useRef<() => Promise<void>>();
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -493,6 +608,18 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
       hasFetchedRef.current = true;
     }
   }, [teamId]);
+
+  // Update ref when fetchDashboardData changes
+  useEffect(() => {
+    fetchDashboardDataRef.current = fetchDashboardData;
+  }, [fetchDashboardData]);
+
+  // Initial fetch on mount
+  useEffect(() => {
+    console.log("🚀 Dashboard mount - initializing fetch...");
+    fetchDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Helper function to extract URLs from a mention (shared by processTopSources and newDomains)
   const extractUrlsFromMention = (mention: any): string[] => {
@@ -1678,18 +1805,98 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-sm text-muted-foreground">Monitor your brand mentions and tracking performance</p>
         </div>
-        <Button 
-          onClick={fetchDashboardData} 
-          disabled={loading}
-          variant="outline"
-          size="sm"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={handleRealtimeCheck} 
+            disabled={realtimeChecking || loading}
+            variant="default"
+            size="sm"
+            className="bg-primary hover:bg-primary/90"
+          >
+            <Zap className={`w-4 h-4 mr-2 ${realtimeChecking ? 'animate-pulse' : ''}`} />
+            {realtimeChecking ? 'Checking...' : 'Check Now (Real-time)'}
+          </Button>
+          <Button 
+            onClick={fetchDashboardData} 
+            disabled={loading}
+            variant="outline"
+            size="sm"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
       </div>
 
-
+      {/* Real-time Check Results */}
+      {realtimeResults.length > 0 && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-5 h-5 text-primary" />
+                <CardTitle>Real-time Check Results</CardTitle>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setRealtimeResults([])}
+              >
+                Clear
+              </Button>
+            </div>
+            <CardDescription>
+              Latest real-time mentions check - {new Date(realtimeResults[0]?.timestamp).toLocaleString()}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {realtimeResults.map((result, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{result.brand}</span>
+                      <Badge variant={result.mentioned ? "default" : "secondary"}>
+                        {result.mentioned ? "Mentioned" : "Not Found"}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">{result.query}</p>
+                    {result.evidence && (
+                      <p className="text-xs text-muted-foreground mt-1 italic">
+                        {result.evidence.slice(0, 100)}...
+                      </p>
+                    )}
+                    {result.sources && result.sources.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {result.sources.slice(0, 3).map((source: any, idx: number) => (
+                          <a
+                            key={idx}
+                            href={source.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline flex items-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {source.title || source.url.slice(0, 30)}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {result.mentioned ? (
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <XCircle className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* New KPI row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

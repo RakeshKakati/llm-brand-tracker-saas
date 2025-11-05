@@ -1,6 +1,5 @@
 "use client";
 
-import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -34,11 +33,20 @@ import {
   Phone,
   RefreshCw,
   AlertCircle,
-  CheckCircle2
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 // Clock flip animation component with 3D flip effect
 function FlipText({ words, className = "" }: { words: string[]; className?: string }) {
@@ -144,181 +152,51 @@ const EXAMPLE_CONTACTS = [
   { company: "The Verge", email: "tips@theverge.com", phone: "+1 212 555 0142", domain: "theverge.com", confidence: 88 }
 ];
 
-// Ebook Download Section Component
-const EbookDownloadSection: React.FC = () => {
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [emailError, setEmailError] = useState('');
+// Example real-time RAG comparison data
+const EXAMPLE_RAG_COMPARISON = [
+  {
+    brand: "Your CRM",
+    position: 1,
+    mentioned: true,
+    evidence: "Your CRM is a powerful solution for startups looking to streamline their sales process...",
+    sources: [
+      { url: "https://techcrunch.com/best-crm-startups", title: "TechCrunch" },
+      { url: "https://forbes.com/crm-comparison", title: "Forbes" }
+    ],
+    method: "RAG",
+    isUser: true
+  },
+  {
+    brand: "Salesforce",
+    position: 2,
+    mentioned: true,
+    evidence: "Salesforce remains the industry leader with comprehensive features...",
+    sources: [
+      { url: "https://techcrunch.com/best-crm-startups", title: "TechCrunch" }
+    ],
+    method: "RAG",
+    isUser: false
+  },
+  {
+    brand: "HubSpot",
+    position: 3,
+    mentioned: true,
+    evidence: "HubSpot offers great free tier options for growing businesses...",
+    sources: [],
+    method: "Standard",
+    isUser: false
+  },
+  {
+    brand: "Pipedrive",
+    position: 4,
+    mentioned: false,
+    evidence: "Not mentioned in current AI search results",
+    sources: [],
+    method: "RAG",
+    isUser: false
+  }
+];
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const handleDownloadEbook = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    
-    // Validate email
-    if (!email || !email.trim()) {
-      setEmailError('Please enter your email address');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
-      return;
-    }
-
-    setEmailError('');
-    setIsDownloading(true);
-
-    try {
-      const response = await fetch('/api/ebook/download', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Failed to download ebook' }));
-        throw new Error(errorData.error || 'Failed to download ebook');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'how-to-rank-on-chatgpt-ebook.txt';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      
-      // Show success message
-      setEmail('');
-    } catch (error: any) {
-      console.error('Download error:', error);
-      setEmailError(error.message || 'Failed to download ebook. Please try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
-  return (
-    <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-br from-primary/5 via-background to-muted/30">
-      <div className="mx-auto max-w-5xl">
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-card to-muted/20 p-8 md:p-12 shadow-xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.01]">
-          <div className="grid md:grid-cols-2 gap-8 items-center">
-            <div>
-              <Badge variant="outline" className="mb-4">Free Resource</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Complete Guide: How to Rank on ChatGPT
-              </h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                Discover the proven strategies to get your website featured in ChatGPT search results. 
-                Learn how to configure OAI-SearchBot, optimize for Bing, and implement Generative Engine Optimization (GEO).
-              </p>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>Step-by-step OAI-SearchBot setup guide</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>Bing optimization strategies (critical for ChatGPT)</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>Generative Engine Optimization (GEO) techniques</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>Structured data & schema markup implementation</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span>Monitoring & measurement strategies</span>
-                </li>
-              </ul>
-              <form onSubmit={handleDownloadEbook} className="space-y-4">
-                <div>
-                  <Input
-                    type="email"
-                    placeholder="Enter your email address"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setEmailError('');
-                    }}
-                    disabled={isDownloading}
-                    className="w-full md:w-auto min-w-[280px]"
-                    required
-                  />
-                  {emailError && (
-                    <p className="text-sm text-red-600 dark:text-red-400 mt-2">{emailError}</p>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  disabled={isDownloading || !email}
-                  size="lg"
-                  className="group w-full md:w-auto transition-all duration-300 hover:scale-105 hover:shadow-lg"
-                >
-                  {isDownloading ? (
-                    <>
-                      <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
-                      Downloading...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
-                      Download Free Ebook
-                    </>
-                  )}
-                </Button>
-              </form>
-              <p className="text-sm text-muted-foreground mt-4">
-                * Enter your email to download. We&apos;ll never spam you.
-              </p>
-            </div>
-            <div className="relative">
-              <Card className="p-6 bg-gradient-to-br from-primary/10 to-background border-2 border-primary/20">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-primary" />
-                    <div>
-                      <p className="font-semibold">Complete Guide</p>
-                      <p className="text-sm text-muted-foreground">15,000+ words</p>
-                    </div>
-                  </div>
-                  <div className="border-t border-border/40 pt-4">
-                    <p className="text-sm font-medium mb-2">What you&apos;ll learn:</p>
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      <li>✓ Configure OAI-SearchBot for discoverability</li>
-                      <li>✓ Optimize for Bing (ChatGPT&apos;s search source)</li>
-                      <li>✓ Implement GEO strategies for AI search</li>
-                      <li>✓ Build brand authority &amp; credibility</li>
-                      <li>✓ Track and measure your performance</li>
-                    </ul>
-                  </div>
-                  <Link 
-                    href="/blogs/how-to-rank-on-chatgpt-openai-seo-guide" 
-                    className="flex items-center gap-2 text-sm text-primary hover:underline"
-                  >
-                    Read online version
-                    <ExternalLink className="w-4 h-4" />
-                  </Link>
-                </div>
-              </Card>
-            </div>
-          </div>
-        </Card>
-      </div>
-    </section>
-  );
-};
 
 export default function LandingPageSaaS() {
   const [scrollY, setScrollY] = useState(0);
@@ -762,6 +640,147 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
+      {/* Real-time RAG Comparison Section */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-br from-primary/5 via-background to-muted/30">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Badge variant="outline" className="mb-4">
+              <Zap className="w-3 h-3 mr-1" />
+              Real-time RAG Analysis
+            </Badge>
+            <h2 className="text-4xl font-bold mb-4">Compare Your Brand vs Competitors in Real-Time</h2>
+            <p className="text-xl text-muted-foreground">
+              Get instant AI search visibility data using RAG technology
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
+            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
+              <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
+                <span className="text-sm font-medium">Real-time Comparison: &quot;{EXAMPLE_QUERY}&quot;</span>
+                <Badge variant="outline" className="text-xs">
+                  <Zap className="w-3 h-3 mr-1" />
+                  RAG Enabled
+                </Badge>
+              </div>
+              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
+                <div className="space-y-3 mb-4">
+                  {EXAMPLE_RAG_COMPARISON.map((comp, idx) => (
+                    <div 
+                      key={idx} 
+                      className={`p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
+                        comp.isUser 
+                          ? 'bg-primary/10 border-2 border-primary/30 shadow-lg' 
+                          : 'bg-muted/50 border hover:bg-muted/70'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold flex-shrink-0 ${
+                          comp.mentioned 
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' 
+                            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+                        }`}>
+                          {comp.position}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <span className={`font-medium ${comp.isUser ? 'text-primary text-lg' : ''}`}>
+                              {comp.brand}
+                            </span>
+                            {comp.isUser && (
+                              <Badge variant="default" className="text-xs">You</Badge>
+                            )}
+                            {comp.mentioned ? (
+                              <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground break-words">
+                            {comp.evidence}
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2 flex-shrink-0 ml-2">
+                          <Badge variant="outline" className="text-xs whitespace-nowrap">
+                            {comp.method}
+                          </Badge>
+                          {comp.sources && comp.sources.length > 0 && (
+                            <Badge variant="secondary" className="text-xs whitespace-nowrap">
+                              {comp.sources.length} source{comp.sources.length > 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                  <p className="text-sm">
+                    <strong className="text-primary">Real-time Insight:</strong> You&apos;re #1 in AI search results! 
+                    RAG technology provides instant, accurate data from ChatGPT.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
+              <h3 className="text-3xl font-bold mb-4">Real-time AI Visibility with RAG</h3>
+              <p className="text-lg text-muted-foreground mb-6">
+                Our advanced RAG (Retrieval-Augmented Generation) technology provides real-time data from ChatGPT and other AI platforms. 
+                See exactly how you rank against competitors with instant, accurate results.
+              </p>
+              <div className="space-y-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <Zap className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Real-time Data</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get current AI search results instantly, not outdated cached data
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Target className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Accurate Comparison</p>
+                    <p className="text-sm text-muted-foreground">
+                      Compare your brand against competitors with precise ranking and visibility data
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Link2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Source Citations</p>
+                    <p className="text-sm text-muted-foreground">
+                      See which sources AI cites, with direct links to improve your visibility
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <p className="font-semibold mb-1">Why RAG Matters</p>
+                    <p className="text-sm text-muted-foreground">
+                      RAG combines real-time web search with AI reasoning to provide the most accurate, 
+                      up-to-date brand visibility data. Traditional methods use stale data—RAG gives you 
+                      what AI sees right now.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <Link href="/auth">
+                <Button size="lg" className="group transition-all duration-300 hover:scale-105 w-full md:w-auto">
+                  Start Tracking with RAG
+                  <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Journey Section 3: Cited Sources */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
         <div className="mx-auto max-w-6xl">
@@ -1110,9 +1129,6 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-      {/* Free Ebook Section */}
-      <EbookDownloadSection />
-
       {/* Pricing Section */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="mx-auto max-w-4xl text-center mb-16">
@@ -1127,19 +1143,21 @@ export default function LandingPageSaaS() {
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {pricingPlans.map((plan, index) => (
+            <div key={index} className="relative">
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                  <Badge className="bg-primary text-primary-foreground px-4 py-1 text-sm font-semibold shadow-lg">
+                    79% pick this
+                  </Badge>
+                </div>
+              )}
             <Card 
-              key={index} 
               className={`p-8 relative transition-all duration-500 hover:shadow-xl hover:scale-105 ${
                 plan.popular 
                   ? 'border-2 border-primary shadow-2xl bg-gradient-to-br from-primary/5 to-background' 
                   : 'border hover:border-primary/30'
               }`}
             >
-              {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white border-0 px-4 py-1 animate-pulse">
-                  79% pick this
-                </Badge>
-              )}
               
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold mb-3">{plan.name}</h3>
@@ -1171,6 +1189,7 @@ export default function LandingPageSaaS() {
                 </Button>
               </Link>
             </Card>
+            </div>
           ))}
         </div>
       </section>

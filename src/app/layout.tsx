@@ -93,6 +93,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             fbq('track', 'PageView');
           `}
         </Script>
+        <script
+  defer
+  data-website-id="dfid_S3UwBer9RhrFoOKKNdWqE"
+  data-domain="www.kommi.in"
+  src="https://datafa.st/js/script.js">
+</script>
       </head>
       <body className={inter.className}>
         {/* Google Tag Manager (noscript) */}

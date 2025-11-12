@@ -132,7 +132,6 @@ export async function POST(req: Request) {
           brand,
           query,
           mentioned: ragResult.mentioned,
-          position: ragResult.position || null,
           evidence: ragResult.evidence,
           source_urls: source_urls,
           sources: ragResult.sources || [],

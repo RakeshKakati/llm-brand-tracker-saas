@@ -28,9 +28,6 @@ import {
   Building2,
   Layers,
   Sparkles,
-  Download,
-  Mail,
-  Phone,
   RefreshCw,
   AlertCircle,
   CheckCircle2,
@@ -146,11 +143,6 @@ const EXAMPLE_SOURCES = [
   { domain: "wired.com", mentions: 8, status: "not mentioned", url: "https://wired.com/startup-tools-2024" }
 ];
 
-const EXAMPLE_CONTACTS = [
-  { company: "TechCrunch", email: "editorial@techcrunch.com", phone: "+1 415 555 0123", domain: "techcrunch.com", confidence: 95 },
-  { company: "Forbes", email: "contributors@forbes.com", phone: "+1 212 555 0198", domain: "forbes.com", confidence: 92 },
-  { company: "The Verge", email: "tips@theverge.com", phone: "+1 212 555 0142", domain: "theverge.com", confidence: 88 }
-];
 
 // Example real-time RAG comparison data
 const EXAMPLE_RAG_COMPARISON = [
@@ -202,9 +194,6 @@ export default function LandingPageSaaS() {
   const [scrollY, setScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState(0);
   const [counterValues, setCounterValues] = useState({ mentions: 0, sources: 0, competitors: 0, coverage: 0 });
-  const [isExporting, setIsExporting] = useState(false);
-  const [exported, setExported] = useState(false);
-  const [monitoringActive, setMonitoringActive] = useState(true);
   const sectionRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   useEffect(() => {
@@ -252,65 +241,6 @@ export default function LandingPageSaaS() {
     }, duration / steps);
   };
 
-  const handleExportCSV = async () => {
-    setIsExporting(true);
-    // Simulate export delay
-    setTimeout(() => {
-      setIsExporting(false);
-      setExported(true);
-      setTimeout(() => setExported(false), 3000);
-    }, 1500);
-  };
-
-  const pricingPlans = [
-    {
-      name: "Free",
-      price: "$0",
-      period: "/forever",
-      description: "Perfect for getting started",
-      features: [
-        "5 brand trackers",
-        "Daily checks",
-        "Basic analytics",
-        "Email support",
-        "30 days history"
-      ],
-      cta: "Get Started",
-      popular: false
-    },
-    {
-      name: "Pro",
-      price: "$19",
-      period: "/month",
-      description: "For growing businesses",
-      features: [
-        "10 brand trackers",
-        "Hourly checks",
-        "Advanced analytics",
-        "Priority support",
-        "1 year history",
-        "Team collaboration"
-      ],
-      cta: "Get Started",
-      popular: true
-    },
-    {
-      name: "Enterprise",
-      price: "Custom",
-      period: "",
-      description: "For large organizations",
-      features: [
-        "Everything in Pro",
-        "Dedicated support",
-        "Custom integrations",
-        "On-premise deployment",
-        "SLA guarantee",
-        "Custom reporting"
-      ],
-      cta: "Contact Sales",
-      popular: false
-    }
-  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
@@ -343,30 +273,32 @@ export default function LandingPageSaaS() {
         <div className="mx-auto max-w-5xl">
           <div className="text-center mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="inline-block mb-4">
-              <Badge variant="outline" className="animate-pulse">Live Example: Tracking &quot;{EXAMPLE_QUERY}&quot;</Badge>
+              <Badge variant="outline">Built for Agencies</Badge>
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              Make your brand <span className="text-primary relative inline-block">
-                AI‑compatible
-                <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/30 animate-pulse"></span>
+              The AI Visibility Platform
+              <br />
+              <span className="text-primary relative inline-block">
+                Built for Agencies
+                <span className="absolute -bottom-2 left-0 right-0 h-1 bg-primary/30"></span>
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              See exactly how <strong className="text-foreground">{EXAMPLE_BRAND}</strong> appears when people ask AI: &quot;{EXAMPLE_QUERY}&quot;
+              Track how your clients appear in ChatGPT, Perplexity, and Gemini — monitor mentions, analyze competitors, and extract leads from every AI result.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-6">
               <Link href="/auth">
                 <Button size="lg" className="text-lg px-8 py-6 group transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                  Analyze For Free
+                  Try Kommi Free for Agencies
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
               <Button size="lg" variant="outline" className="text-lg px-8 py-6 transition-all duration-300 hover:scale-105 hover:border-primary">
-                Try live demo
+                Book a Demo
                 <PlayCircle className="ml-2 w-5 h-5" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground animate-pulse">
+            <p className="text-sm text-muted-foreground">
               Free forever • No credit card required
             </p>
           </div>
@@ -375,11 +307,11 @@ export default function LandingPageSaaS() {
           <div className="mt-12 rounded-lg border border-border/40 bg-card shadow-2xl overflow-hidden transition-all duration-500 hover:shadow-3xl hover:scale-[1.01]">
             <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                <div className="w-3 h-3 rounded-full bg-red-500"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
                 <span className="ml-4 text-sm font-medium text-muted-foreground">kommi Dashboard</span>
-                <Badge variant="outline" className="ml-2 animate-pulse">
+                <Badge variant="outline" className="ml-2">
                   <Activity className="w-3 h-3 mr-1" />
                   Live
                 </Badge>
@@ -425,7 +357,7 @@ export default function LandingPageSaaS() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-semibold text-lg">Recent Activity: &quot;{EXAMPLE_QUERY}&quot;</h3>
-                    <Badge className="animate-pulse">
+                    <Badge>
                       <Clock className="w-3 h-3 mr-1" />
                       Latest searches
                     </Badge>
@@ -434,7 +366,7 @@ export default function LandingPageSaaS() {
                     <div className="flex items-center justify-between p-4 rounded-lg border bg-primary/5 border-primary/20 transition-all duration-300 hover:bg-primary/10 hover:scale-[1.02]">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                          <Badge className="bg-green-600 animate-pulse">
+                          <Badge className="bg-green-600">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Mentioned
                             </Badge>
@@ -464,86 +396,171 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-      {/* Journey Section 1: Discover Mentions */}
-      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
+      {/* Section 2: Core Value */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Badge variant="outline" className="mb-4">Step 1: Discovery</Badge>
-            <h2 className="text-4xl font-bold mb-4">Discover Your AI Mentions</h2>
+            <Badge variant="outline" className="mb-4">Core Value</Badge>
+            <h2 className="text-4xl font-bold mb-4">See how your brands appear across AI — and what to do next</h2>
             <p className="text-xl text-muted-foreground">
-              See exactly how often <strong>{EXAMPLE_BRAND}</strong> appears when people ask: &quot;{EXAMPLE_QUERY}&quot;
+              Three powerful capabilities that transform AI visibility into actionable insights
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            <Card className="p-8 border-2 border-primary/20 bg-background transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
+              <div className="mb-6">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Eye className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Track Every Mention</h3>
+                <p className="text-muted-foreground mb-4">
+                  Monitor your clients across ChatGPT, Perplexity, Gemini, and more.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    <span>Detect brand mentions, citations, and ranking positions in real time</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+
+            <Card className="p-8 border-2 border-primary/20 bg-background transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
+              <div className="mb-6">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <BarChart3 className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Analyze Competitors</h3>
+                <p className="text-muted-foreground mb-4">
+                  Compare brand visibility, citation links, and domain-level mentions.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    <span>Identify who's dominating AI answers and why</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+
+            <Card className="p-8 border-2 border-primary/20 bg-background transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:scale-105">
+              <div className="mb-6">
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Users className="w-6 h-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3">Generate Leads Instantly</h3>
+                <p className="text-muted-foreground mb-4">
+                  Extract contacts from every source URL — authors, emails, social links — all scored for accuracy.
+                </p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="w-4 h-4 text-primary" />
+                    <span>Turn brand mentions into new business opportunities</span>
+                  </li>
+                </ul>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3: Built for Agencies - KEY DIFFERENTIATOR */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <Badge variant="outline" className="mb-4">Agency-First</Badge>
+            <h2 className="text-4xl font-bold mb-4">Built for all your brands with custom dashboards</h2>
+            <p className="text-xl text-muted-foreground">
+              Kommi was built for multi-client operations — manage unlimited brands, teams, and clients in one unified workspace.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
             <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Real-time visibility tracking</h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                We monitor AI platforms 24/7. When someone asks &quot;{EXAMPLE_QUERY}&quot;, we track if you're mentioned, 
-                your position, and which sources AI cites. <strong>You're currently mentioned in 63% of searches</strong> for this query.
-              </p>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary animate-in zoom-in duration-500" />
-                  <span>8 mentions in last 30 days</span>
+              <h3 className="text-3xl font-bold mb-6">Team sections, multi-brand dashboards, and automated monitoring</h3>
+              <ul className="space-y-4 mb-8">
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Custom dashboards for every client brand</p>
+                    <p className="text-sm text-muted-foreground">Each client gets their own branded dashboard with real-time AI visibility metrics</p>
+                  </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary animate-in zoom-in duration-500 delay-100" />
-                  <span>Average position: #2 (behind Salesforce)</span>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Team collaboration with roles and permissions</p>
+                    <p className="text-sm text-muted-foreground">Invite team members, assign roles (owner, admin, member), and control access per client</p>
+                  </div>
                 </li>
-                <li className="flex items-center gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary animate-in zoom-in duration-500 delay-200" />
-                  <span>12 unique sources cited by AI</span>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Hourly monitoring & real-time alerts</p>
+                    <p className="text-sm text-muted-foreground">Automated checks every hour. Get instant alerts when positions change or new mentions appear</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Client-ready white-label reports</p>
+                    <p className="text-sm text-muted-foreground">Generate professional reports your clients will love — perfect for monthly reviews</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Webhooks & integrations</p>
+                    <p className="text-sm text-muted-foreground">Push data into Slack, HubSpot, Notion, or any tool via webhooks</p>
+                  </div>
                 </li>
               </ul>
               <Link href="/auth">
                 <Button size="lg" className="group transition-all duration-300 hover:scale-105">
-                  Start tracking your brand
+                  Join the Agency Beta
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
             </div>
             <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
               <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-                <span className="text-sm font-medium">kommi Dashboard</span>
-                <Badge variant="outline">
-                  <RefreshCw className={`w-3 h-3 mr-1 ${monitoringActive ? 'animate-spin' : ''}`} />
-                  Monitoring
+                <span className="text-sm font-medium">kommi Agency Workspace</span>
+                <Badge className="bg-green-600">
+                  <Activity className="w-3 h-3 mr-1" />
+                  Active
                 </Badge>
               </div>
               <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
                 <div className="space-y-4">
-                  <Card className="p-6 border-2 border-primary/20 transition-all duration-300 hover:border-primary/40">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-semibold">Mention Rate</span>
-                      <Badge className="bg-green-600 animate-pulse">63%</Badge>
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Client: TechStartup Inc.</span>
+                      <Badge>3 brands</Badge>
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>Query: &quot;{EXAMPLE_QUERY}&quot;</span>
-                        <span className="font-semibold">8/12 searches</span>
-                      </div>
-                      <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                        <div 
-                          className="bg-gradient-to-r from-primary to-primary/80 h-3 rounded-full transition-all duration-1000 ease-out"
-                          style={{ width: '63%' }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        Your brand appears in 63% of AI responses for this query
-                      </p>
+                    <p className="text-sm text-muted-foreground mb-2">Custom dashboard • 12 mentions this week</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Bell className="w-3 h-3" />
+                      <span>Last update: 23m ago</span>
                     </div>
                   </Card>
-                  <Card className="p-6 border-2 border-primary/20 transition-all duration-300 hover:border-primary/40">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-semibold">Best Position</span>
-                      <Badge variant="default" className="text-lg">#2</Badge>
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Client: GrowthCo</span>
+                      <Badge>5 brands</Badge>
                     </div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <TrendingUp className="w-5 h-5 text-green-600" />
-                      <span className="text-sm font-medium">Up from #3 last week</span>
+                    <p className="text-sm text-muted-foreground mb-2">Custom dashboard • 28 mentions this week</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Bell className="w-3 h-3" />
+                      <span>Last update: 15m ago</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">Average ranking across all searches</p>
+                  </Card>
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Team Members</span>
+                      <Badge variant="outline">4 active</Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">2 owners • 2 members • Role-based access</p>
                   </Card>
                 </div>
               </div>
@@ -552,105 +569,17 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-      {/* Journey Section 2: Competitor Positions */}
-      <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Badge variant="outline" className="mb-4">Step 2: Competitive Intelligence</Badge>
-            <h2 className="text-4xl font-bold mb-4">See How You Stack Up</h2>
-            <p className="text-xl text-muted-foreground">
-              Compare your position against competitors for &quot;{EXAMPLE_QUERY}&quot;
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
-              <div className="bg-muted/50 px-6 py-4 border-b">
-                <span className="text-sm font-medium">kommi Dashboard</span>
-              </div>
-              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-                <h4 className="font-semibold mb-4">Competitor Analysis: &quot;{EXAMPLE_QUERY}&quot;</h4>
-                <div className="space-y-3">
-                  {EXAMPLE_COMPETITORS.map((comp, idx) => (
-                    <div 
-                      key={idx} 
-                      className={`flex items-center justify-between p-4 rounded-lg transition-all duration-300 hover:scale-[1.02] ${
-                        comp.highlight 
-                          ? 'bg-primary/10 border-2 border-primary/30 shadow-lg' 
-                          : 'bg-muted/50 border hover:bg-muted/70'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Target className={`w-4 h-4 ${comp.highlight ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <span className={`font-medium ${comp.highlight ? 'text-primary text-lg' : ''}`}>
-                          {comp.name}
-                        </span>
-                        {comp.highlight && (
-                          <Badge variant="outline" className="ml-2">You</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={comp.highlight ? "default" : "outline"} className="text-base">
-                          {comp.position}
-                        </Badge>
-                        <div className="flex items-center gap-1">
-                          {comp.trend === "up" && <TrendingUp className="w-4 h-4 text-green-600" />}
-                          {comp.trend === "down" && <ArrowDown className="w-4 h-4 text-red-600" />}
-                          <span className="text-sm text-muted-foreground">{comp.appearances} searches</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/20">
-                  <p className="text-sm">
-                    <strong className="text-primary">Insight:</strong> You're #2, just behind Salesforce. 
-                    Focus on the sources they cite to close the gap.
-                  </p>
-              </div>
-            </div>
-            </div>
-            <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Know your competitive position</h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                For &quot;{EXAMPLE_QUERY}&quot;, you rank <strong className="text-primary text-xl">#2</strong>, appearing in 
-                <strong className="text-primary"> 8 out of 12</strong> searches. Salesforce leads with 12 appearances at #1. 
-                HubSpot is #3 with 6 appearances.
-              </p>
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="font-semibold mb-1">Action Item</p>
-                    <p className="text-sm text-muted-foreground">
-                      You're missing from 4 searches. Check which sources Salesforce cites that you don't. 
-                      Export contacts from those sources to pitch for mentions.
-              </p>
-                  </div>
-                </div>
-              </div>
-              <Link href="/auth">
-                <Button size="lg" className="group transition-all duration-300 hover:scale-105">
-                  Analyze your competitors
-                  <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Real-time RAG Comparison Section */}
+      {/* Section 4: Live Intelligence */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-br from-primary/5 via-background to-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <Badge variant="outline" className="mb-4">
               <Zap className="w-3 h-3 mr-1" />
-              Real-time RAG Analysis
+              Real-Time Intelligence
             </Badge>
-            <h2 className="text-4xl font-bold mb-4">Compare Your Brand vs Competitors in Real-Time</h2>
+            <h2 className="text-4xl font-bold mb-4">Real-Time AI Tracking with RAG</h2>
             <p className="text-xl text-muted-foreground">
-              Get instant AI search visibility data using RAG technology
+              Kommi's Retrieval-Augmented Generation (RAG) engine checks AI results live, pulling real web data every time you run a brand scan.
             </p>
           </div>
 
@@ -723,52 +652,44 @@ export default function LandingPageSaaS() {
               </div>
             </div>
             <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Real-time AI Visibility with RAG</h3>
+              <h3 className="text-3xl font-bold mb-4">Live intelligence, not static scraping</h3>
               <p className="text-lg text-muted-foreground mb-6">
-                Our advanced RAG (Retrieval-Augmented Generation) technology provides real-time data from ChatGPT and other AI platforms. 
-                See exactly how you rank against competitors with instant, accurate results.
+                You see where your clients rank in AI conversations — with full evidence and citations. 
+                This isn't static scraping. It's live intelligence, powered by GPT-4 and OpenAI's real-time web search.
               </p>
               <div className="space-y-4 mb-6">
                 <div className="flex items-start gap-3">
                   <Zap className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold mb-1">Real-time Data</p>
+                    <p className="font-semibold mb-1">Real-Time Web Data</p>
                     <p className="text-sm text-muted-foreground">
-                      Get current AI search results instantly, not outdated cached data
+                      Every scan pulls fresh data from AI platforms — no cached results
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Target className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold mb-1">Accurate Comparison</p>
+                    <p className="font-semibold mb-1">Full Evidence & Citations</p>
                     <p className="text-sm text-muted-foreground">
-                      Compare your brand against competitors with precise ranking and visibility data
+                      See exactly what AI says about your clients, with source links and context
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <Link2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold mb-1">Source Citations</p>
+                    <p className="font-semibold mb-1">Powered by GPT-4</p>
                     <p className="text-sm text-muted-foreground">
-                      See which sources AI cites, with direct links to improve your visibility
+                      Built on OpenAI's latest models for the most accurate AI visibility tracking
                     </p>
                   </div>
                 </div>
               </div>
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-primary mt-0.5" />
-                  <div>
-                    <p className="font-semibold mb-1">Why RAG Matters</p>
-                    <p className="text-sm text-muted-foreground">
-                      RAG combines real-time web search with AI reasoning to provide the most accurate, 
-                      up-to-date brand visibility data. Traditional methods use stale data—RAG gives you 
-                      what AI sees right now.
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground italic">
+                  "This isn't static scraping. It's live intelligence, powered by GPT-4 and OpenAI's real-time web search."
+                </p>
               </div>
               <Link href="/auth">
                 <Button size="lg" className="group transition-all duration-300 hover:scale-105 w-full md:w-auto">
@@ -781,44 +702,62 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-      {/* Journey Section 3: Cited Sources */}
+      {/* Section 5: Competitive Intelligence */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Badge variant="outline" className="mb-4">Step 3: Source Intelligence</Badge>
-            <h2 className="text-4xl font-bold mb-4">See Which Sources AI Cites</h2>
+            <Badge variant="outline" className="mb-4">Competitive Intelligence</Badge>
+            <h2 className="text-4xl font-bold mb-4">Know who owns the AI answers</h2>
             <p className="text-xl text-muted-foreground">
-              Know exactly which URLs mention you (and which don't) for &quot;{EXAMPLE_QUERY}&quot;
+              Kommi's analytics break down citation frequency, source categories, competitor share of voice, and position tracking
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
             <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Identify opportunity gaps</h3>
+              <h3 className="text-3xl font-bold mb-4">Deep competitive insights</h3>
               <p className="text-lg text-muted-foreground mb-6">
-                When AI answers &quot;{EXAMPLE_QUERY}&quot;, it cites specific URLs. We show you which sources 
-                <strong className="text-green-600"> mention you</strong> (like TechCrunch, Forbes) and which 
-                <strong className="text-orange-600"> don't mention you</strong> (like The Verge, Wired).
+                Kommi's analytics break down:
               </p>
-              <ul className="space-y-3 mb-6">
+              <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium">Mentioned sources (2)</p>
-                    <p className="text-sm text-muted-foreground">techcrunch.com, forbes.com - Great! AI sees you here.</p>
+                    <p className="font-semibold mb-1">Citation frequency per domain</p>
+                    <p className="text-sm text-muted-foreground">See which sources AI cites most for your clients and competitors</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium">Missing sources (2)</p>
-                    <p className="text-sm text-muted-foreground">theverge.com, wired.com - Opportunity to pitch for mentions.</p>
+                    <p className="font-semibold mb-1">Source categories (News, Blogs, Social, Forums)</p>
+                    <p className="text-sm text-muted-foreground">Understand where your clients appear across content types</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Competitor share of voice</p>
+                    <p className="text-sm text-muted-foreground">Compare how often competitors appear vs your clients</p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-semibold mb-1">Position tracking and opportunity scoring</p>
+                    <p className="text-sm text-muted-foreground">Identify high-opportunity queries where you can win</p>
                   </div>
                 </li>
               </ul>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
+                <p className="text-sm italic text-muted-foreground mb-2">
+                  "Kommi gave us AI share-of-voice data our SEO tools completely missed."
+                </p>
+                <p className="text-xs text-muted-foreground">— Growth Director, Digital Agency Partner</p>
+              </div>
               <Link href="/auth">
                 <Button size="lg" className="group transition-all duration-300 hover:scale-105">
-                  View all sources
+                  Explore Competitive Intelligence
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
                 </Button>
               </Link>
@@ -881,225 +820,160 @@ export default function LandingPageSaaS() {
           </div>
       </section>
 
-      {/* Journey Section 4: Export Contacts & CSV */}
+      {/* Section 6: Automation & Integrations */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Badge variant="outline" className="mb-4">Step 4: Take Action</Badge>
-            <h2 className="text-4xl font-bold mb-4">Export Contacts & Pitch for Mentions</h2>
+            <Badge variant="outline" className="mb-4">Integrations</Badge>
+            <h2 className="text-4xl font-bold mb-4">Plug Kommi into your agency workflow</h2>
             <p className="text-xl text-muted-foreground">
-              Extract contact info from sources and export to CSV to increase your presence
-            </p>
-            </div>
-
-          <div className="grid md:grid-cols-2 gap-12 items-center mb-20">
-            <div className="order-2 md:order-1 rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
-              <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-                <span className="text-sm font-medium">Contacts from Cited Sources</span>
-                <Badge variant="outline" className="text-xs">3 contacts found</Badge>
-              </div>
-              <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
-                <div className="space-y-3 mb-6">
-                  {EXAMPLE_CONTACTS.map((c, idx) => (
-                    <div 
-                      key={idx} 
-                      className="p-4 rounded-lg border bg-background transition-all duration-300 hover:scale-[1.02] hover:shadow-md hover:border-primary/30"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                      <div>
-                          <p className="font-medium">{c.company}</p>
-                          <p className="text-sm text-muted-foreground">{c.domain}</p>
-                      </div>
-                        <Badge variant="secondary" className="animate-pulse">
-                          {c.confidence}% match
-                        </Badge>
-                    </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                          <Mail className="w-4 h-4" />
-                          {c.email}
-                  </div>
-                        <div className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">
-                          <Phone className="w-4 h-4" />
-                          {c.phone}
-                  </div>
-                      </div>
-                    </div>
-                  ))}
-                  </div>
-                <Button 
-                  onClick={handleExportCSV}
-                  disabled={isExporting || exported}
-                  className="w-full group transition-all duration-300 hover:scale-105"
-                  size="lg"
-                >
-                  {isExporting ? (
-                    <>
-                      <RefreshCw className="mr-2 w-5 h-5 animate-spin" />
-                      Exporting...
-                    </>
-                  ) : exported ? (
-                    <>
-                      <CheckCircle className="mr-2 w-5 h-5" />
-                      Exported!
-                    </>
-                  ) : (
-                    <>
-                      <Download className="mr-2 w-5 h-5 transition-transform duration-300 group-hover:translate-y-1" />
-                      Export to CSV
-                    </>
-                  )}
-                </Button>
-                {exported && (
-                  <p className="text-sm text-center text-primary mt-3 animate-in fade-in slide-in-from-top-2">
-                    ✓ CSV downloaded! Ready to import into your CRM.
-                  </p>
-                )}
-                </div>
-              </div>
-            <div className="order-1 md:order-2 animate-in fade-in slide-in-from-right-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Turn sources into outreach opportunities</h3>
-              <p className="text-lg text-muted-foreground mb-6">
-                We automatically extract emails, phone numbers, and social profiles from sources that don't mention you. 
-                Export everything to CSV with one click—perfect for your sales team or outreach campaigns.
-              </p>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Smart extraction</p>
-                    <p className="text-sm text-muted-foreground">Finds editorial emails, filters out junk (like Sentry telemetry).</p>
-            </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">One-click CSV export</p>
-                    <p className="text-sm text-muted-foreground">Includes domain, email, phone, confidence score—ready for your CRM.</p>
-          </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="font-medium">Increase your presence</p>
-                    <p className="text-sm text-muted-foreground">Reach out to sources that don't mention you. Pitch for mentions and move up in rankings.</p>
-              </div>
-                </li>
-              </ul>
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <p className="text-sm">
-                  <strong className="text-primary">Pro Tip:</strong> Export contacts from sources that don't mention you. 
-                  These are your highest-value outreach targets.
-              </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Journey Section 5: Constant Monitoring */}
-      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/50">
-        <div className="mx-auto max-w-6xl">
-          <div className="text-center mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <Badge variant="outline" className="mb-4">Step 5: Continuous Improvement</Badge>
-            <h2 className="text-4xl font-bold mb-4">Constant Monitoring & Updates</h2>
-            <p className="text-xl text-muted-foreground">
-              Get real-time alerts when your position changes for &quot;{EXAMPLE_QUERY}&quot;
+              Trigger Slack alerts, create CRM leads, or push AI mentions into your data warehouse — automatically.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-12 items-center">
+          <div className="grid md:grid-cols-2 gap-12 items-center mb-12">
             <div className="animate-in fade-in slide-in-from-left-4 duration-700">
-              <h3 className="text-3xl font-bold mb-4">Stay ahead with hourly monitoring</h3>
+              <h3 className="text-3xl font-bold mb-4">Every mention becomes an insight, lead, or report</h3>
               <p className="text-lg text-muted-foreground mb-6">
-                We check AI platforms every hour for &quot;{EXAMPLE_QUERY}&quot;. You'll know immediately if:
+                Kommi integrates with the tools your agency already uses. Set up webhooks once, and every brand mention 
+                automatically flows into your workflow.
               </p>
-              <ul className="space-y-3 mb-6">
-                <li className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary animate-pulse" />
-                  <span>Your position changes (you moved from #3 to #2 last week!)</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary animate-pulse" />
-                  <span>New sources start citing you</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary animate-pulse" />
-                  <span>Competitors gain or lose ground</span>
-                </li>
-                <li className="flex items-center gap-3">
-                  <Bell className="w-5 h-5 text-primary animate-pulse" />
-                  <span>Your mention rate increases or decreases</span>
-                </li>
-              </ul>
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Activity className="w-5 h-5 text-primary animate-pulse" />
-                  <span className="font-semibold">Last update: 23 minutes ago</span>
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/make.svg" 
+                      alt="Make.com integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/make/6E3FFC";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">Make.com</span>
                 </div>
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/zapier.svg" 
+                      alt="Zapier integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/zapier/FF4A00";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">Zapier</span>
+                </div>
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/hubspot.svg" 
+                      alt="HubSpot integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/hubspot/FF7A59";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">HubSpot</span>
+                </div>
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/salesforce.svg" 
+                      alt="Salesforce integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/salesforce/00A1E0";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">Salesforce</span>
+                </div>
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/slack.svg" 
+                      alt="Slack integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/slack/4A154B";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">Slack</span>
+                </div>
+                <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-lg border bg-background hover:border-primary/50 transition-all duration-300 hover:shadow-md">
+                  <div className="w-16 h-16 rounded-lg flex items-center justify-center shadow-md relative overflow-hidden bg-white p-4">
+                    <Image 
+                      src="/logos/integrations/notion.svg" 
+                      alt="Notion integration logo" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = "https://cdn.simpleicons.org/notion/000000";
+                      }}
+                    />
+                  </div>
+                  <span className="font-medium text-sm">Notion</span>
+                </div>
+              </div>
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-6">
                 <p className="text-sm text-muted-foreground">
-                  Monitoring active for &quot;{EXAMPLE_QUERY}&quot;. You'll receive email alerts for significant changes.
+                  <strong className="text-primary">Microcopy:</strong> Every mention can become an insight, lead, or report — instantly.
                 </p>
               </div>
-                <Link href="/auth">
+              <Link href="/auth">
                 <Button size="lg" className="group transition-all duration-300 hover:scale-105">
-                  Start monitoring
+                  Set Up Integrations
                   <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-                  </Button>
-                </Link>
-              </div>
+                </Button>
+              </Link>
+            </div>
             <div className="rounded-lg border border-border/40 bg-card shadow-xl overflow-hidden transition-all duration-500 hover:shadow-2xl hover:scale-[1.02]">
-              <div className="bg-muted/50 px-6 py-4 border-b flex items-center justify-between">
-                <span className="text-sm font-medium">kommi Monitoring Dashboard</span>
-                <Badge className="bg-green-600 animate-pulse">
-                  <Activity className="w-3 h-3 mr-1 animate-spin" />
-                  Active
-                </Badge>
+              <div className="bg-muted/50 px-6 py-4 border-b">
+                <span className="text-sm font-medium">kommi Integrations</span>
               </div>
               <div className="p-8 bg-gradient-to-br from-primary/5 to-background">
                 <div className="space-y-4">
-                  <Card className="p-6 border-2 border-primary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-semibold">Query: &quot;{EXAMPLE_QUERY}&quot;</span>
-                      <Badge variant="outline">Last 7 days</Badge>
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Webhook: Slack Channel</span>
+                      <Badge className="bg-green-600">Active</Badge>
                     </div>
-                <div className="space-y-3">
-                      <div className="flex justify-between text-sm">
-                        <span>Mentions</span>
-                        <span className="font-semibold">8</span>
-                        </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Best Position</span>
-                        <Badge>#2</Badge>
-                        </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Status</span>
-                        <Badge className="bg-green-600">
-                          <TrendingUp className="w-3 h-3 mr-1" />
-                          Improved
-                        </Badge>
-                      </div>
-                      </div>
+                    <p className="text-sm text-muted-foreground">Sends alerts when clients are mentioned</p>
                   </Card>
-                  <Card className="p-6 border-2 border-primary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="font-semibold">Recent Updates</span>
-                      <Clock className="w-4 h-4 text-muted-foreground" />
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Webhook: HubSpot CRM</span>
+                      <Badge className="bg-green-600">Active</Badge>
                     </div>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <span className="text-muted-foreground">Position changed</span>
-                        <span className="font-medium">#3 → #2</span>
-                </div>
-                      <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <span className="text-muted-foreground">New source added</span>
-                        <span className="font-medium">forbes.com</span>
-              </div>
-                      <div className="flex items-center justify-between p-2 rounded bg-muted/50">
-                        <span className="text-muted-foreground">Last check</span>
-                        <span className="font-medium">23m ago</span>
-                      </div>
+                    <p className="text-sm text-muted-foreground">Creates leads from brand mentions</p>
+                  </Card>
+                  <Card className="p-4 border-2 border-primary/20">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold">Webhook: Make.com</span>
+                      <Badge className="bg-green-600">Active</Badge>
                     </div>
+                    <p className="text-sm text-muted-foreground">Triggers custom automation workflows</p>
                   </Card>
                 </div>
               </div>
@@ -1108,113 +982,491 @@ export default function LandingPageSaaS() {
         </div>
       </section>
 
-      {/* Social Proof Section */}
-      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/20">
-        <div className="mx-auto max-w-4xl text-center">
-          <h2 className="text-3xl font-bold mb-8">Trusted by marketing teams worldwide</h2>
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="p-6 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-              <div className="text-4xl font-bold text-primary mb-2" data-target="1450">1,450+</div>
-              <div className="text-sm text-muted-foreground">Companies signed up</div>
-            </Card>
-            <Card className="p-6 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-              <div className="text-4xl font-bold text-primary mb-2" data-target="50">50K+</div>
-              <div className="text-sm text-muted-foreground">Brand mentions tracked</div>
-            </Card>
-            <Card className="p-6 transition-all duration-300 hover:scale-105 hover:shadow-lg">
-              <div className="text-4xl font-bold text-primary mb-2" data-target="98">98%</div>
-              <div className="text-sm text-muted-foreground">Customer satisfaction</div>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
+      {/* Section 7: Pricing */}
       <section className="container max-w-screen-2xl px-4 py-24 bg-gradient-to-b from-background to-muted/30">
         <div className="mx-auto max-w-4xl text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">Start free. Scale with your agency.</h2>
           <p className="text-xl text-muted-foreground mb-4">
-            Choose the plan that fits your needs
+            Choose the plan that fits your agency's needs
           </p>
           <Badge variant="outline" className="text-sm">
-            No credit card required • Free forever plan available
+            Most agencies choose Pro ($19/mo per seat)
           </Badge>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-          {pricingPlans.map((plan, index) => (
-            <div key={index} className="relative">
-              {plan.popular && (
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-primary text-primary-foreground px-4 py-1 text-sm font-semibold shadow-lg">
-                    79% pick this
-                  </Badge>
-                </div>
-              )}
-            <Card 
-              className={`p-8 relative transition-all duration-500 hover:shadow-xl hover:scale-105 ${
-                plan.popular 
-                  ? 'border-2 border-primary shadow-2xl bg-gradient-to-br from-primary/5 to-background' 
-                  : 'border hover:border-primary/30'
-              }`}
-            >
-              
-              <div className="text-center mb-8">
-                <h3 className="text-2xl font-bold mb-3">{plan.name}</h3>
-                <div className="flex items-baseline justify-center gap-1 mb-2">
-                  <span className="text-5xl font-bold">{plan.price}</span>
-                  {plan.period && (
-                    <span className="text-lg text-muted-foreground">{plan.period}</span>
-                  )}
-                </div>
-                <p className="text-sm text-muted-foreground">{plan.description}</p>
-              </div>
-              
-              <ul className="space-y-4 mb-8 min-h-[280px]">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-3 animate-in fade-in slide-in-from-left-4" style={{ animationDelay: `${i * 100}ms` }}>
-                    <CheckCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${plan.popular ? 'text-primary' : 'text-green-600'}`} />
-                    <span className="text-sm">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-              
-              <Link href="/auth" className="block">
-                <Button 
-                  className={`w-full transition-all duration-300 hover:scale-105 ${plan.popular ? '' : 'border-2'}`}
-                  variant={plan.popular ? "default" : "outline"}
-                  size="lg"
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
-            </Card>
-            </div>
-          ))}
+        <div className="max-w-4xl mx-auto mb-12">
+          <Card className="p-8 border-2 border-primary/20">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[200px]">Feature</TableHead>
+                  <TableHead className="text-center">Free</TableHead>
+                  <TableHead className="text-center">Pro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium">Trackers</TableCell>
+                  <TableCell className="text-center">5</TableCell>
+                  <TableCell className="text-center">Unlimited</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Check Frequency</TableCell>
+                  <TableCell className="text-center">Daily</TableCell>
+                  <TableCell className="text-center">Hourly</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">History</TableCell>
+                  <TableCell className="text-center">30 days</TableCell>
+                  <TableCell className="text-center">1 year</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Contacts</TableCell>
+                  <TableCell className="text-center">Basic</TableCell>
+                  <TableCell className="text-center">Unlimited</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Integrations</TableCell>
+                  <TableCell className="text-center">Webhooks</TableCell>
+                  <TableCell className="text-center">Advanced</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium">Teams</TableCell>
+                  <TableCell className="text-center">Single</TableCell>
+                  <TableCell className="text-center">Multi-member</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Card>
+        </div>
+
+        <div className="text-center">
+          <Link href="/auth">
+            <Button size="lg" className="text-lg px-8 py-6 group transition-all duration-300 hover:scale-105">
+              Start Free
+              <ArrowRight className="ml-2 w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+            </Button>
+          </Link>
         </div>
       </section>
 
-      {/* Final CTA Section */}
-      <section className="container max-w-screen-2xl px-4 py-20">
-        <Card className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 border-0 text-primary-foreground p-12 text-center shadow-2xl transition-all duration-500 hover:shadow-3xl hover:scale-[1.02]">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Ready to track &quot;{EXAMPLE_QUERY}&quot; for your brand?
-          </h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto opacity-90">
-            Get a free analysis of your brand mentions and visibility in AI like ChatGPT, Claude, Gemini and more.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/auth">
-              <Button size="lg" variant="secondary" className="text-lg px-8 bg-background text-foreground hover:bg-background/90 transition-all duration-300 hover:scale-105">
-                Analyze For Free
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
-            <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent border-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10 transition-all duration-300 hover:scale-105">
-              Start for free
-            </Button>
+      {/* Section 8: Proof & Trust */}
+      <section className="container max-w-screen-2xl px-4 py-24 bg-muted/20">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold mb-4">Trusted by forward-thinking agencies globally</h2>
+            <p className="text-lg text-muted-foreground mb-12">
+              From boutique digital shops to enterprise marketing teams, Kommi powers AI visibility for agencies that move faster than the algorithm.
+            </p>
           </div>
-        </Card>
+
+          {/* Twitter Testimonials - Row 1 (slides left) */}
+          <div className="mb-8 overflow-hidden">
+            <div className="flex gap-4 animate-scroll-left">
+              {[
+                {
+                  name: "Sarah Chen",
+                  handle: "@sarahchen",
+                  avatar: "https://ui-avatars.com/api/?name=Sarah+Chen&size=48&background=10b981&color=fff&bold=true",
+                  verified: true,
+                  date: "2h",
+                  content: "Kommi helped us identify which AI queries our clients weren't ranking for. We've increased their visibility by 40% in just 2 months. Game changer for our agency!",
+                  replies: 12,
+                  retweets: 28,
+                  likes: 156
+                },
+                {
+                  name: "Marcus Rodriguez",
+                  handle: "@marcusrod",
+                  avatar: "https://ui-avatars.com/api/?name=Marcus+Rodriguez&size=48&background=eab308&color=fff&bold=true",
+                  verified: false,
+                  date: "4h",
+                  content: "The real-time RAG tracking is a game-changer. We can now show clients exactly where they stand in AI search results instantly. No more guessing!",
+                  replies: 8,
+                  retweets: 19,
+                  likes: 89
+                },
+                {
+                  name: "Alex Kim",
+                  handle: "@alexkim",
+                  avatar: "https://ui-avatars.com/api/?name=Alex+Kim&size=48&background=3b82f6&color=fff&bold=true",
+                  verified: true,
+                  date: "6h",
+                  content: "Contact extraction from AI sources has generated 200+ qualified leads for our clients. This is the future of lead gen. Highly recommend!",
+                  replies: 15,
+                  retweets: 42,
+                  likes: 203
+                },
+                {
+                  name: "Jordan Taylor",
+                  handle: "@jordantaylor",
+                  avatar: "https://ui-avatars.com/api/?name=Jordan+Taylor&size=48&background=ef4444&color=fff&bold=true",
+                  verified: false,
+                  date: "8h",
+                  content: "Kommi's webhook integrations saved us 10+ hours per week. All our client mentions now automatically flow into their CRMs. Set it and forget it!",
+                  replies: 6,
+                  retweets: 23,
+                  likes: 127
+                },
+                {
+                  name: "Emma Wilson",
+                  handle: "@emmawilson",
+                  avatar: "https://ui-avatars.com/api/?name=Emma+Wilson&size=48&background=8b5cf6&color=fff&bold=true",
+                  verified: true,
+                  date: "12h",
+                  content: "Finally, a tool that shows WHY competitors win, not just WHERE they rank. Kommi's competitive intelligence is exactly what we needed.",
+                  replies: 9,
+                  retweets: 31,
+                  likes: 178
+                }
+              ].map((tweet, idx) => (
+                <Card key={idx} className="min-w-[320px] max-w-[320px] p-4 bg-background border border-border/50 hover:border-border transition-all">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Image 
+                      src={tweet.avatar}
+                      alt={tweet.name}
+                      width={48}
+                      height={48}
+                      className="rounded-full flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="font-bold text-sm">{tweet.name}</span>
+                        {tweet.verified && (
+                          <svg viewBox="0 0 22 22" className="w-4 h-4 text-blue-500 fill-current">
+                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/>
+                          </svg>
+                        )}
+                        <span className="text-muted-foreground text-sm">{tweet.handle}</span>
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="text-muted-foreground text-sm">{tweet.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm mb-3 leading-relaxed">{tweet.content}</p>
+                  <div className="flex items-center justify-between text-muted-foreground text-sm pt-2 border-t border-border/50">
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.47-4 6.865l-8.129 4.13V18.5c-1.794 0-3.248-1.456-3.248-3.25V10zm8.005-6.5c-3.317 0-6.005 2.69-6.005 6v5.25c0 1.794 1.456 3.25 3.248 3.25h.75v-3.5h-.75c-.69 0-1.25-.56-1.25-1.25v-5c0-3.317 2.69-6 6.005-6h4.366c3.317 0 6.005 2.69 6.005 6v5c0 .69-.56 1.25-1.25 1.25h-2.5v3.5h2.5c2.07 0 3.75-1.68 3.75-3.75v-5c0-4.42-3.584-8-8.129-8h-4.366z"/>
+                      </svg>
+                      <span>{tweet.replies}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.791-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.791 4 4v7.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/>
+                      </svg>
+                      <span>{tweet.retweets}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.487-2.99 4.282-3.2 1.37-.19 2.79.04 3.94 1.03 1.15.99 1.88 2.3 2.05 3.68.17 1.38-.19 2.82-1.01 3.99l-.01.02c-.19.26-.49.41-.81.41-.32 0-.62-.15-.81-.41l-.01-.02c-.82-1.17-1.18-2.61-1.01-3.99.17-1.38.9-2.69 2.05-3.68 1.15-.99 2.57-1.22 3.94-1.03 1.8.21 3.4 1.41 4.28 3.2.9 1.81.85 4.17-.51 6.67z"/>
+                      </svg>
+                      <span>{tweet.likes}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41L6.71 9.71 5.29 8.29 12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </Card>
+              ))}
+              {/* Duplicate for seamless loop */}
+              {[
+                {
+                  name: "Sarah Chen",
+                  handle: "@sarahchen",
+                  avatar: "https://ui-avatars.com/api/?name=Sarah+Chen&size=48&background=10b981&color=fff&bold=true",
+                  verified: true,
+                  date: "2h",
+                  content: "Kommi helped us identify which AI queries our clients weren't ranking for. We've increased their visibility by 40% in just 2 months. Game changer for our agency!",
+                  replies: 12,
+                  retweets: 28,
+                  likes: 156
+                },
+                {
+                  name: "Marcus Rodriguez",
+                  handle: "@marcusrod",
+                  avatar: "https://ui-avatars.com/api/?name=Marcus+Rodriguez&size=48&background=eab308&color=fff&bold=true",
+                  verified: false,
+                  date: "4h",
+                  content: "The real-time RAG tracking is a game-changer. We can now show clients exactly where they stand in AI search results instantly. No more guessing!",
+                  replies: 8,
+                  retweets: 19,
+                  likes: 89
+                }
+              ].map((tweet, idx) => (
+                <Card key={`dup-${idx}`} className="min-w-[320px] max-w-[320px] p-4 bg-background border border-border/50 hover:border-border transition-all">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Image 
+                      src={tweet.avatar}
+                      alt={tweet.name}
+                      width={48}
+                      height={48}
+                      className="rounded-full flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="font-bold text-sm">{tweet.name}</span>
+                        {tweet.verified && (
+                          <svg viewBox="0 0 22 22" className="w-4 h-4 text-blue-500 fill-current">
+                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/>
+                          </svg>
+                        )}
+                        <span className="text-muted-foreground text-sm">{tweet.handle}</span>
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="text-muted-foreground text-sm">{tweet.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm mb-3 leading-relaxed">{tweet.content}</p>
+                  <div className="flex items-center justify-between text-muted-foreground text-sm pt-2 border-t border-border/50">
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.47-4 6.865l-8.129 4.13V18.5c-1.794 0-3.248-1.456-3.248-3.25V10zm8.005-6.5c-3.317 0-6.005 2.69-6.005 6v5.25c0 1.794 1.456 3.25 3.248 3.25h.75v-3.5h-.75c-.69 0-1.25-.56-1.25-1.25v-5c0-3.317 2.69-6 6.005-6h4.366c3.317 0 6.005 2.69 6.005 6v5c0 .69-.56 1.25-1.25 1.25h-2.5v3.5h2.5c2.07 0 3.75-1.68 3.75-3.75v-5c0-4.42-3.584-8-8.129-8h-4.366z"/>
+                      </svg>
+                      <span>{tweet.replies}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.791-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.791 4 4v7.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/>
+                      </svg>
+                      <span>{tweet.retweets}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.487-2.99 4.282-3.2 1.37-.19 2.79.04 3.94 1.03 1.15.99 1.88 2.3 2.05 3.68.17 1.38-.19 2.82-1.01 3.99l-.01.02c-.19.26-.49.41-.81.41-.32 0-.62-.15-.81-.41l-.01-.02c-.82-1.17-1.18-2.61-1.01-3.99.17-1.38.9-2.69 2.05-3.68 1.15-.99 2.57-1.22 3.94-1.03 1.8.21 3.4 1.41 4.28 3.2.9 1.81.85 4.17-.51 6.67z"/>
+                      </svg>
+                      <span>{tweet.likes}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41L6.71 9.71 5.29 8.29 12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Twitter Testimonials - Row 2 (slides right) */}
+          <div className="overflow-hidden">
+            <div className="flex gap-4 animate-scroll-right">
+              {[
+                {
+                  name: "David Park",
+                  handle: "@davidpark",
+                  avatar: "https://ui-avatars.com/api/?name=David+Park&size=48&background=06b6d4&color=fff&bold=true",
+                  verified: false,
+                  date: "1d",
+                  content: "We've been using Kommi for 3 months now. The competitive intelligence features helped us win 5 new clients. ROI is insane!",
+                  replies: 24,
+                  retweets: 67,
+                  likes: 312
+                },
+                {
+                  name: "Lisa Anderson",
+                  handle: "@lisanderson",
+                  avatar: "https://ui-avatars.com/api/?name=Lisa+Anderson&size=48&background=f59e0b&color=fff&bold=true",
+                  verified: true,
+                  date: "1d",
+                  content: "The contact extraction feature is pure gold. We've automated our entire lead gen process. Our sales team loves it!",
+                  replies: 18,
+                  retweets: 54,
+                  likes: 289
+                },
+                {
+                  name: "Ryan Chen",
+                  handle: "@ryanchen",
+                  avatar: "https://ui-avatars.com/api/?name=Ryan+Chen&size=48&background=ec4899&color=fff&bold=true",
+                  verified: false,
+                  date: "2d",
+                  content: "Kommi's webhook integration with HubSpot is seamless. Every mention becomes a lead automatically. This is the future!",
+                  replies: 11,
+                  retweets: 38,
+                  likes: 198
+                },
+                {
+                  name: "Maya Patel",
+                  handle: "@mayapatel",
+                  avatar: "https://ui-avatars.com/api/?name=Maya+Patel&size=48&background=14b8a6&color=fff&bold=true",
+                  verified: true,
+                  date: "2d",
+                  content: "Best investment we've made this year. Kommi shows us exactly what to optimize and why. Data-driven decisions made easy.",
+                  replies: 16,
+                  retweets: 45,
+                  likes: 267
+                },
+                {
+                  name: "Chris Thompson",
+                  handle: "@christhompson",
+                  avatar: "https://ui-avatars.com/api/?name=Chris+Thompson&size=48&background=6366f1&color=fff&bold=true",
+                  verified: false,
+                  date: "3d",
+                  content: "The RAG technology is mind-blowing. Real-time AI search tracking that actually works. Our clients are impressed!",
+                  replies: 9,
+                  retweets: 29,
+                  likes: 145
+                }
+              ].map((tweet, idx) => (
+                <Card key={idx} className="min-w-[320px] max-w-[320px] p-4 bg-background border border-border/50 hover:border-border transition-all">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Image 
+                      src={tweet.avatar}
+                      alt={tweet.name}
+                      width={48}
+                      height={48}
+                      className="rounded-full flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="font-bold text-sm">{tweet.name}</span>
+                        {tweet.verified && (
+                          <svg viewBox="0 0 22 22" className="w-4 h-4 text-blue-500 fill-current">
+                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/>
+                          </svg>
+                        )}
+                        <span className="text-muted-foreground text-sm">{tweet.handle}</span>
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="text-muted-foreground text-sm">{tweet.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm mb-3 leading-relaxed">{tweet.content}</p>
+                  <div className="flex items-center justify-between text-muted-foreground text-sm pt-2 border-t border-border/50">
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.47-4 6.865l-8.129 4.13V18.5c-1.794 0-3.248-1.456-3.248-3.25V10zm8.005-6.5c-3.317 0-6.005 2.69-6.005 6v5.25c0 1.794 1.456 3.25 3.248 3.25h.75v-3.5h-.75c-.69 0-1.25-.56-1.25-1.25v-5c0-3.317 2.69-6 6.005-6h4.366c3.317 0 6.005 2.69 6.005 6v5c0 .69-.56 1.25-1.25 1.25h-2.5v3.5h2.5c2.07 0 3.75-1.68 3.75-3.75v-5c0-4.42-3.584-8-8.129-8h-4.366z"/>
+                      </svg>
+                      <span>{tweet.replies}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.791-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.791 4 4v7.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/>
+                      </svg>
+                      <span>{tweet.retweets}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.487-2.99 4.282-3.2 1.37-.19 2.79.04 3.94 1.03 1.15.99 1.88 2.3 2.05 3.68.17 1.38-.19 2.82-1.01 3.99l-.01.02c-.19.26-.49.41-.81.41-.32 0-.62-.15-.81-.41l-.01-.02c-.82-1.17-1.18-2.61-1.01-3.99.17-1.38.9-2.69 2.05-3.68 1.15-.99 2.57-1.22 3.94-1.03 1.8.21 3.4 1.41 4.28 3.2.9 1.81.85 4.17-.51 6.67z"/>
+                      </svg>
+                      <span>{tweet.likes}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41L6.71 9.71 5.29 8.29 12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </Card>
+              ))}
+              {/* Duplicate for seamless loop */}
+              {[
+                {
+                  name: "David Park",
+                  handle: "@davidpark",
+                  avatar: "https://ui-avatars.com/api/?name=David+Park&size=48&background=06b6d4&color=fff&bold=true",
+                  verified: false,
+                  date: "1d",
+                  content: "We've been using Kommi for 3 months now. The competitive intelligence features helped us win 5 new clients. ROI is insane!",
+                  replies: 24,
+                  retweets: 67,
+                  likes: 312
+                },
+                {
+                  name: "Lisa Anderson",
+                  handle: "@lisanderson",
+                  avatar: "https://ui-avatars.com/api/?name=Lisa+Anderson&size=48&background=f59e0b&color=fff&bold=true",
+                  verified: true,
+                  date: "1d",
+                  content: "The contact extraction feature is pure gold. We've automated our entire lead gen process. Our sales team loves it!",
+                  replies: 18,
+                  retweets: 54,
+                  likes: 289
+                }
+              ].map((tweet, idx) => (
+                <Card key={`dup2-${idx}`} className="min-w-[320px] max-w-[320px] p-4 bg-background border border-border/50 hover:border-border transition-all">
+                  <div className="flex items-start gap-3 mb-3">
+                    <Image 
+                      src={tweet.avatar}
+                      alt={tweet.name}
+                      width={48}
+                      height={48}
+                      className="rounded-full flex-shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="font-bold text-sm">{tweet.name}</span>
+                        {tweet.verified && (
+                          <svg viewBox="0 0 22 22" className="w-4 h-4 text-blue-500 fill-current">
+                            <path d="M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z"/>
+                          </svg>
+                        )}
+                        <span className="text-muted-foreground text-sm">{tweet.handle}</span>
+                        <span className="text-muted-foreground text-sm">·</span>
+                        <span className="text-muted-foreground text-sm">{tweet.date}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm mb-3 leading-relaxed">{tweet.content}</p>
+                  <div className="flex items-center justify-between text-muted-foreground text-sm pt-2 border-t border-border/50">
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M1.751 10c0-4.42 3.584-8 8.005-8h4.366c4.49 0 8.129 3.64 8.129 8.13 0 2.96-1.607 5.47-4 6.865l-8.129 4.13V18.5c-1.794 0-3.248-1.456-3.248-3.25V10zm8.005-6.5c-3.317 0-6.005 2.69-6.005 6v5.25c0 1.794 1.456 3.25 3.248 3.25h.75v-3.5h-.75c-.69 0-1.25-.56-1.25-1.25v-5c0-3.317 2.69-6 6.005-6h4.366c3.317 0 6.005 2.69 6.005 6v5c0 .69-.56 1.25-1.25 1.25h-2.5v3.5h2.5c2.07 0 3.75-1.68 3.75-3.75v-5c0-4.42-3.584-8-8.129-8h-4.366z"/>
+                      </svg>
+                      <span>{tweet.replies}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-green-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M4.5 3.88l4.432 4.14-1.364 1.46L5.5 7.55V16c0 1.1.896 2 2 2H13v2H7.5c-2.209 0-4-1.791-4-4V7.55L1.432 9.48.068 8.02 4.5 3.88zM16.5 6H11V4h5.5c2.209 0 4 1.791 4 4v7.45l2.068-1.93 1.364 1.46-4.432 4.14-4.432-4.14 1.364-1.46 2.068 1.93V8c0-1.1-.896-2-2-2z"/>
+                      </svg>
+                      <span>{tweet.retweets}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-red-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.487-2.99 4.282-3.2 1.37-.19 2.79.04 3.94 1.03 1.15.99 1.88 2.3 2.05 3.68.17 1.38-.19 2.82-1.01 3.99l-.01.02c-.19.26-.49.41-.81.41-.32 0-.62-.15-.81-.41l-.01-.02c-.82-1.17-1.18-2.61-1.01-3.99.17-1.38.9-2.69 2.05-3.68 1.15-.99 2.57-1.22 3.94-1.03 1.8.21 3.4 1.41 4.28 3.2.9 1.81.85 4.17-.51 6.67z"/>
+                      </svg>
+                      <span>{tweet.likes}</span>
+                    </button>
+                    <button className="flex items-center gap-2 hover:text-blue-500 transition-colors">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41L6.71 9.71 5.29 8.29 12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z"/>
+                      </svg>
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 9: Final CTA */}
+      <section className="container max-w-screen-2xl px-4 py-20">
+        <div className="mx-auto max-w-4xl">
+          <Card className="bg-gradient-to-br from-primary via-primary/95 to-primary/90 border-0 text-primary-foreground p-8 md:p-12 text-center shadow-2xl">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
+              Measure the unmeasurable.
+              <br />
+              See where your clients stand in the AI era.
+            </h2>
+            <p className="text-base md:text-lg mb-8 max-w-2xl mx-auto opacity-90">
+              Start tracking AI visibility for your agency clients today. Free forever plan available.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Link href="/auth" className="w-full sm:w-auto">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto text-lg px-8 bg-background text-foreground hover:bg-background/90">
+                  Start Tracking with Kommi
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Button size="lg" variant="outline" className="w-full sm:w-auto text-lg px-8 bg-transparent border-2 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10">
+                Book a Demo
+              </Button>
+            </div>
+          </Card>
+        </div>
       </section>
 
       {/* Footer */}
@@ -1234,7 +1486,7 @@ export default function LandingPageSaaS() {
                 <span className="font-bold text-lg">kommi</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Monitor and improve your brand visibility in AI. Track, analyze, and optimize your presence in AI-powered search results.
+                The AI visibility platform built for agencies. Track, analyze, and optimize your clients' presence in AI-powered search results.
               </p>
             </div>
             
@@ -1255,7 +1507,7 @@ export default function LandingPageSaaS() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="/blogs/comparisons" className="hover:text-foreground transition-colors">Comparisons</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="#" className="hover:text-foreground transition-colors">API</a></li>
                 <li><a href="#" className="hover:text-foreground transition-colors">Blog</a></li>
               </ul>
             </div>
@@ -1286,7 +1538,7 @@ export default function LandingPageSaaS() {
           
           <div className="pt-8 border-t border-border/40 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2025 kommi. All rights reserved.
+              © 2025 Kommi Technologies Inc. | Built in India, deployed on Vercel
             </p>
             <div className="flex items-center gap-6 text-sm text-muted-foreground">
               <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>

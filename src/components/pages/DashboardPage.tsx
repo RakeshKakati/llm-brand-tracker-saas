@@ -1590,40 +1590,66 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
 
   // Top Movers: Brands/Competitors with fastest growth (week-over-week comparison)
   const topMovers = React.useMemo(() => {
-    if (!chartMentionsRaw || chartMentionsRaw.length === 0) return [] as { name: string; currentWeek: number; previousWeek: number; growth: number; trend: 'up' | 'down' }[];
+    if (!chartMentionsRaw || chartMentionsRaw.length === 0) {
+      console.log("📊 Top Movers: No chart data available");
+      return [] as { name: string; currentWeek: number; previousWeek: number; growth: number; trend: 'up' | 'down' }[];
+    }
     
-    const ref = new Date();
-    const currentWeekStart = new Date(ref);
-    currentWeekStart.setDate(ref.getDate() - 7);
-    const previousWeekStart = new Date(ref);
-    previousWeekStart.setDate(ref.getDate() - 14);
+    const now = new Date();
+    const currentWeekStart = new Date(now);
+    currentWeekStart.setDate(now.getDate() - 7);
+    currentWeekStart.setHours(0, 0, 0, 0); // Start of day
+    
+    const previousWeekStart = new Date(now);
+    previousWeekStart.setDate(now.getDate() - 14);
+    previousWeekStart.setHours(0, 0, 0, 0); // Start of day
     
     // Track mentions by brand name in current week and previous week
     const brandMentions = new Map<string, { current: number; previous: number }>();
+    let currentWeekCount = 0;
+    let previousWeekCount = 0;
     
     chartMentionsRaw.forEach((mention: any) => {
+      if (!mention.created_at) return;
       const mentionDate = new Date(mention.created_at);
+      if (isNaN(mentionDate.getTime())) return; // Invalid date
+      
       const brand = (mention.brand || '').toLowerCase().trim();
       if (!brand) return;
       
+      // Current week: last 7 days (including today)
       if (mentionDate >= currentWeekStart) {
+        currentWeekCount++;
         const entry = brandMentions.get(brand) || { current: 0, previous: 0 };
         entry.current += 1;
         brandMentions.set(brand, entry);
-      } else if (mentionDate >= previousWeekStart && mentionDate < currentWeekStart) {
+      } 
+      // Previous week: 7-14 days ago
+      else if (mentionDate >= previousWeekStart && mentionDate < currentWeekStart) {
+        previousWeekCount++;
         const entry = brandMentions.get(brand) || { current: 0, previous: 0 };
         entry.previous += 1;
         brandMentions.set(brand, entry);
       }
     });
     
+    console.log(`📊 Top Movers: ${currentWeekCount} mentions in current week, ${previousWeekCount} in previous week, ${brandMentions.size} unique brands`);
+    
     // Calculate growth percentage and sort
     const movers = Array.from(brandMentions.entries())
       .filter(([_, counts]) => counts.current > 0 || counts.previous > 0)
       .map(([name, counts]) => {
-        const growth = counts.previous > 0 
-          ? ((counts.current - counts.previous) / counts.previous) * 100
-          : counts.current > 0 ? 1000 : 0; // Infinite growth if no previous mentions
+        // Calculate growth: if previous is 0 and current > 0, it's new (infinite growth)
+        // If both are 0, skip (already filtered)
+        // If previous > 0, calculate percentage change
+        let growth: number;
+        if (counts.previous === 0 && counts.current > 0) {
+          growth = 1000; // Mark as infinite/new growth
+        } else if (counts.previous > 0) {
+          growth = ((counts.current - counts.previous) / counts.previous) * 100;
+        } else {
+          growth = 0; // Shouldn't happen due to filter, but safety check
+        }
         
         return {
           name: name.charAt(0).toUpperCase() + name.slice(1), // Capitalize first letter
@@ -1633,8 +1659,16 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
           trend: counts.current >= counts.previous ? 'up' as const : 'down' as const
         };
       })
-      .sort((a, b) => Math.abs(b.growth) - Math.abs(a.growth)) // Sort by absolute growth
+      .filter(m => m.currentWeek > 0 || m.previousWeek > 0) // Extra safety filter
+      .sort((a, b) => {
+        // Sort by: 1) brands with growth (up trend) first, 2) absolute growth value
+        if (a.trend === 'up' && b.trend === 'down') return -1;
+        if (a.trend === 'down' && b.trend === 'up') return 1;
+        return Math.abs(b.growth) - Math.abs(a.growth);
+      })
       .slice(0, 10); // Top 10 movers
+    
+    console.log(`📊 Top Movers: Found ${movers.length} movers after processing`);
     
     return movers;
   }, [chartMentionsRaw]);
@@ -2061,9 +2095,9 @@ export default function DashboardPage({ teamId }: DashboardPageProps = {}) {
                 <Activity className="w-5 h-5" />
                 <CardTitle>Recent Activity</CardTitle>
               </div>
-              <Badge variant="secondary" className="ml-auto">
-                {recentMentions.length} {recentMentions.length === 1 ? 'search' : 'searches'}
-              </Badge>
+            <Badge variant="secondary" className="ml-auto">
+              {recentMentions.length} {recentMentions.length === 1 ? 'search' : 'searches'}
+            </Badge>
             </div>
             <CardDescription>
               Latest brand mentions with source links

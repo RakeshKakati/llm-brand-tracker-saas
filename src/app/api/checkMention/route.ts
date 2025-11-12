@@ -375,7 +375,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Database insert failed" }, { status: 500 });
     }
 
-    // ---- STEP 5: Respond to frontend ----
+    // ---- STEP 5: Trigger integrations (webhooks) ----
+    try {
+      const { triggerIntegrations } = await import('@/lib/integration-service');
+      await triggerIntegrations(
+        user_email,
+        'brand_mentioned',
+        {
+          brand,
+          query,
+          mentioned,
+          position: brandPosition,
+          evidence: evidenceSnippet,
+          source_urls: source_urls,
+          sources: source_urls.map(url => ({ url })),
+        },
+        team_id || undefined
+      );
+    } catch (integrationError) {
+      // Don't fail the request if integrations fail
+      console.error('⚠️ Integration trigger failed (non-critical):', integrationError);
+    }
+
+    // ---- STEP 6: Respond to frontend ----
     return NextResponse.json({
       brand,
       query,

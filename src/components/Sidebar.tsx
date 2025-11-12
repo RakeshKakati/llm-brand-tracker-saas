@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2, Mail } from "lucide-react";
+import { BarChart3, ChevronRight, FileText, LogOut, Settings, Target, Users, ChevronDown, Crown, Zap, Building2, Mail, Link2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -121,6 +121,11 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
       page: "teams",
     },
     {
+      title: "Integrations",
+      icon: Link2,
+      page: "integrations",
+    },
+    {
       title: "Settings",
       icon: Settings,
       page: "settings",
@@ -153,7 +158,7 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
                   }}
                 />
               </div>
-              <div className="grid flex-1 text-left text-sm leading-tight">
+              <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate font-semibold">kommi</span>
               </div>
             </SidebarMenuButton>
@@ -183,12 +188,12 @@ export function AppSidebar({ onPageChange, currentPage, userEmail, ...props }: A
 
       <SidebarFooter>
         {/* Theme Toggle */}
-        <div className="px-4 py-2 mb-2 border-t border-sidebar-border flex items-center justify-center">
+        <div className="px-4 py-2 mb-2 border-t border-sidebar-border flex items-center justify-center group-data-[collapsible=icon]:hidden">
           <ThemeToggle />
         </div>
         
         {/* Usage Tracking Section */}
-        <div className="px-4 py-2 mb-2 border-t border-sidebar-border">
+        <div className="px-4 py-2 mb-2 border-t border-sidebar-border group-data-[collapsible=icon]:hidden">
           <div className="space-y-3">
             {/* Trackers Usage */}
             <div className="space-y-1">

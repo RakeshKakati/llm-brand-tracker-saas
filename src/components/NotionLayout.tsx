@@ -15,6 +15,7 @@ import SettingsPage from "@/components/pages/SettingsPage";
 import CompetitorsPage from "@/components/pages/CompetitorsPage";
 import TeamsPage from "@/components/pages/TeamsPage";
 import ContactsPage from "@/components/pages/ContactsPage";
+import IntegrationsPage from "@/components/pages/IntegrationsPage";
 import OnboardingPage from "@/components/pages/OnboardingPage";
 import { supabase } from "@/app/lib/supabaseClient";
 
@@ -113,6 +114,8 @@ export default function NotionLayout() {
         return <TeamsPage />;
       case "contacts":
         return <ContactsPage />;
+      case "integrations":
+        return <IntegrationsPage />;
       default:
         return <DashboardPage />;
     }
@@ -129,6 +132,7 @@ export default function NotionLayout() {
       case "competitors": return "Competitors";
       case "teams": return "Teams";
       case "contacts": return "Contacts";
+      case "integrations": return "Integrations";
       default: return "Overview";
     }
   };

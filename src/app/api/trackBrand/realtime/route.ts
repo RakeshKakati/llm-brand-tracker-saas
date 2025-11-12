@@ -122,6 +122,27 @@ export async function POST(req: Request) {
       // Still return result even if DB insert fails
     }
 
+    // Trigger integrations (webhooks)
+    try {
+      const { triggerIntegrations } = await import('@/lib/integration-service');
+      await triggerIntegrations(
+        user_email,
+        'brand_mentioned',
+        {
+          brand,
+          query,
+          mentioned: ragResult.mentioned,
+          position: ragResult.position || null,
+          evidence: ragResult.evidence,
+          source_urls: source_urls,
+          sources: ragResult.sources || [],
+        },
+        team_id || undefined
+      );
+    } catch (integrationError) {
+      console.error('⚠️ Integration trigger failed (non-critical):', integrationError);
+    }
+
     // Return enhanced response
     return NextResponse.json({
       brand,

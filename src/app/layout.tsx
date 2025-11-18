@@ -99,6 +99,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   data-domain="www.kommi.in"
   src="https://datafa.st/js/script.js">
 </script>
+        <meta name="sonar-verify" content="9b45a42f-ab25-475d-87ef-502470e2a6fb" />
+
       </head>
       <body className={inter.className}>
         {/* Google Tag Manager (noscript) */}
